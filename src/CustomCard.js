@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button, Card } from 'react-bootstrap'
 
-const CustomCard = (props) => {
+export function CustomCard(props){
   const ClickHandler = () => {
     props.hide()
     props.ischosen(props.imagess.url)
@@ -22,5 +22,3 @@ const CustomCard = (props) => {
     </div>
   )
 }
-
-export {CustomCard}

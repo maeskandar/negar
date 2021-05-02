@@ -2,7 +2,9 @@ import Konva from "konva"
 
 import v1 from 'uuid/dist/v1'
 
-export const addTextNode = (stage, layer) => {
+import {isSafari, isFirefox, isEdge} from "./utils/browser"
+
+export function addTextNode(stage, layer) {
   const
     id = v1(),
     textNode = new Konva.Text({
@@ -104,11 +106,9 @@ export const addTextNode = (stage, layer) => {
       transform += `rotateZ(${rotation}deg)`
     }
 
-    let
-      px = 0,
-      isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+    let px = 0
 
-    if (isFirefox) {
+    if (isFirefox()) {
       px += 2 + Math.round(textNode.fontSize() / 20)
     }
 
@@ -132,13 +132,7 @@ export const addTextNode = (stage, layer) => {
       if (!newWidth) { // set width for placeholder
         newWidth = textNode.placeholder.length * textNode.fontSize()
       }
-      // some extra fixes on different browsers
-      const
-        isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
-        isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1,
-        isEdge = document.documentMode || /Edge/.test(navigator.userAgent)
-
-      if (isSafari || isFirefox) {
+      if (isSafari() || isFirefox()) {
         newWidth = Math.ceil(newWidth)
       }
       else if (isEdge)
