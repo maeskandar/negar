@@ -27,7 +27,7 @@ export const addTextNode = (stage, layer) => {
     },
   })
 
-  stage.on("click", (e) => {
+  stage.on("click", function (e) {
     if (!this.clickStartShape)
       return
 

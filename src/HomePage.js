@@ -37,10 +37,8 @@ function HomePage() {
       fill: "red",
       id: `rect${rectangles.length + 1}`,
     }
-    const rects = rectangles.concat([rect])
-    setRectangles(rects)
-    const shs = shapes.concat([`rect${rectangles.length + 1}`])
-    setShapes(shs)
+    setRectangles(rectangles.concat([rect]))
+    setShapes(shapes.concat([`rect${rectangles.length + 1}`]))
   }
   const addCircle = () => {
     const circ = {
@@ -51,10 +49,8 @@ function HomePage() {
       fill: "red",
       id: `circ${circles.length + 1}`,
     }
-    const circs = circles.concat([circ])
-    setCircles(circs)
-    const shs = shapes.concat([`circ${circles.length + 1}`])
-    setShapes(shs)
+    setCircles(circles.concat([circ]))
+    setShapes(shapes.concat([`circ${circles.length + 1}`]))
   }
   const drawLine = () => {
     addLine(stageEl.current.getStage(), layerEl.current)
@@ -64,8 +60,7 @@ function HomePage() {
   }
   const drawText = () => {
     const id = addTextNode(stageEl.current.getStage(), layerEl.current)
-    const shs = shapes.concat([id])
-    setShapes(shs)
+    setShapes(shapes.concat([id]))
   }
   const drawImage = () => {
     fileUploadEl.current.click()
@@ -84,9 +79,10 @@ function HomePage() {
         id,
       })
       setImages(images)
+      
       shapes.push(id)
       setShapes(shapes)
-      
+
       forceUpdate()
     }, false
     )
