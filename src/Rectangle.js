@@ -1,7 +1,7 @@
 import React from "react"
 import { Rect, Transformer } from "react-konva"
 
-const Rectangle = ({ shapeProps, isSelected, onSelect, onChange }) => {
+export default function Rectangle ({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
@@ -50,5 +50,3 @@ const Rectangle = ({ shapeProps, isSelected, onSelect, onChange }) => {
     </>
   )
 }
-
-export default Rectangle

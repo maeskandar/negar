@@ -3,7 +3,7 @@ import { Button, Modal } from 'react-bootstrap'
 
 import { CustomCard } from './CustomCard'
 
-export const MyVerticallyCenteredModal = (props) => {
+export function MyVerticallyCenteredModal (props) {
   return (
     <Modal
       {...props}

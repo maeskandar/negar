@@ -1,7 +1,7 @@
 import React from "react"
 import { Circle, Transformer } from "react-konva"
 
-const Circ = ({ shapeProps, isSelected, onSelect, onChange }) => {
+export default function Circ ({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
@@ -51,4 +51,3 @@ const Circ = ({ shapeProps, isSelected, onSelect, onChange }) => {
     </>
   )
 }
-export default Circ

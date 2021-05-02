@@ -2,12 +2,12 @@ import React from "react"
 import { Image, Transformer } from "react-konva"
 import useImage from "use-image"
 
-const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
+export default function Img ({ shapeProps, isSelected, onSelect, onChange, imageUrl }){
   const
     shapeRef = React.useRef(),
     trRef = React.useRef(),
     [image] = useImage(imageUrl)
-  
+
   React.useEffect(() => {
     if (isSelected) {
       // we need to attach transformer manually
@@ -15,7 +15,7 @@ const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
       trRef.current.getLayer().batchDraw()
     }
   }, [isSelected])
-  
+
   return (
     <>
       <Image
@@ -31,9 +31,11 @@ const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
           })
         }}
         onTransformEnd={e => {
-          const node = shapeRef.current
-          const scaleX = node.scaleX()
-          const scaleY = node.scaleY()
+          const
+            node = shapeRef.current,
+            scaleX = node.scaleX(),
+            scaleY = node.scaleY()
+            
           onChange({
             ...shapeProps,
             x: node.x(),
@@ -47,4 +49,3 @@ const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
     </>
   )
 }
-export default Img
