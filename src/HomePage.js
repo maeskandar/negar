@@ -1,46 +1,47 @@
-import React, { useState, useRef } from "react";
-import ButtonGroup from "react-bootstrap/ButtonGroup";
-import Button from "react-bootstrap/Button";
-import { Stage, Layer } from "react-konva";
-import Rectangle from "./Rectangle";
-import Circle from "./Circle";
-import { addLine } from "./Line";
-import { addTextNode } from "./TextNode";
-import Image from "./Images";
-import v1 from 'uuid/dist/v1';
-// import backgroundImage1 from './images/pexels-eberhard-grossgasteiger-1064162.jpg'
-import { MyVerticallyCenteredModal } from "./MyVerticallyCenteredModal";
-// const uuidv1 = require("uuid/dist/v1");
+import React, { useState } from "react"
+import { Stage, Layer } from "react-konva"
+
+import Rectangle from "./Rectangle"
+import Circle from "./Circle"
+import { addLine } from "./Line"
+import { addTextNode } from "./TextNode"
+import Image from "./Images"
+import { MyVerticallyCenteredModal } from "./MyVerticallyCenteredModal"
+
+import v1 from 'uuid/dist/v1'
+
 function HomePage() {
-  const [rectangles, setRectangles] = useState([]);
-  const [backgroundimage,setBackgroundimage] = useState('/images/pexels-eberhard-grossgasteiger-1064162.jpg');
-  
-  const [circles, setCircles] = useState([]);
-  const [images, setImages] = useState([]);
-  const [selectedId, selectShape] = useState(null);
-  const [shapes, setShapes] = useState([]);
-  const [, updateState] = React.useState();
-  const [modalShow, setModalShow] = React.useState(false);
-  const stageEl = React.createRef();
-  const layerEl = React.createRef();
-  const fileUploadEl = React.createRef();
-  const getRandomInt = max => {
-    return Math.floor(Math.random() * Math.floor(max));
-  };
+  const
+    [rectangles, setRectangles] = useState([]),
+    [backgroundimage, setBackgroundimage] = useState('/images/pexels-eberhard-grossgasteiger-1064162.jpg'),
+    [circles, setCircles] = useState([]),
+    [images, setImages] = useState([]),
+    [selectedId, selectShape] = useState(null),
+    [shapes, setShapes] = useState([]),
+    [, updateState] = React.useState(),
+    [modalShow, setModalShow] = React.useState(false),
+    stageEl = React.createRef(),
+    layerEl = React.createRef(),
+    fileUploadEl = React.createRef()
+
+  const getRandomInt = (max) => {
+    return Math.floor(Math.random() * Math.floor(max))
+  }
+
   const addRectangle = () => {
     const rect = {
       x: getRandomInt(100),
       y: getRandomInt(100),
       width: 100,
       height: 100,
-      fill: "red",  
+      fill: "red",
       id: `rect${rectangles.length + 1}`,
-    };
-    const rects = rectangles.concat([rect]);
-    setRectangles(rects);
-    const shs = shapes.concat([`rect${rectangles.length + 1}`]);
-    setShapes(shs);
-  };
+    }
+    const rects = rectangles.concat([rect])
+    setRectangles(rects)
+    const shs = shapes.concat([`rect${rectangles.length + 1}`])
+    setShapes(shs)
+  }
   const addCircle = () => {
     const circ = {
       x: getRandomInt(100),
@@ -49,117 +50,123 @@ function HomePage() {
       height: 100,
       fill: "red",
       id: `circ${circles.length + 1}`,
-    };
-    const circs = circles.concat([circ]);
-    setCircles(circs);
-    const shs = shapes.concat([`circ${circles.length + 1}`]);
-    setShapes(shs);
-  };
+    }
+    const circs = circles.concat([circ])
+    setCircles(circs)
+    const shs = shapes.concat([`circ${circles.length + 1}`])
+    setShapes(shs)
+  }
   const drawLine = () => {
-    addLine(stageEl.current.getStage(), layerEl.current);
-  };
+    addLine(stageEl.current.getStage(), layerEl.current)
+  }
   const eraseLine = () => {
-    addLine(stageEl.current.getStage(), layerEl.current, "erase");
-  };
+    addLine(stageEl.current.getStage(), layerEl.current, "erase")
+  }
   const drawText = () => {
-    const id = addTextNode(stageEl.current.getStage(), layerEl.current);
-    const shs = shapes.concat([id]);
-    setShapes(shs);
-  };
+    const id = addTextNode(stageEl.current.getStage(), layerEl.current)
+    const shs = shapes.concat([id])
+    setShapes(shs)
+  }
   const drawImage = () => {
-    fileUploadEl.current.click();
-  };
-  const forceUpdate = React.useCallback(() => updateState({}), []);
-  const fileChange = ev => {
-    let file = ev.target.files[0];
-    let reader = new FileReader();
-    reader.addEventListener(
-      "load",
-      () => {
-        const id = v1();
-        images.push({
-          content: reader.result,
-          id,
-        });
-        setImages(images);
-        fileUploadEl.current.value = null;
-        shapes.push(id);
-        setShapes(shapes);
-        forceUpdate();
-      },
-      false
-    );
+    fileUploadEl.current.click()
+  }
+  const forceUpdate = React.useCallback(() => updateState({}), [])
+  const fileChange = (ev) => {
+    let file = ev.target.files[0]
+
+    const reader = new FileReader()
+    reader.addEventListener("load", () => {
+      fileUploadEl.current.value = null
+
+      const id = v1()
+      images.push({
+        content: reader.result,
+        id,
+      })
+      setImages(images)
+      shapes.push(id)
+      setShapes(shapes)
+      
+      forceUpdate()
+    }, false
+    )
     if (file) {
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file)
     }
-  };
+  }
   const undo = () => {
-    const lastId = shapes[shapes.length - 1];
-    let index = circles.findIndex(c => c.id == lastId);
-    if (index != -1) {
-      circles.splice(index, 1);
-      setCircles(circles);
+    const lastId = shapes[shapes.length - 1]
+    let index = circles.findIndex(c => c.id === lastId)
+    if (index !== -1) {
+      circles.splice(index, 1)
+      setCircles(circles)
     }
-    index = rectangles.findIndex(r => r.id == lastId);
-    if (index != -1) {
-      rectangles.splice(index, 1);
-      setRectangles(rectangles);
+
+    index = rectangles.findIndex(r => r.id === lastId)
+    if (index !== -1) {
+      rectangles.splice(index, 1)
+      setRectangles(rectangles)
     }
-    index = images.findIndex(r => r.id == lastId);
-    if (index != -1) {
-      images.splice(index, 1);
-      setImages(images);
+
+    index = images.findIndex(r => r.id === lastId)
+    if (index !== -1) {
+      images.splice(index, 1)
+      setImages(images)
     }
-    shapes.pop();
-    setShapes(shapes);
-    forceUpdate();
-  };
-  document.addEventListener("keydown", ev => {
-    if (ev.code == "Delete") {
-      let index = circles.findIndex(c => c.id == selectedId);
-      if (index != -1) {
-        circles.splice(index, 1);
-        setCircles(circles);
+
+    shapes.pop()
+    setShapes(shapes)
+    forceUpdate()
+  }
+  document.addEventListener("keydown", (ev) => {
+    if (ev.code === "Delete") {
+      let index = circles.findIndex(c => c.id === selectedId)
+      if (index !== -1) {
+        circles.splice(index, 1)
+        setCircles(circles)
       }
-      index = rectangles.findIndex(r => r.id == selectedId);
-      if (index != -1) {
-        rectangles.splice(index, 1);
-        setRectangles(rectangles);
+
+      index = rectangles.findIndex(r => r.id === selectedId)
+      if (index !== -1) {
+        rectangles.splice(index, 1)
+        setRectangles(rectangles)
       }
-      index = images.findIndex(r => r.id == selectedId);
-      if (index != -1) {
-        images.splice(index, 1);
-        setImages(images);
+
+      index = images.findIndex(r => r.id === selectedId)
+      if (index !== -1) {
+        images.splice(index, 1)
+        setImages(images)
       }
-      forceUpdate();
+
+      forceUpdate()
     }
-  });
+  })
   const backimages = [
     {
-      url:'/images/pexels-eberhard-grossgasteiger-1064162.jpg',
-      title:'forest and lake!',
-      desc:'nothing to say,beautiful!'
+      url: '/images/pexels-eberhard-grossgasteiger-1064162.jpg',
+      title: 'forest and lake!',
+      desc: 'nothing to say,beautiful!'
     },
     {
-      url:'/images/pexels-martin-damboldt-814499.jpg',
-      title:'nice lake!',
-      desc:'nothing to say,beautiful!'
+      url: '/images/pexels-martin-damboldt-814499.jpg',
+      title: 'nice lake!',
+      desc: 'nothing to say,beautiful!'
     },
     {
-      url:'/images/pexels-roberto-shumski-1903702.jpg',
-      title:'mountains!',
-      desc:'nothing to say,beautiful!'
+      url: '/images/pexels-roberto-shumski-1903702.jpg',
+      title: 'mountains!',
+      desc: 'nothing to say,beautiful!'
     }
   ]
+
   return (
     <div className="home-page" style={{
       textAlign: 'center',
       background: `url(${backgroundimage}) no-repeat center fixed`,
-      
-      width:'100%'
+      width: '100%'
     }}>
       <MyVerticallyCenteredModal
-        images = {backimages}
+        images={backimages}
         show={modalShow}
         setimage={setBackgroundimage}
         onHide={() => setModalShow(false)}
@@ -172,22 +179,22 @@ function HomePage() {
         <button className={'btn btn-info'} variant="secondary" onClick={addCircle}>
           Circle
         </button>
-        {/* <button className={'btn btn-info'} variant="secondary" onClick={drawLine}>
+        <button className={'btn btn-info'} variant="secondary" onClick={drawLine}>
           Line
         </button>
         <button className={'btn btn-info'} variant="secondary" onClick={eraseLine}>
           Erase
-        </button> */}
-        <button className={'btn btn-info'}  onClick={drawText}>
+        </button>
+        <button className={'btn btn-info'} onClick={drawText}>
           Text
         </button>
-        <button className={'btn btn-info'}  onClick={drawImage}>
+        <button className={'btn btn-info'} onClick={drawImage}>
           Image
         </button>
-        <button className={'btn btn-info'}  onClick={undo}>
+        <button className={'btn btn-info'} onClick={undo}>
           Undo
         </button>
-        <button className={'btn btn-info'}  onClick={()=>setModalShow(true)}>
+        <button className={'btn btn-info'} onClick={() => setModalShow(true)}>
           change background
         </button>
       </div>
@@ -203,31 +210,29 @@ function HomePage() {
         ref={stageEl}
         onMouseDown={e => {
           // deselect when clicked on empty area
-          const clickedOnEmpty = e.target === e.target.getStage();
+          const clickedOnEmpty = e.target === e.target.getStage()
           if (clickedOnEmpty) {
-            selectShape(null);
+            selectShape(null)
           }
         }}
       >
-    
         <Layer ref={layerEl}>
           {rectangles.map((rect, i) => {
             return (
               <Rectangle
-                
                 key={i}
                 shapeProps={rect}
                 isSelected={rect.id === selectedId}
                 onSelect={() => {
-                  selectShape(rect.id);
+                  selectShape(rect.id)
                 }}
                 onChange={newAttrs => {
-                  const rects = rectangles.slice();
-                  rects[i] = newAttrs;
-                  setRectangles(rects);
+                  const rects = rectangles.slice()
+                  rects[i] = newAttrs
+                  setRectangles(rects)
                 }}
               />
-            );
+            )
           })}
           {circles.map((circle, i) => {
             return (
@@ -236,15 +241,15 @@ function HomePage() {
                 shapeProps={circle}
                 isSelected={circle.id === selectedId}
                 onSelect={() => {
-                  selectShape(circle.id);
+                  selectShape(circle.id)
                 }}
                 onChange={newAttrs => {
-                  const circs = circles.slice();
-                  circs[i] = newAttrs;
-                  setCircles(circs);
+                  const circs = circles.slice()
+                  circs[i] = newAttrs
+                  setCircles(circs)
                 }}
               />
-            );
+            )
           })}
           {images.map((image, i) => {
             return (
@@ -253,18 +258,19 @@ function HomePage() {
                 imageUrl={image.content}
                 isSelected={image.id === selectedId}
                 onSelect={() => {
-                  selectShape(image.id);
+                  selectShape(image.id)
                 }}
                 onChange={newAttrs => {
-                  const imgs = images.slice();
-                  imgs[i] = newAttrs;
+                  const imgs = images.slice()
+                  imgs[i] = newAttrs
                 }}
               />
-            );
+            )
           })}
         </Layer>
       </Stage>
     </div>
-  );
+  )
 }
-export default HomePage;
+
+export default HomePage
