@@ -1,4 +1,5 @@
 import Konva from "konva"
+
 import v1 from 'uuid/dist/v1'
 
 export const addTextNode = (stage, layer) => {
@@ -30,7 +31,7 @@ export const addTextNode = (stage, layer) => {
     if (!this.clickStartShape)
       return
 
-    if (e.target._id == this.clickStartShape._id) {
+    if (e.target._id === this.clickStartShape._id) {
       layer.add(tr)
       tr.attachTo(e.target)
       layer.draw()
@@ -39,17 +40,18 @@ export const addTextNode = (stage, layer) => {
       layer.draw()
     }
   })
-  
-  textNode.on("transform", function () {
+
+  textNode.on("transform", () => {
     // reset scale, so only with is changing by transformer
     textNode.setAttrs({
       width: textNode.width() * textNode.scaleX(),
       scaleX: 1,
     })
   })
-  
+
   layer.add(tr)
   layer.draw()
+
   textNode.on("dblclick", () => {
     // hide text node and transformer:
     textNode.hide()
@@ -93,28 +95,30 @@ export const addTextNode = (stage, layer) => {
     textarea.style.transformOrigin = "left top"
     textarea.style.textAlign = textNode.align()
     textarea.style.color = textNode.fill()
-    
-    let rotation = textNode.rotation()
-    let transform = ""
-    
+
+    let
+      rotation = textNode.rotation(),
+      transform = ""
+
     if (rotation) {
       transform += "rotateZ(" + rotation + "deg)"
     }
-    
-    let px = 0
-    let isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
-    
+
+    let
+      px = 0,
+      isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+
     if (isFirefox) {
       px += 2 + Math.round(textNode.fontSize() / 20)
     }
-    
+
     transform += "translateY(-" + px + "px)"
     textarea.style.transform = transform
     textarea.style.height = "auto"
     // after browsers resized it we can set actual value
     textarea.style.height = textarea.scrollHeight + 3 + "px"
     textarea.focus()
-    
+
     function removeTextarea() {
       textarea.parentNode.removeChild(textarea)
       window.removeEventListener("click", handleOutsideClick)
@@ -123,7 +127,7 @@ export const addTextNode = (stage, layer) => {
       tr.forceUpdate()
       layer.draw()
     }
-    
+
     function setTextareaWidth(newWidth) {
       if (!newWidth) {
         // set width for placeholder
@@ -132,13 +136,15 @@ export const addTextNode = (stage, layer) => {
       // some extra fixes on different browsers
       let isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
       let isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+
       if (isSafari || isFirefox) {
         newWidth = Math.ceil(newWidth)
       }
+
       let isEdge = document.documentMode || /Edge/.test(navigator.userAgent)
-      if (isEdge) {
+      if (isEdge)
         newWidth += 1
-      }
+
       textarea.style.width = newWidth + "px"
     }
 
@@ -154,7 +160,7 @@ export const addTextNode = (stage, layer) => {
         removeTextarea()
       }
     })
-    
+
     textarea.addEventListener("keydown", function (e) {
       let scale = textNode.getAbsoluteScale().x
       setTextareaWidth(textNode.width() * scale)
@@ -168,9 +174,11 @@ export const addTextNode = (stage, layer) => {
         removeTextarea()
       }
     }
+
     setTimeout(() => {
       window.addEventListener("click", handleOutsideClick)
     })
   })
+  
   return id
 }

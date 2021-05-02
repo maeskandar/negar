@@ -1,12 +1,14 @@
-import React, { useState, useRef } from "react"
+import React, { useState } from "react"
 import { Stage, Layer } from "react-konva"
+
 import Rectangle from "./Rectangle"
 import Circle from "./Circle"
 import { addLine } from "./Line"
 import { addTextNode } from "./TextNode"
 import Image from "./Images"
-import v1 from 'uuid/dist/v1'
 import { MyVerticallyCenteredModal } from "./MyVerticallyCenteredModal"
+
+import v1 from 'uuid/dist/v1'
 // import ButtonGroup from "react-bootstrap/ButtonGroup"
 // import Button from "react-bootstrap/Button"
 // import backgroundImage1 from './images/pexels-eberhard-grossgasteiger-1064162.jpg'
@@ -57,9 +59,11 @@ function HomePage() {
     const shs = shapes.concat([`circ${circles.length + 1}`])
     setShapes(shs)
   }
+  // eslint-disable-next-line
   const drawLine = () => {
     addLine(stageEl.current.getStage(), layerEl.current)
   }
+  // eslint-disable-next-line
   const eraseLine = () => {
     addLine(stageEl.current.getStage(), layerEl.current, "erase")
   }
@@ -97,18 +101,18 @@ function HomePage() {
   }
   const undo = () => {
     const lastId = shapes[shapes.length - 1]
-    let index = circles.findIndex(c => c.id == lastId)
-    if (index != -1) {
+    let index = circles.findIndex(c => c.id === lastId)
+    if (index !== -1) {
       circles.splice(index, 1)
       setCircles(circles)
     }
-    index = rectangles.findIndex(r => r.id == lastId)
-    if (index != -1) {
+    index = rectangles.findIndex(r => r.id === lastId)
+    if (index !== -1) {
       rectangles.splice(index, 1)
       setRectangles(rectangles)
     }
-    index = images.findIndex(r => r.id == lastId)
-    if (index != -1) {
+    index = images.findIndex(r => r.id === lastId)
+    if (index !== -1) {
       images.splice(index, 1)
       setImages(images)
     }
@@ -116,20 +120,20 @@ function HomePage() {
     setShapes(shapes)
     forceUpdate()
   }
-  document.addEventListener("keydown", ev => {
-    if (ev.code == "Delete") {
-      let index = circles.findIndex(c => c.id == selectedId)
-      if (index != -1) {
+  document.addEventListener("keydown", (ev) => {
+    if (ev.code === "Delete") {
+      let index = circles.findIndex(c => c.id === selectedId)
+      if (index !== -1) {
         circles.splice(index, 1)
         setCircles(circles)
       }
-      index = rectangles.findIndex(r => r.id == selectedId)
-      if (index != -1) {
+      index = rectangles.findIndex(r => r.id === selectedId)
+      if (index !== -1) {
         rectangles.splice(index, 1)
         setRectangles(rectangles)
       }
-      index = images.findIndex(r => r.id == selectedId)
-      if (index != -1) {
+      index = images.findIndex(r => r.id === selectedId)
+      if (index !== -1) {
         images.splice(index, 1)
         setImages(images)
       }

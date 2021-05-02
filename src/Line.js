@@ -20,16 +20,19 @@ export const addLine = (stage, layer, mode = "brush") => {
 
     layer.add(lastLine)
   })
+
   stage.on("mouseup touchend", function () {
     isPaint = false
   })
+
   stage.on("mousemove touchmove", function () {
     if (!isPaint)
       return
-    
-    const pos = stage.getPointerPosition()
-    let newPoints = lastLine.points().concat([pos.x, pos.y])
-    
+
+    const
+      pos = stage.getPointerPosition(),
+      newPoints = lastLine.points().concat([pos.x, pos.y])
+
     lastLine.points(newPoints)
     layer.batchDraw()
   })

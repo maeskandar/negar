@@ -1,7 +1,8 @@
 import React from "react"
-import { Router, Route, Link } from "react-router-dom"
-import HomePage from "./HomePage"
+import { Router, Route } from "react-router-dom"
 import { createBrowserHistory as createHistory } from "history"
+
+import HomePage from "./HomePage"
 
 const history = createHistory()
 

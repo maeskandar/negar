@@ -1,5 +1,6 @@
 import { React } from 'react'
 import { Button, Modal } from 'react-bootstrap'
+
 import { CustomCard } from './CustomCard'
 
 export const MyVerticallyCenteredModal = (props) => {
@@ -17,14 +18,12 @@ export const MyVerticallyCenteredModal = (props) => {
       </Modal.Header>
       <Modal.Body>
         <div className={"row"}>
-          {
-            props.images.map((img) => (
-              <CustomCard ischosen={props.setimage}
-                imagess={img}
-                hide={props.onHide}
-              />
-
-            ))}
+          {props.images.map((img) => (
+            <CustomCard ischosen={props.setimage}
+              imagess={img}
+              hide={props.onHide}
+            />
+          ))}
         </div>
       </Modal.Body>
       <Modal.Footer>

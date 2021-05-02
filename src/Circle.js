@@ -5,6 +5,7 @@ const Circ = ({ shapeProps, isSelected, onSelect, onChange }) => {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
+
   React.useEffect(() => {
     if (isSelected) {
       trRef.current.setNode(shapeRef.current)
@@ -28,11 +29,14 @@ const Circ = ({ shapeProps, isSelected, onSelect, onChange }) => {
         }}
         onTransformEnd={e => {
           // transformer is changing scale
-          const node = shapeRef.current
-          const scaleX = node.scaleX()
-          const scaleY = node.scaleY()
+          const
+            node = shapeRef.current,
+            scaleX = node.scaleX(),
+            scaleY = node.scaleY()
+
           node.scaleX(1)
           node.scaleY(1)
+
           onChange({
             ...shapeProps,
             x: node.x(),
@@ -40,6 +44,7 @@ const Circ = ({ shapeProps, isSelected, onSelect, onChange }) => {
             width: node.width() * scaleX,
             height: node.height() * scaleY,
           })
+
         }}
       />
       {isSelected && <Transformer ref={trRef} />}
