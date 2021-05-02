@@ -21,13 +21,13 @@ export const addTextNode = (stage, layer) => {
     node: textNode,
     enabledAnchors: ["middle-left", "middle-right"],
     // set minimum width of text
-    boundBoxFunc: function (oldBox, newBox) {
+    boundBoxFunc: (oldBox, newBox) => {
       newBox.width = Math.max(30, newBox.width)
       return newBox
     },
   })
 
-  stage.on("click", function (e) {
+  stage.on("click", (e) => {
     if (!this.clickStartShape)
       return
 
@@ -101,7 +101,7 @@ export const addTextNode = (stage, layer) => {
       transform = ""
 
     if (rotation) {
-      transform += "rotateZ(" + rotation + "deg)"
+      transform += `rotateZ(${rotation}deg)`
     }
 
     let
@@ -112,7 +112,7 @@ export const addTextNode = (stage, layer) => {
       px += 2 + Math.round(textNode.fontSize() / 20)
     }
 
-    transform += "translateY(-" + px + "px)"
+    transform += `translateY(-${px}px)`
     textarea.style.transform = transform
     textarea.style.height = "auto"
     // after browsers resized it we can set actual value
@@ -129,42 +129,41 @@ export const addTextNode = (stage, layer) => {
     }
 
     function setTextareaWidth(newWidth) {
-      if (!newWidth) {
-        // set width for placeholder
+      if (!newWidth) { // set width for placeholder
         newWidth = textNode.placeholder.length * textNode.fontSize()
       }
       // some extra fixes on different browsers
-      let isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-      let isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+      const
+        isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+        isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1,
+        isEdge = document.documentMode || /Edge/.test(navigator.userAgent)
 
       if (isSafari || isFirefox) {
         newWidth = Math.ceil(newWidth)
       }
-
-      let isEdge = document.documentMode || /Edge/.test(navigator.userAgent)
-      if (isEdge)
+      else if (isEdge)
         newWidth += 1
 
       textarea.style.width = newWidth + "px"
     }
 
-    textarea.addEventListener("keydown", function (e) {
+    textarea.addEventListener("keydown", (e) => {
       // hide on enter
       // but don't hide on shift + enter
-      if (e.keyCode === 13 && !e.shiftKey) {
+      if (e.key === "Escape" && !e.shiftKey) {
         textNode.text(textarea.value)
         removeTextarea()
       }
       // on esc do not set value back to node
-      if (e.keyCode === 27) {
+      if (e.key === "Enter") {
         removeTextarea()
       }
     })
 
-    textarea.addEventListener("keydown", function (e) {
+    textarea.addEventListener("keydown", (e) => {
       let scale = textNode.getAbsoluteScale().x
+
       setTextareaWidth(textNode.width() * scale)
-      textarea.style.height = "auto"
       textarea.style.height =
         textarea.scrollHeight + textNode.fontSize() + "px"
     })
@@ -179,6 +178,6 @@ export const addTextNode = (stage, layer) => {
       window.addEventListener("click", handleOutsideClick)
     })
   })
-  
+
   return id
 }

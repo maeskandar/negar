@@ -9,9 +9,6 @@ import Image from "./Images"
 import { MyVerticallyCenteredModal } from "./MyVerticallyCenteredModal"
 
 import v1 from 'uuid/dist/v1'
-// import ButtonGroup from "react-bootstrap/ButtonGroup"
-// import Button from "react-bootstrap/Button"
-// import backgroundImage1 from './images/pexels-eberhard-grossgasteiger-1064162.jpg'
 
 function HomePage() {
   const
@@ -59,11 +56,9 @@ function HomePage() {
     const shs = shapes.concat([`circ${circles.length + 1}`])
     setShapes(shs)
   }
-  // eslint-disable-next-line
   const drawLine = () => {
     addLine(stageEl.current.getStage(), layerEl.current)
   }
-  // eslint-disable-next-line
   const eraseLine = () => {
     addLine(stageEl.current.getStage(), layerEl.current, "erase")
   }
@@ -78,22 +73,22 @@ function HomePage() {
   const forceUpdate = React.useCallback(() => updateState({}), [])
   const fileChange = (ev) => {
     let file = ev.target.files[0]
-    let reader = new FileReader()
-    reader.addEventListener(
-      "load",
-      () => {
-        const id = v1()
-        images.push({
-          content: reader.result,
-          id,
-        })
-        setImages(images)
-        fileUploadEl.current.value = null
-        shapes.push(id)
-        setShapes(shapes)
-        forceUpdate()
-      },
-      false
+
+    const reader = new FileReader()
+    reader.addEventListener("load", () => {
+      fileUploadEl.current.value = null
+
+      const id = v1()
+      images.push({
+        content: reader.result,
+        id,
+      })
+      setImages(images)
+      shapes.push(id)
+      setShapes(shapes)
+      
+      forceUpdate()
+    }, false
     )
     if (file) {
       reader.readAsDataURL(file)
@@ -106,16 +101,19 @@ function HomePage() {
       circles.splice(index, 1)
       setCircles(circles)
     }
+
     index = rectangles.findIndex(r => r.id === lastId)
     if (index !== -1) {
       rectangles.splice(index, 1)
       setRectangles(rectangles)
     }
+
     index = images.findIndex(r => r.id === lastId)
     if (index !== -1) {
       images.splice(index, 1)
       setImages(images)
     }
+
     shapes.pop()
     setShapes(shapes)
     forceUpdate()
@@ -127,16 +125,19 @@ function HomePage() {
         circles.splice(index, 1)
         setCircles(circles)
       }
+
       index = rectangles.findIndex(r => r.id === selectedId)
       if (index !== -1) {
         rectangles.splice(index, 1)
         setRectangles(rectangles)
       }
+
       index = images.findIndex(r => r.id === selectedId)
       if (index !== -1) {
         images.splice(index, 1)
         setImages(images)
       }
+
       forceUpdate()
     }
   })
@@ -178,12 +179,12 @@ function HomePage() {
         <button className={'btn btn-info'} variant="secondary" onClick={addCircle}>
           Circle
         </button>
-        {/* <button className={'btn btn-info'} variant="secondary" onClick={drawLine}>
+        <button className={'btn btn-info'} variant="secondary" onClick={drawLine}>
           Line
         </button>
         <button className={'btn btn-info'} variant="secondary" onClick={eraseLine}>
           Erase
-        </button> */}
+        </button>
         <button className={'btn btn-info'} onClick={drawText}>
           Text
         </button>

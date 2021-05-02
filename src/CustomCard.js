@@ -16,7 +16,7 @@ const CustomCard = (props) => {
           <Card.Text>
             {props.imagess.desc}
           </Card.Text>
-          <Button variant="primary" onClick={ClickHandler}>Submit</Button>
+          <Button variant="primary" onClick={ClickHandler}>Select</Button>
         </Card.Body>
       </Card>
     </div>

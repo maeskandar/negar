@@ -29,11 +29,14 @@ const Rectangle = ({ shapeProps, isSelected, onSelect, onChange }) => {
         }}
         onTransformEnd={e => {
           // transformer is changing scale
-          const node = shapeRef.current
-          const scaleX = node.scaleX()
-          const scaleY = node.scaleY()
+          const
+            node = shapeRef.current,
+            scaleX = node.scaleX(),
+            scaleY = node.scaleY()
+
           node.scaleX(1)
           node.scaleY(1)
+          
           onChange({
             ...shapeProps,
             x: node.x(),

@@ -5,7 +5,7 @@ export const addLine = (stage, layer, mode = "brush") => {
     isPaint = false,
     lastLine
 
-  stage.on("mousedown touchstart", function (e) {
+  stage.on("mousedown touchstart", (e) => {
     isPaint = true
     let pos = stage.getPointerPosition()
 
@@ -21,11 +21,11 @@ export const addLine = (stage, layer, mode = "brush") => {
     layer.add(lastLine)
   })
 
-  stage.on("mouseup touchend", function () {
+  stage.on("mouseup touchend", () => {
     isPaint = false
   })
 
-  stage.on("mousemove touchmove", function () {
+  stage.on("mousemove touchmove", () => {
     if (!isPaint)
       return
 
