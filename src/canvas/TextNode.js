@@ -1,8 +1,7 @@
 import Konva from "konva"
-
 import v1 from 'uuid/dist/v1'
 
-import {isSafari, isFirefox, isEdge} from "./utils/browser"
+import {isSafari, isFirefox, isEdge} from "../utils/browser"
 
 export function addTextNode(stage, layer) {
   const

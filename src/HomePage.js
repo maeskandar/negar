@@ -3,12 +3,12 @@ import { Stage, Layer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 import randInt from 'random-int'
 
-import Rectangle from "./Rectangle"
-import Circle from "./Circle"
-import { addLine } from "./Line"
-import { addTextNode } from "./TextNode"
-import Image from "./Images"
-import { MyVerticallyCenteredModal } from "./MyVerticallyCenteredModal"
+import Rectangle from "./canvas/Rectangle"
+import Circle from "./canvas/Circle"
+import { addLine } from "./canvas/Line"
+import { addTextNode } from "./canvas/TextNode"
+import Image from "./canvas/Images"
+import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModal"
 
 
 export default function HomePage() {
