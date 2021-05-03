@@ -5,41 +5,60 @@ import randInt from 'random-int'
 
 import Rectangle from "./canvas/Rectangle"
 import Circle from "./canvas/Circle"
-import { addLine } from "./canvas/Line"
+// import { addLine } from "./canvas/Line"
 import { addTextNode } from "./canvas/TextNode"
 import Image from "./canvas/Images"
 import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModal"
 
+// enum
+const
+  APP_STATES = {
+    NOTHING: 0,
+    DRAGING: 1,
+    DRAWING: 2,
+  },
+  APP_TOOLS = {
+    NOTHING: 0,
+    LINE: 1,
+    RECTANGLE: 2,
+    CIRCLE: 3,
+    IMAGE: 4,
+  }
 
 export default function HomePage() {
   const
+    // react stuff
     forceUpdate = React.useCallback(() => updateState({}), []),
-    [rectangles, setRectangles] = useState([]),
-    [backgroundimage, setBackgroundimage] = useState('/images/pexels-eberhard-grossgasteiger-1064162.jpg'),
-    [circles, setCircles] = useState([]),
-    [images, setImages] = useState([]),
-    [selectedId, selectShape] = useState(null),
-    [shapes, setShapes] = useState([]),
     [, updateState] = React.useState(),
-    [modalShow, setModalShow] = React.useState(false),
+    // canvas related
+    [circles, setCircles] = useState([]),
+    [rectangles, setRectangles] = useState([]),
+    [images, setImages] = useState([]),
+    [shapes, setShapes] = useState([]),
+    [selectedId, selectShape] = useState(null),
     stageEl = React.createRef(),
     layerEl = React.createRef(),
+    // app functionality related
+    [appState, setAppState] = React.useState(APP_STATES.NOTHING),
+    [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
+    [modalShow, setModalShow] = React.useState(false),
     fileUploadEl = React.createRef(),
+    [backgroundimage, setBackgroundimage] = useState('/images/pexels-eberhard-grossgasteiger-1064162.jpg'),
     backimages = [
       {
         url: '/images/pexels-eberhard-grossgasteiger-1064162.jpg',
         title: 'forest and lake!',
-        desc: 'nothing to say,beautiful!'
+        desc: 'no description is available'
       },
       {
         url: '/images/pexels-martin-damboldt-814499.jpg',
         title: 'nice lake!',
-        desc: 'nothing to say,beautiful!'
+        desc: 'no description is available'
       },
       {
         url: '/images/pexels-roberto-shumski-1903702.jpg',
         title: 'mountains!',
-        desc: 'nothing to say,beautiful!'
+        desc: 'no description is available'
       }
     ]
 
@@ -70,10 +89,8 @@ export default function HomePage() {
       setShapes(shapes.concat([`circ${circles.length + 1}`]))
     },
     drawLine = () => {
-      addLine(stageEl.current.getStage(), layerEl.current)
-    },
-    eraseLine = () => {
-      addLine(stageEl.current.getStage(), layerEl.current, "erase")
+      setAppState(APP_STATES.DRAWING)
+      setSelectedTool(APP_TOOLS.LINE)
     },
     drawText = () => {
       const id = addTextNode(stageEl.current.getStage(), layerEl.current)
@@ -81,6 +98,10 @@ export default function HomePage() {
     },
     drawImage = () => {
       fileUploadEl.current.click()
+    },
+    cancelDrawing = () => {
+      setSelectedTool(APP_TOOLS.NOTHING)
+      setAppState(APP_STATES.NOTHING)
     },
 
     fileChange = (ev) => {
@@ -156,6 +177,13 @@ export default function HomePage() {
     }
   })
 
+
+  if (appState === APP_STATES.DRAWING) {
+    // TODO: add drawing mode for other shapes
+    if (selectedTool === APP_TOOLS.LINE) {
+      // TODO: show points to select in drawing line
+    }
+  }
   return (
     <div className="home-page" style={{
       textAlign: 'center',
@@ -168,31 +196,41 @@ export default function HomePage() {
         setimage={setBackgroundimage}
         onHide={() => setModalShow(false)}
       />
-      <h1 style={{ fontStyle: 'italic' }}>Konva Board</h1>
-      <div className={"btn-group"} role="group">
-        <button className={'btn btn-info'} variant="secondary" onClick={addRectangle}>
-          Rectangle
+      <div className="btn-group my-2" role="group">
+        {/* Default State */
+          appState === APP_STATES.NOTHING && <>
+            <button className={'btn btn-info'} onClick={addRectangle}>
+              Rectangle
         </button>
-        <button className={'btn btn-info'} variant="secondary" onClick={addCircle}>
-          Circle
+            <button className={'btn btn-info'} onClick={addCircle}>
+              Circle
         </button>
-        <button className={'btn btn-info'} variant="secondary" onClick={drawLine}>
-          Line
+            <button className={'btn btn-info'} onClick={drawLine}>
+              Line
         </button>
-        <button className={'btn btn-info'} variant="secondary" onClick={eraseLine}>
-          Erase
+            <button className={'btn btn-info'} onClick={drawText}>
+              Text
         </button>
-        <button className={'btn btn-info'} onClick={drawText}>
-          Text
+            <button className={'btn btn-info'} onClick={drawImage}>
+              Image
         </button>
-        <button className={'btn btn-info'} onClick={drawImage}>
-          Image
+            <button className={'btn btn-info'} onClick={() => { }}>
+              Arrow
         </button>
+            <button className={'btn btn-info'} onClick={() => setModalShow(true)}>
+              change background
+        </button>
+          </>
+        }
+        {/* Drawing State */
+          appState === APP_STATES.DRAWING && <>
+            <button className={'btn btn-warning'} onClick={cancelDrawing}>
+              cancel
+        </button>
+          </>
+        }
         <button className={'btn btn-info'} onClick={undo}>
           Undo
-        </button>
-        <button className={'btn btn-info'} onClick={() => setModalShow(true)}>
-          change background
         </button>
       </div>
       <input
