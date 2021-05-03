@@ -141,14 +141,14 @@ export function addTextNode(stage, layer) {
     }
 
     textarea.addEventListener("keydown", (e) => {
-      // hide on enter
-      // but don't hide on shift + enter
-      if (e.key === "Escape" && !e.shiftKey) {
+      // hide on enter but don't hide on shift + enter
+      if (e.key === "Enter" && !e.shiftKey) { 
         textNode.text(textarea.value)
         removeTextarea()
       }
-      // on esc do not set value back to node
-      if (e.key === "Enter") {
+      
+      // on esc do not set value back to nodes
+      else if (e.key === "Escape") { 
         removeTextarea()
       }
     })
