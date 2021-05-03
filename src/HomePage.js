@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Stage, Layer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 import randInt from 'random-int'
@@ -23,6 +23,10 @@ const
     RECTANGLE: 2,
     CIRCLE: 3,
     IMAGE: 4,
+  },
+  isSet = {
+    stageEventListeners: false,
+    documentEventListeners: false,
   }
 
 export default function HomePage() {
@@ -153,37 +157,50 @@ export default function HomePage() {
       forceUpdate()
     }
 
-  document.addEventListener("keydown", (ev) => {
-    if (ev.code === "Delete") {
-      let index = circles.findIndex(c => c.id === selectedId)
-      if (index !== -1) {
-        circles.splice(index, 1)
-        setCircles(circles)
-      }
+  // adds event listeners in the first time only
+  useEffect(() => {
+    if (!isSet.documentEventListeners) {
+      document.addEventListener("keydown", (ev) => {
+        if (ev.code === "Delete") {
+          let index = circles.findIndex(c => c.id === selectedId)
+          if (index !== -1) {
+            circles.splice(index, 1)
+            setCircles(circles)
+          }
 
-      index = rectangles.findIndex(r => r.id === selectedId)
-      if (index !== -1) {
-        rectangles.splice(index, 1)
-        setRectangles(rectangles)
-      }
+          index = rectangles.findIndex(r => r.id === selectedId)
+          if (index !== -1) {
+            rectangles.splice(index, 1)
+            setRectangles(rectangles)
+          }
 
-      index = images.findIndex(r => r.id === selectedId)
-      if (index !== -1) {
-        images.splice(index, 1)
-        setImages(images)
-      }
+          index = images.findIndex(r => r.id === selectedId)
+          if (index !== -1) {
+            images.splice(index, 1)
+            setImages(images)
+          }
 
-      forceUpdate()
+          forceUpdate()
+        }
+      })
+      isSet.documentEventListeners = true
+    }
+
+    if (!isSet.stageEventListeners && stageEl.current) {
+      stageEl.current.on('click', (ev) => {
+
+        if (appState === APP_STATES.DRAWING) {
+          // TODO: add drawing mode for other shapes
+          if (selectedTool === APP_TOOLS.LINE) {
+            // TODO: show points to select in drawing line
+          }
+        }
+        
+      })
+      isSet.stageEventListeners = true
     }
   })
 
-
-  if (appState === APP_STATES.DRAWING) {
-    // TODO: add drawing mode for other shapes
-    if (selectedTool === APP_TOOLS.LINE) {
-      // TODO: show points to select in drawing line
-    }
-  }
   return (
     <div className="home-page" style={{
       textAlign: 'center',
@@ -239,6 +256,8 @@ export default function HomePage() {
         ref={fileUploadEl}
         onChange={fileChange}
       />
+
+      {/* konva canvas */}
       <Stage
         width={window.innerWidth * 0.9}
         height={window.innerHeight}
@@ -249,6 +268,7 @@ export default function HomePage() {
         }}
       >
         <Layer ref={layerEl}>
+          {/* TODO: add dynamic layers not like circles, rects, ... */}
           {rectangles.map((rect, i) => {
             return (
               <Rectangle
@@ -297,6 +317,7 @@ export default function HomePage() {
           })}
         </Layer>
       </Stage>
+
     </div>
   )
 }

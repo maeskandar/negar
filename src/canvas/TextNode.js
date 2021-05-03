@@ -1,7 +1,7 @@
 import Konva from "konva"
 import v1 from 'uuid/dist/v1'
 
-import {isSafari, isFirefox, isEdge} from "../utils/browser"
+import { isSafari, isFirefox, isEdge } from "../utils/browser"
 
 export function addTextNode(stage, layer) {
   const
@@ -10,7 +10,7 @@ export function addTextNode(stage, layer) {
       text: "type here",
       x: 50,
       y: 80,
-      fontSize: 20,
+      fontSize: 24,
       draggable: true,
       width: 200,
       id,
@@ -22,10 +22,10 @@ export function addTextNode(stage, layer) {
     node: textNode,
     enabledAnchors: ["middle-left", "middle-right"],
     // set minimum width of text
-    boundBoxFunc: (oldBox, newBox) => {
-      newBox.width = Math.max(30, newBox.width)
-      return newBox
-    },
+    boundBoxFunc: (oldBox, newBox) => ({
+      ...newBox,
+      width: Math.max(30, newBox.width)
+    }),
   })
 
   stage.on("click", function (e) {
@@ -142,13 +142,13 @@ export function addTextNode(stage, layer) {
 
     textarea.addEventListener("keydown", (e) => {
       // hide on enter but don't hide on shift + enter
-      if (e.key === "Enter" && !e.shiftKey) { 
+      if (e.key === "Enter" && !e.shiftKey) {
         textNode.text(textarea.value)
         removeTextarea()
       }
-      
+
       // on esc do not set value back to nodes
-      else if (e.key === "Escape") { 
+      else if (e.key === "Escape") {
         removeTextarea()
       }
     })
