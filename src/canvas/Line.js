@@ -1,6 +1,6 @@
 import Konva from "konva"
 
-export const addLine = (stage, layer, mode = "brush") => {
+export function addLine(stage, layer, mode = "brush") {
   let
     isPaint = false,
     lastLine

@@ -1,27 +1,24 @@
 import React from "react"
-import { Image, Transformer } from "react-konva"
-import useImage from "use-image"
+import { Rect, Transformer } from "react-konva"
 
-const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
+export default function Rectangle ({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
-    trRef = React.useRef(),
-    [image] = useImage(imageUrl)
-  
+    trRef = React.useRef()
+
   React.useEffect(() => {
-    if (isSelected) {
-      // we need to attach transformer manually
+    if (isSelected) { // we need to attach transformer manually
       trRef.current.setNode(shapeRef.current)
       trRef.current.getLayer().batchDraw()
     }
   }, [isSelected])
-  
+
   return (
     <>
-      <Image
+      <Rect
         onClick={onSelect}
-        image={image}
         ref={shapeRef}
+        {...shapeProps}
         draggable
         onDragEnd={e => {
           onChange({
@@ -31,9 +28,15 @@ const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
           })
         }}
         onTransformEnd={e => {
-          const node = shapeRef.current
-          const scaleX = node.scaleX()
-          const scaleY = node.scaleY()
+          // transformer is changing scale
+          const
+            node = shapeRef.current,
+            scaleX = node.scaleX(),
+            scaleY = node.scaleY()
+
+          node.scaleX(1)
+          node.scaleY(1)
+          
           onChange({
             ...shapeProps,
             x: node.x(),
@@ -47,4 +50,3 @@ const Img = ({ shapeProps, isSelected, onSelect, onChange, imageUrl }) => {
     </>
   )
 }
-export default Img

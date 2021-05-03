@@ -1,15 +1,16 @@
 import Konva from "konva"
-
 import v1 from 'uuid/dist/v1'
 
-export const addTextNode = (stage, layer) => {
+import { isSafari, isFirefox, isEdge } from "../utils/browser"
+
+export function addTextNode(stage, layer) {
   const
     id = v1(),
     textNode = new Konva.Text({
       text: "type here",
       x: 50,
       y: 80,
-      fontSize: 20,
+      fontSize: 24,
       draggable: true,
       width: 200,
       id,
@@ -21,13 +22,13 @@ export const addTextNode = (stage, layer) => {
     node: textNode,
     enabledAnchors: ["middle-left", "middle-right"],
     // set minimum width of text
-    boundBoxFunc: (oldBox, newBox) => {
-      newBox.width = Math.max(30, newBox.width)
-      return newBox
-    },
+    boundBoxFunc: (oldBox, newBox) => ({
+      ...newBox,
+      width: Math.max(30, newBox.width)
+    }),
   })
 
-  stage.on("click", (e) => {
+  stage.on("click", function (e) {
     if (!this.clickStartShape)
       return
 
@@ -104,11 +105,9 @@ export const addTextNode = (stage, layer) => {
       transform += `rotateZ(${rotation}deg)`
     }
 
-    let
-      px = 0,
-      isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
+    let px = 0
 
-    if (isFirefox) {
+    if (isFirefox()) {
       px += 2 + Math.round(textNode.fontSize() / 20)
     }
 
@@ -132,13 +131,7 @@ export const addTextNode = (stage, layer) => {
       if (!newWidth) { // set width for placeholder
         newWidth = textNode.placeholder.length * textNode.fontSize()
       }
-      // some extra fixes on different browsers
-      const
-        isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
-        isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1,
-        isEdge = document.documentMode || /Edge/.test(navigator.userAgent)
-
-      if (isSafari || isFirefox) {
+      if (isSafari() || isFirefox()) {
         newWidth = Math.ceil(newWidth)
       }
       else if (isEdge)
@@ -148,14 +141,14 @@ export const addTextNode = (stage, layer) => {
     }
 
     textarea.addEventListener("keydown", (e) => {
-      // hide on enter
-      // but don't hide on shift + enter
-      if (e.key === "Escape" && !e.shiftKey) {
+      // hide on enter but don't hide on shift + enter
+      if (e.key === "Enter" && !e.shiftKey) {
         textNode.text(textarea.value)
         removeTextarea()
       }
-      // on esc do not set value back to node
-      if (e.key === "Enter") {
+
+      // on esc do not set value back to nodes
+      else if (e.key === "Escape") {
         removeTextarea()
       }
     })
