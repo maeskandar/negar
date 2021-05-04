@@ -9,6 +9,11 @@ import Circle from "./canvas/Circle"
 import { addTextNode } from "./canvas/TextNode"
 import Image from "./canvas/Images"
 import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModal"
+import { MyLine, newLine } from "./canvas/Line"
+import { newArrow, Arrow } from "./canvas/Arrow"
+
+import { replaceInArray } from "./utils/array"
+import Konva from "konva"
 
 // enum
 const
@@ -25,9 +30,11 @@ const
     IMAGE: 4,
   },
   isSet = {
-    stageEventListeners: false,
     documentEventListeners: false,
-  }
+  },
+  drawingTempData = []
+
+// var mouseCursor
 
 export default function HomePage() {
   const
@@ -37,11 +44,14 @@ export default function HomePage() {
     // canvas related
     [circles, setCircles] = useState([]),
     [rectangles, setRectangles] = useState([]),
+    [lines, setLines] = useState([]),
+    [arrows, setArrows] = useState([]),
     [images, setImages] = useState([]),
     [shapes, setShapes] = useState([]),
     [selectedId, selectShape] = useState(null),
     stageEl = React.createRef(),
-    layerEl = React.createRef(),
+    mainLayer = React.createRef(),
+    drawingPreviewLayer = React.createRef(),
     // app functionality related
     [appState, setAppState] = React.useState(APP_STATES.NOTHING),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
@@ -68,41 +78,60 @@ export default function HomePage() {
 
   // functions -----------------------------------------
   const
-    addRectangle = () => {
+    onCanvasClick = (ev) => {
+      if (appState === APP_STATES.DRAWING) {
+        // TODO: add drawing mode for other shapes
+        if (selectedTool === APP_TOOLS.LINE) {
+          drawingTempData.push(ev.evt.layerX, ev.evt.layerY)
+
+          if (drawingTempData.length === 4) {
+            setLines(lines.concat([newLine(...drawingTempData)]))
+            setShapes(shapes.concat([`ln${lines.length + 1}`]))
+            drawingTempData.length = 0
+          }
+        }
+      }
+    },
+    addRectangle = (x, y) => {
       const rect = {
-        x: randInt(100),
-        y: randInt(100),
+        x, y,
         width: 100,
         height: 100,
-        fill: "red",
-        id: `rect${rectangles.length + 1}`,
+        fill: Konva.Util.getRandomColor(),
+        id: v1(),
       }
       setRectangles(rectangles.concat([rect]))
-      setShapes(shapes.concat([`rect${rectangles.length + 1}`]))
+      setShapes(shapes.concat([rect.id]))
     },
-    addCircle = () => {
+    addCircle = (x, y) => {
       const circ = {
-        x: randInt(100),
-        y: randInt(100),
+        x, y,
         width: 100,
         height: 100,
-        fill: "red",
-        id: `circ${circles.length + 1}`,
+        fill: Konva.Util.getRandomColor(),
+        id: v1(),
       }
       setCircles(circles.concat([circ]))
-      setShapes(shapes.concat([`circ${circles.length + 1}`]))
+      setShapes(shapes.concat([circ.id]))
     },
     drawLine = () => {
       setAppState(APP_STATES.DRAWING)
       setSelectedTool(APP_TOOLS.LINE)
     },
+    drawArrow = () => {
+      var arw = newArrow()
+      console.log(arw)
+      setArrows(arrows.concat([arw]))
+      setShapes(shapes.concat([`arw${arrows.length + 1}`]))
+    },
     drawText = () => {
-      const id = addTextNode(stageEl.current.getStage(), layerEl.current)
+      const id = addTextNode(stageEl.current.getStage(), mainLayer.current)
       setShapes(shapes.concat([id]))
     },
     drawImage = () => {
       fileUploadEl.current.click()
     },
+
     cancelDrawing = () => {
       setSelectedTool(APP_TOOLS.NOTHING)
       setAppState(APP_STATES.NOTHING)
@@ -157,6 +186,7 @@ export default function HomePage() {
       forceUpdate()
     }
 
+
   // adds event listeners in the first time only
   useEffect(() => {
     if (!isSet.documentEventListeners) {
@@ -185,27 +215,11 @@ export default function HomePage() {
       })
       isSet.documentEventListeners = true
     }
-
-    if (!isSet.stageEventListeners && stageEl.current) {
-      stageEl.current.on('click', (ev) => {
-
-        if (appState === APP_STATES.DRAWING) {
-          // TODO: add drawing mode for other shapes
-          if (selectedTool === APP_TOOLS.LINE) {
-            // TODO: show points to select in drawing line
-          }
-        }
-        
-      })
-      isSet.stageEventListeners = true
-    }
   })
 
   return (
     <div className="home-page" style={{
-      textAlign: 'center',
       background: `url(${backgroundimage}) no-repeat center fixed`,
-      width: '100%'
     }}>
       <MyVerticallyCenteredModal
         images={backimages}
@@ -216,10 +230,10 @@ export default function HomePage() {
       <div className="btn-group my-2" role="group">
         {/* Default State */
           appState === APP_STATES.NOTHING && <>
-            <button className={'btn btn-info'} onClick={addRectangle}>
+            <button className={'btn btn-info'} onClick={() => addRectangle(randInt(100), randInt(100))}>
               Rectangle
         </button>
-            <button className={'btn btn-info'} onClick={addCircle}>
+            <button className={'btn btn-info'} onClick={() => addCircle(randInt(100), randInt(100))}>
               Circle
         </button>
             <button className={'btn btn-info'} onClick={drawLine}>
@@ -231,7 +245,7 @@ export default function HomePage() {
             <button className={'btn btn-info'} onClick={drawImage}>
               Image
         </button>
-            <button className={'btn btn-info'} onClick={() => { }}>
+            <button className={'btn btn-info'} onClick={drawArrow}>
               Arrow
         </button>
             <button className={'btn btn-info'} onClick={() => setModalShow(true)}>
@@ -262,62 +276,82 @@ export default function HomePage() {
         width={window.innerWidth * 0.9}
         height={window.innerHeight}
         ref={stageEl}
+        onClick={onCanvasClick}
         onMouseDown={e => {
           // deselect when clicked on empty area
           if (e.target === e.target.getStage()) selectShape(null)
         }}
       >
-        <Layer ref={layerEl}>
+        <Layer ref={mainLayer}>
           {/* TODO: add dynamic layers not like circles, rects, ... */}
-          {rectangles.map((rect, i) => {
-            return (
-              <Rectangle
-                key={i}
-                shapeProps={rect}
-                isSelected={rect.id === selectedId}
-                onSelect={() => {
-                  selectShape(rect.id)
-                }}
-                onChange={newAttrs => {
-                  const rects = rectangles.slice()
-                  rects[i] = newAttrs
-                  setRectangles(rects)
-                }}
-              />
-            )
-          })}
-          {circles.map((circle, i) => {
-            return (
-              <Circle
-                key={i}
-                shapeProps={circle}
-                isSelected={circle.id === selectedId}
-                onSelect={() => selectShape(circle.id)}
-                onChange={newAttrs => {
-                  const circs = circles.slice()
-                  circs[i] = newAttrs
-                  setCircles(circs)
-                }}
-              />
-            )
-          })}
-          {images.map((image, i) => {
-            return (
-              <Image
-                key={i}
-                imageUrl={image.content}
-                isSelected={image.id === selectedId}
-                onSelect={() => selectShape(image.id)}
-                onChange={newAttrs => {
-                  const imgs = images.slice()
-                  imgs[i] = newAttrs
-                }}
-              />
-            )
-          })}
+          {/* main layer */}
+          {rectangles.map((rect, i) =>
+            <Rectangle
+              key={i}
+              shapeProps={rect}
+              isSelected={rect.id === selectedId}
+              onSelect={() => {
+                selectShape(rect.id)
+              }}
+              onChange={newAttrs => {
+                setRectangles(replaceInArray(rectangles, i, newAttrs))
+              }}
+            />
+          )}
+          {circles.map((circle, i) =>
+            <Circle
+              key={i}
+              shapeProps={circle}
+              isSelected={circle.id === selectedId}
+              onSelect={() => selectShape(circle.id)}
+              onChange={newAttrs => {
+                setCircles(replaceInArray(circles, i, newAttrs))
+              }}
+            />
+          )}
+          {images.map((image, i) =>
+            <Image
+              key={i}
+              imageUrl={image.content}
+              isSelected={image.id === selectedId}
+              onSelect={() => selectShape(image.id)}
+              onChange={newAttrs => {
+                const imgs = images.slice()
+                imgs[i] = newAttrs
+                // FIXME: why you don't have something like `setCircles`?
+              }}
+            />
+          )}
+          {arrows.map((arrow, i) =>
+            <Arrow
+              key={i}
+              shapeProps={arrow}
+              isSelected={arrow.id === selectedId}
+              onSelect={() => selectShape(arrow.id)}
+              onChange={newAttrs => {
+                setArrows(replaceInArray(arrows, i, newAttrs))
+              }}
+            />
+          )}
+          {lines.map((line, i) =>
+            <MyLine
+              key={i}
+              shapeProps={line}
+              isSelected={line.id === selectedId}
+              onSelect={() => selectShape(line.id)}
+              onChange={newAttrs => {
+                setLines(replaceInArray(lines, i, newAttrs))
+              }}
+            />
+          )}
+        </Layer>
+
+        {/* drawing preview layer */}
+        <Layer ref={drawingPreviewLayer}>
+
         </Layer>
       </Stage>
 
-    </div>
+    </div >
   )
 }
