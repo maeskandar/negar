@@ -1,12 +1,12 @@
-import React from "react"
+import React, {useEffect} from "react"
 import { Circle, Transformer } from "react-konva"
 
-export default function Circ ({ shapeProps, isSelected, onSelect, onChange }) {
+export default function MyCircle ({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSelected) {
       trRef.current.setNode(shapeRef.current)
       trRef.current.getLayer().batchDraw()

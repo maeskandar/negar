@@ -2,6 +2,10 @@
     background-size: cover  !important;
 }
 
+.home-page{
+    text-align: center;
+}
+
 .konvajs-content{
     margin: auto;
 }

@@ -3,17 +3,29 @@ import { Line, Transformer } from "react-konva"
 
 import v1 from 'uuid/dist/v1'
 
-export function newLine(pos1x, pos1y, pos2x, pos2y) {
+export function newArrow() {
   return {
-    points: [pos1x, pos1y, pos2x, pos2y],
-    stroke: 'red',
-    strokeWidth: 11,
+    points: [
+      [0, 0],
+      [50, 50],
+      [50, 20],
+      [150, 20],
+      [150, -20],
+      [50, -20],
+      [50, -50],
+    ].map(it => [it[0] + 50, it[1] + 50]).flat(),
+
+    stroke: 'black',
+    fill: '#00D2FF',
+    strokeWidth: 6,
     lineCap: 'round',
     lineJoin: 'round',
+    closed: true,
     id: v1()
   }
 }
-export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
+
+export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
