@@ -9,3 +9,7 @@
 .konvajs-content{
     margin: auto;
 }
+
+#color-picker-wrapper{
+    z-index: 10;
+}

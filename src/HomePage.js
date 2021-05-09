@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { Stage, Layer } from "react-konva"
-import v1 from 'uuid/dist/v1'
+import { ChromePicker } from "react-color"
+// import v1 from 'uuid/dist/v1'
 import randInt from 'random-int'
 
-import Rectangle from "./canvas/Rectangle"
-import Circle from "./canvas/Circle"
-// import { addLine } from "./canvas/Line"
-import { addTextNode } from "./canvas/TextNode"
-import Image from "./canvas/Images"
+import { shapeKinds } from "./canvas/"
+import { Rectangle, newRectangle } from "./canvas/Rectangle"
+import { MyCircle as Circle, newCircle } from "./canvas/Circle"
+import { MyImage as Image, newImage } from "./canvas/Images"
+// import { addTextNode } from "./canvas/TextNode"
 import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModal"
 import { MyLine, newLine } from "./canvas/Line"
 import { newArrow, Arrow } from "./canvas/Arrow"
 
-import { replaceInArray } from "./utils/array"
-import Konva from "konva"
+import { removeInArray, replaceInArray } from "./utils/array"
+
 
 // enum
 const
@@ -21,6 +22,7 @@ const
     NOTHING: 0,
     DRAGING: 1,
     DRAWING: 2,
+    COLOR_PICKING: 3,
   },
   APP_TOOLS = {
     NOTHING: 0,
@@ -29,9 +31,6 @@ const
     CIRCLE: 3,
     IMAGE: 4,
   },
-  isSet = {
-    documentEventListeners: false,
-  },
   drawingTempData = []
 
 // var mouseCursor
@@ -39,19 +38,17 @@ const
 export default function HomePage() {
   const
     // react stuff
-    forceUpdate = React.useCallback(() => updateState({}), []),
-    [, updateState] = React.useState(),
+    // forceUpdate = React.useCallback(() => updateState({}), []),
+    // [, updateState] = React.useState(),
+
     // canvas related
-    [circles, setCircles] = useState([]),
-    [rectangles, setRectangles] = useState([]),
-    [lines, setLines] = useState([]),
-    [arrows, setArrows] = useState([]),
-    [images, setImages] = useState([]),
     [shapes, setShapes] = useState([]),
-    [selectedId, selectShape] = useState(null),
+    [bg, setbg] = useState("#fff"),
+    [selectedId, setSelectedId] = useState(null),
     stageEl = React.createRef(),
     mainLayer = React.createRef(),
     drawingPreviewLayer = React.createRef(),
+
     // app functionality related
     [appState, setAppState] = React.useState(APP_STATES.NOTHING),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
@@ -76,6 +73,7 @@ export default function HomePage() {
       }
     ]
 
+
   // functions -----------------------------------------
   const
     onCanvasClick = (ev) => {
@@ -83,58 +81,75 @@ export default function HomePage() {
         // TODO: add drawing mode for other shapes
         if (selectedTool === APP_TOOLS.LINE) {
           drawingTempData.push(ev.evt.layerX, ev.evt.layerY)
-
           if (drawingTempData.length === 4) {
-            setLines(lines.concat([newLine(...drawingTempData)]))
-            setShapes(shapes.concat([`ln${lines.length + 1}`]))
+            addToShapes(newLine(...drawingTempData))
             drawingTempData.length = 0
           }
         }
       }
-    },
-    addRectangle = (x, y) => {
-      const rect = {
-        x, y,
-        width: 100,
-        height: 100,
-        fill: Konva.Util.getRandomColor(),
-        id: v1(),
+
+      else if (ev.target === ev.target.getStage()) {
+        setSelectedId(null)
+        cancelOperation()
       }
-      setRectangles(rectangles.concat([rect]))
-      setShapes(shapes.concat([rect.id]))
+    },
+
+    onShapeSelected = (shapeId) => {
+      setSelectedId(shapeId === selectedId ? null : shapeId)
+    },
+
+    addToShapes = (newShape) => {
+      setShapes(shapes.concat([newShape]))
+    },
+
+    addRectangle = (x, y) => {
+      addToShapes(
+        newRectangle(x, y))
     },
     addCircle = (x, y) => {
-      const circ = {
-        x, y,
-        width: 100,
-        height: 100,
-        fill: Konva.Util.getRandomColor(),
-        id: v1(),
-      }
-      setCircles(circles.concat([circ]))
-      setShapes(shapes.concat([circ.id]))
+      addToShapes(
+        newCircle(x, y))
     },
     drawLine = () => {
       setAppState(APP_STATES.DRAWING)
       setSelectedTool(APP_TOOLS.LINE)
     },
     drawArrow = () => {
-      var arw = newArrow()
-      console.log(arw)
-      setArrows(arrows.concat([arw]))
-      setShapes(shapes.concat([`arw${arrows.length + 1}`]))
+      addToShapes(
+        newArrow())
     },
     drawText = () => {
-      const id = addTextNode(stageEl.current.getStage(), mainLayer.current)
-      setShapes(shapes.concat([id]))
+      // const id = addTextNode(stageEl.current.getStage(), mainLayer.current)
+      // setShapes(shapes.concat([id]))
     },
-    drawImage = () => {
+    drawImage = () => { // #FIXME: what a name
       fileUploadEl.current.click()
     },
 
-    cancelDrawing = () => {
-      setSelectedTool(APP_TOOLS.NOTHING)
+    deleteShape = (shapeId) => {
+      console.log(`im looking for ${shapeId}`)
+      console.log(shapes.length, shapes)
+
+      let index = shapes.findIndex(it => it.id === shapeId)
+
+      if (index !== -1)
+        setShapes(removeInArray(shapes, index))
+    },
+    cancelOperation = () => {
+      switch (appState) {
+        case APP_STATES.DRAWING:
+          // TODO: i broke drawing
+          break
+
+        case APP_STATES.COLOR_PICKING:
+          break
+
+        default:
+          break
+      }
+
       setAppState(APP_STATES.NOTHING)
+      setSelectedTool(APP_TOOLS.NOTHING)
     },
 
     fileChange = (ev) => {
@@ -143,84 +158,39 @@ export default function HomePage() {
       const reader = new FileReader()
       reader.addEventListener("load", () => {
         fileUploadEl.current.value = null
-
-        const id = v1()
-        images.push({
-          content: reader.result,
-          id,
-        })
-        setImages(images)
-
-        shapes.push(id)
-        setShapes(shapes)
-
-        forceUpdate()
+        addToShapes(newImage(reader.result))
       }, false)
+
       if (file) {
         reader.readAsDataURL(file)
       }
     },
-    undo = () => {
-      const lastId = shapes[shapes.length - 1]
-      let index = circles.findIndex(c => c.id === lastId)
-
-      if (index !== -1) {
-        circles.splice(index, 1)
-        setCircles(circles)
-      }
-
-      index = rectangles.findIndex(r => r.id === lastId)
-      if (index !== -1) {
-        rectangles.splice(index, 1)
-        setRectangles(rectangles)
-      }
-
-      index = images.findIndex(r => r.id === lastId)
-      if (index !== -1) {
-        images.splice(index, 1)
-        setImages(images)
-      }
-
-      shapes.pop()
-      setShapes(shapes)
-      forceUpdate()
-    }
+    undo = () => { }
 
 
-  // adds event listeners in the first time only
+
+  // if you have any question for what i did that: because of new stupid functional paradigm react way
   useEffect(() => {
-    if (!isSet.documentEventListeners) {
-      document.addEventListener("keydown", (ev) => {
+    const
+      handleWindowKeyboard = (ev) => {
+        console.log(ev.code, selectedId)
+
         if (ev.code === "Delete") {
-          let index = circles.findIndex(c => c.id === selectedId)
-          if (index !== -1) {
-            circles.splice(index, 1)
-            setCircles(circles)
+          if (selectedId) {
+            deleteShape(selectedId)
+            setSelectedId(null)
           }
-
-          index = rectangles.findIndex(r => r.id === selectedId)
-          if (index !== -1) {
-            rectangles.splice(index, 1)
-            setRectangles(rectangles)
-          }
-
-          index = images.findIndex(r => r.id === selectedId)
-          if (index !== -1) {
-            images.splice(index, 1)
-            setImages(images)
-          }
-
-          forceUpdate()
         }
-      })
-      isSet.documentEventListeners = true
-    }
-  })
+      }
+
+    window.addEventListener('keydown', handleWindowKeyboard)
+    return () => window.removeEventListener('keydown', handleWindowKeyboard)
+  }, [selectedId, deleteShape])
 
   return (
-    <div className="home-page" style={{
-      background: `url(${backgroundimage}) no-repeat center fixed`,
-    }}>
+    <div className="home-page"
+      style={{ background: `url(${backgroundimage}) no-repeat center fixed`, }}
+    >
       <MyVerticallyCenteredModal
         images={backimages}
         show={modalShow}
@@ -230,40 +200,81 @@ export default function HomePage() {
       <div className="btn-group my-2" role="group">
         {/* Default State */
           appState === APP_STATES.NOTHING && <>
-            <button className={'btn btn-info'} onClick={() => addRectangle(randInt(100), randInt(100))}>
+            <button className="btn btn-info" onClick={() => addRectangle(randInt(100), randInt(100))}>
               Rectangle
         </button>
-            <button className={'btn btn-info'} onClick={() => addCircle(randInt(100), randInt(100))}>
+            <button className="btn btn-info" onClick={() => addCircle(randInt(100), randInt(100))}>
               Circle
         </button>
-            <button className={'btn btn-info'} onClick={drawLine}>
+            <button className="btn btn-info" onClick={drawLine}>
               Line
         </button>
-            <button className={'btn btn-info'} onClick={drawText}>
+            <button className="btn btn-info" onClick={drawText}>
               Text
         </button>
-            <button className={'btn btn-info'} onClick={drawImage}>
+            <button className="btn btn-info" onClick={drawImage}>
               Image
         </button>
-            <button className={'btn btn-info'} onClick={drawArrow}>
+            <button className="btn btn-info" onClick={drawArrow}>
               Arrow
         </button>
-            <button className={'btn btn-info'} onClick={() => setModalShow(true)}>
+            <button className="btn btn-info" onClick={() => setModalShow(true)}>
               change background
         </button>
+
+            {
+              selectedId !== null &&
+              <button
+                className="btn btn-info"
+                onClick={() => {
+                  setAppState(APP_STATES.COLOR_PICKING)
+
+                  let shape = shapes.find(it => it.id === selectedId)
+                  // TODO: make that check a function
+                  setbg(shape.kind === shapeKinds.Line ? shape.stroke : shape.fill)
+                }}>
+                color picker
+                        </button>
+            }
           </>
         }
+
         {/* Drawing State */
-          appState === APP_STATES.DRAWING && <>
-            <button className={'btn btn-warning'} onClick={cancelDrawing}>
+          (appState === APP_STATES.DRAWING || appState === APP_STATES.COLOR_PICKING) && <>
+            <button className={'btn btn-warning'} onClick={cancelOperation}>
               cancel
         </button>
           </>
         }
-        <button className={'btn btn-info'} onClick={undo}>
+        <button className="btn btn-info" onClick={undo}>
           Undo
         </button>
       </div>
+      {// something selected 
+        selectedId !== null && appState === APP_STATES.COLOR_PICKING &&
+        <div id="color-picker-wrapper" className="position-fixed">
+          <ChromePicker
+            disableAlpha
+            color={bg}
+            onChange={(color) => setbg(color['hex'])}
+            onChangeComplete={(color) => {
+              let
+                index = shapes.findIndex((it) => it.id === selectedId)
+
+              if (index === -1)
+                return console.log('what?')
+
+
+              let
+                shape = shapes[index],
+                key = shape.kind !== shapeKinds.Line ? 'fill' : 'stroke'
+
+              setShapes(replaceInArray(shapes, index,
+                { ...shape, [key]: color['hex'] }))
+            }}
+          />
+        </div>
+      }
       <input
         style={{ display: "none" }}
         type="file"
@@ -277,73 +288,73 @@ export default function HomePage() {
         height={window.innerHeight}
         ref={stageEl}
         onClick={onCanvasClick}
-        onMouseDown={e => {
-          // deselect when clicked on empty area
-          if (e.target === e.target.getStage()) selectShape(null)
-        }}
       >
         <Layer ref={mainLayer}>
           {/* TODO: add dynamic layers not like circles, rects, ... */}
           {/* main layer */}
-          {rectangles.map((rect, i) =>
-            <Rectangle
-              key={i}
-              shapeProps={rect}
-              isSelected={rect.id === selectedId}
-              onSelect={() => {
-                selectShape(rect.id)
-              }}
-              onChange={newAttrs => {
-                setRectangles(replaceInArray(rectangles, i, newAttrs))
-              }}
-            />
-          )}
-          {circles.map((circle, i) =>
-            <Circle
-              key={i}
-              shapeProps={circle}
-              isSelected={circle.id === selectedId}
-              onSelect={() => selectShape(circle.id)}
-              onChange={newAttrs => {
-                setCircles(replaceInArray(circles, i, newAttrs))
-              }}
-            />
-          )}
-          {images.map((image, i) =>
-            <Image
-              key={i}
-              imageUrl={image.content}
-              isSelected={image.id === selectedId}
-              onSelect={() => selectShape(image.id)}
-              onChange={newAttrs => {
-                const imgs = images.slice()
-                imgs[i] = newAttrs
-                // FIXME: why you don't have something like `setCircles`?
-              }}
-            />
-          )}
-          {arrows.map((arrow, i) =>
-            <Arrow
-              key={i}
-              shapeProps={arrow}
-              isSelected={arrow.id === selectedId}
-              onSelect={() => selectShape(arrow.id)}
-              onChange={newAttrs => {
-                setArrows(replaceInArray(arrows, i, newAttrs))
-              }}
-            />
-          )}
-          {lines.map((line, i) =>
-            <MyLine
-              key={i}
-              shapeProps={line}
-              isSelected={line.id === selectedId}
-              onSelect={() => selectShape(line.id)}
-              onChange={newAttrs => {
-                setLines(replaceInArray(lines, i, newAttrs))
-              }}
-            />
-          )}
+          {shapes.map((shape, i) => {
+            switch (shape.kind) {
+              case shapeKinds.Reactangle:
+                return <Rectangle
+                  key={shape.id}
+                  shapeProps={shape}
+                  isSelected={shape.id === selectedId}
+                  onSelect={() => onShapeSelected(shape.id)}
+                  onChange={newAttrs => {
+                    setShapes(replaceInArray(shapes, i, newAttrs))
+                  }}
+                />
+
+              case shapeKinds.Circle:
+                return <Circle
+                  key={shape.id}
+                  shapeProps={shape}
+                  isSelected={shape.id === selectedId}
+                  onSelect={() => onShapeSelected(shape.id)}
+                  onChange={newAttrs => {
+                    setShapes(replaceInArray(shapes, i, newAttrs))
+                  }}
+                />
+
+              case shapeKinds.Image:
+                return <Image
+                  key={shape.id}
+                  imageUrl={shape.content}
+                  isSelected={shape.id === selectedId}
+                  onSelect={() => onShapeSelected(shape.id)}
+                  onChange={newAttrs => {
+                    // const imgs = images.slice()
+                    // imgs[i] = newAttrs
+                    // FIXME: why you don't have something like `setCircles`?
+                  }}
+                />
+
+              case shapeKinds.CustomShape:
+                return <Arrow
+                  key={shape.id}
+                  shapeProps={shape}
+                  isSelected={shape.id === selectedId}
+                  onSelect={() => onShapeSelected(shape.id)}
+                  onChange={newAttrs => {
+                    setShapes(replaceInArray(shapes, i, newAttrs))
+                  }}
+                />
+
+              case shapeKinds.Line:
+                return <MyLine
+                  key={shape.id}
+                  shapeProps={shape}
+                  isSelected={shape.id === selectedId}
+                  onSelect={() => onShapeSelected(shape.id)}
+                  onChange={newAttrs => {
+                    setShapes(replaceInArray(shapes, i, newAttrs))
+                  }}
+                />
+
+              default:
+                throw "how is it possible?"
+            }
+          })}
         </Layer>
 
         {/* drawing preview layer */}

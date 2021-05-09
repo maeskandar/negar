@@ -1,8 +1,20 @@
 import React from "react"
 import { Image, Transformer } from "react-konva"
 import useImage from "use-image"
+import v1 from 'uuid/dist/v1'
 
-export default function Img ({ shapeProps, isSelected, onSelect, onChange, imageUrl }){
+import { shapeKinds } from './'
+
+export function newImage(content) {
+  return {
+    id: v1(),
+    kind: shapeKinds.Image,
+    
+    content,
+  }
+}
+
+export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef(),
@@ -22,7 +34,7 @@ export default function Img ({ shapeProps, isSelected, onSelect, onChange, image
         onClick={onSelect}
         image={image}
         ref={shapeRef}
-        draggable
+        draggable = {isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,
@@ -35,7 +47,7 @@ export default function Img ({ shapeProps, isSelected, onSelect, onChange, image
             node = shapeRef.current,
             scaleX = node.scaleX(),
             scaleY = node.scaleY()
-            
+
           onChange({
             ...shapeProps,
             x: node.x(),

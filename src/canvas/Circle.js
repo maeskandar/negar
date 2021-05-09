@@ -1,7 +1,23 @@
-import React, {useEffect} from "react"
+import React, { useEffect } from "react"
+import Konva from "konva"
 import { Circle, Transformer } from "react-konva"
+import v1 from 'uuid/dist/v1'
 
-export default function MyCircle ({ shapeProps, isSelected, onSelect, onChange }) {
+import { shapeKinds } from './'
+
+export function newCircle(x, y) {
+  return {
+    id: v1(),
+    kind: shapeKinds.Circle,
+
+    x, y,
+    width: 100,
+    height: 100,
+    fill: Konva.Util.getRandomColor(),
+  }
+}
+
+export function MyCircle({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
@@ -19,7 +35,7 @@ export default function MyCircle ({ shapeProps, isSelected, onSelect, onChange }
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable
+        draggable = {isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,

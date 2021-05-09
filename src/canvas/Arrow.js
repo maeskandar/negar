@@ -1,10 +1,14 @@
 import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
-
 import v1 from 'uuid/dist/v1'
+
+import { shapeKinds } from './'
 
 export function newArrow() {
   return {
+    id: v1(),
+    kind: shapeKinds.CustomShape,
+
     points: [
       [0, 0],
       [50, 50],
@@ -15,13 +19,12 @@ export function newArrow() {
       [50, -50],
     ].map(it => [it[0] + 50, it[1] + 50]).flat(),
 
-    stroke: 'black',
     fill: '#00D2FF',
+    stroke: 'black',
     strokeWidth: 6,
     lineCap: 'round',
     lineJoin: 'round',
     closed: true,
-    id: v1()
   }
 }
 
@@ -44,7 +47,7 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable
+        draggable = {isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,

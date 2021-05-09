@@ -1,7 +1,23 @@
 import React from "react"
+import Konva from "konva"
 import { Rect, Transformer } from "react-konva"
+import v1 from 'uuid/dist/v1'
 
-export default function Rectangle ({ shapeProps, isSelected, onSelect, onChange }) {
+import { shapeKinds } from './'
+
+export function newRectangle(x,y) {
+  return {
+    id: v1(),
+    kind: shapeKinds.Reactangle,
+
+    x, y,
+    width: 100,
+    height: 100,
+    fill: Konva.Util.getRandomColor(),
+  }
+}
+
+export function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
@@ -19,7 +35,7 @@ export default function Rectangle ({ shapeProps, isSelected, onSelect, onChange 
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable
+        draggable = {isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,
@@ -36,7 +52,7 @@ export default function Rectangle ({ shapeProps, isSelected, onSelect, onChange 
 
           node.scaleX(1)
           node.scaleY(1)
-          
+
           onChange({
             ...shapeProps,
             x: node.x(),
