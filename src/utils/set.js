@@ -12,3 +12,15 @@ export function addToSet(s, v) {
   return n
 }
 
+export function setHasParamsAnd(s, ...params) {
+  for (const p of params)
+    if (!s.has(p))
+      return false
+  return true
+}
+export function setHasParamsOr(s, ...params) {
+  for (const p of params)
+    if (s.has(p))
+      return true
+  return false
+}

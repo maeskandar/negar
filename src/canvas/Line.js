@@ -4,10 +4,10 @@ import v1 from 'uuid/dist/v1'
 
 import { shapeKinds } from './'
 
-export function newLine(points) {
+export function newLine(points, customLine = false) {
   return {
     id: v1(),
-    kind: shapeKinds.Line,
+    kind: customLine ? shapeKinds.CustomLine : shapeKinds.Line,
     points,
     stroke: 'red',
     strokeWidth: 11,
@@ -34,7 +34,7 @@ export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable = {isSelected}
+        draggable={isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,
