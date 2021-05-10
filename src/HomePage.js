@@ -13,8 +13,9 @@ import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModa
 import { MyLine, newLine } from "./canvas/Line"
 import { newArrow, Arrow } from "./canvas/Arrow"
 
-import { removeInArray, replaceInArray, cleanArray } from "./utils/array"
+import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "./utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "./utils/set"
+import { pointsDistance } from "./utils/math"
 
 // enums ----
 const
@@ -32,7 +33,9 @@ const
     PENCIL: 5,
     ERASER: 6,
   },
-  drawingTempData = []
+  ERASER_RADIUS = 10 // px
+
+let drawingTempData = []
 
 function objectToShape(obj, isSelected, onSelect, onChange) {
   const commonProps = {
@@ -178,8 +181,31 @@ export default function HomePage() {
     doneJob = () => {
       if (appState.has(APP_STATES.DRAWING)) {
 
-        if (selectedTool === APP_TOOLS.PENCIL) {
-          addToShapes(...tempShapes)
+        // stick lines if they have Intersection, else create new line
+        if (selectedTool === APP_TOOLS.PENCIL && tempShapes.length !== 0) {
+          let resultLines = []
+
+          function stickToLast(x, y) {
+            let lastLine = resultLines[resultLines.length - 1]
+            lastLine.points = lastLine.points.concat([x, y])
+          }
+          function addNewLine(...points) {
+            resultLines.push(newLine(points, true))
+          }
+
+          for (let i = 0; i < tempShapes.length - 1; i++) {
+            let
+              lcp = tempShapes[i].points, // current line points
+              lnp = tempShapes[i + 1].points // next line points
+
+            // if end points of this line are equal to start points of next line
+            if (arraysEqual(lcp.slice(2), lnp.slice(0, 2)))
+              stickToLast(...lnp.slice(2))
+            else
+              addNewLine(...lnp)
+          }
+
+          addToShapes(...resultLines)
         }
 
       }
@@ -216,6 +242,7 @@ export default function HomePage() {
       if (appState.has(APP_STATES.DRAWING)) {
         const pos = e.target.getStage().getPointerPosition()
 
+        drawingTempData = [pos.x, pos.y]
         if (selectedTool === APP_TOOLS.PENCIL) {
           setTempShapes(tempShapes.concat([newLine([pos.x, pos.y], true)]))
         }
@@ -224,19 +251,29 @@ export default function HomePage() {
     handleMouseMove = (e) => {
       if (setHasParamsAnd(appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
 
+        var mp = stageEl.current.getPointerPosition()
+        mp = [mp.x, mp.y]
+
         if (selectedTool === APP_TOOLS.PENCIL) {
-          const point = stageEl.current.getPointerPosition()
+          setTempShapes(addToArray(tempShapes,
+            newLine(drawingTempData.concat(mp))))
 
-          let lastLine = tempShapes[tempShapes.length - 1]
-          lastLine.points = lastLine.points.concat([point.x, point.y])
-
-          setTempShapes(replaceInArray(
-            tempShapes, tempShapes.length - 1, lastLine))
+          drawingTempData = mp
         }
-
         else if (selectedTool === APP_TOOLS.ERASER) {
-          // for
+          let acc = []
+          for (const l of tempShapes) {
+            let
+              sp = l.points.slice(0, 2),
+              ep = l.points.slice(2)
+
+            if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS))
+              acc.push(l)
+          }
+
+          setTempShapes(acc)
         }
+
       }
     },
     handleMouseUp = () => {
@@ -244,9 +281,10 @@ export default function HomePage() {
 
       // if (appState.has(APP_STATES.DRAWING)) {
       //   if (selectedTool === APP_TOOLS.PENCIL) {
+
       //   }
-      // else if (selectedTool === APP_TOOLS.ERASER) {
-      // }
+      //   else if (selectedTool === APP_TOOLS.ERASER) {
+      //   }
       // }
     },
 
