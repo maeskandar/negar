@@ -4,15 +4,15 @@ import v1 from 'uuid/dist/v1'
 
 import { shapeKinds } from './'
 
-export function newLine(pos1x, pos1y, pos2x, pos2y) {
+export function newLine(points) {
   return {
+    id: v1(),
     kind: shapeKinds.Line,
-    points: [pos1x, pos1y, pos2x, pos2y],
+    points,
     stroke: 'red',
     strokeWidth: 11,
     lineCap: 'round',
     lineJoin: 'round',
-    id: v1()
   }
 }
 export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {

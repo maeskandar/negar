@@ -13,13 +13,13 @@ import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModa
 import { MyLine, newLine } from "./canvas/Line"
 import { newArrow, Arrow } from "./canvas/Arrow"
 
-import { removeInArray, replaceInArray } from "./utils/array"
+import { removeInArray, replaceInArray, cleanArray } from "./utils/array"
+import { removeInSet, addToSet } from "./utils/set"
 
 
 // enum
 const
   APP_STATES = {
-    NOTHING: 0,
     DRAGING: 1,
     DRAWING: 2,
     COLOR_PICKING: 3,
@@ -30,6 +30,8 @@ const
     RECTANGLE: 2,
     CIRCLE: 3,
     IMAGE: 4,
+    PENCIL: 5,
+    ERASER: 6,
   },
   drawingTempData = []
 
@@ -38,11 +40,12 @@ const
 export default function HomePage() {
   const
     // react stuff
-    // forceUpdate = React.useCallback(() => updateState({}), []),
     // [, updateState] = React.useState(),
+    // forceUpdate = useCallback(() => updateState({}), []),
 
     // canvas related
     [shapes, setShapes] = useState([]),
+    [tempShapes, setTempShapes] = useState([]),
     [bg, setbg] = useState("#fff"),
     [selectedId, setSelectedId] = useState(null),
     stageEl = React.createRef(),
@@ -50,7 +53,7 @@ export default function HomePage() {
     drawingPreviewLayer = React.createRef(),
 
     // app functionality related
-    [appState, setAppState] = React.useState(APP_STATES.NOTHING),
+    [appState, setAppState] = React.useState(new Set()),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
     [modalShow, setModalShow] = React.useState(false),
     fileUploadEl = React.createRef(),
@@ -76,30 +79,8 @@ export default function HomePage() {
 
   // functions -----------------------------------------
   const
-    onCanvasClick = (ev) => {
-      if (appState === APP_STATES.DRAWING) {
-        // TODO: add drawing mode for other shapes
-        if (selectedTool === APP_TOOLS.LINE) {
-          drawingTempData.push(ev.evt.layerX, ev.evt.layerY)
-          if (drawingTempData.length === 4) {
-            addToShapes(newLine(...drawingTempData))
-            drawingTempData.length = 0
-          }
-        }
-      }
-
-      else if (ev.target === ev.target.getStage()) {
-        setSelectedId(null)
-        cancelOperation()
-      }
-    },
-
-    onShapeSelected = (shapeId) => {
-      setSelectedId(shapeId === selectedId ? null : shapeId)
-    },
-
-    addToShapes = (newShape) => {
-      setShapes(shapes.concat([newShape]))
+    addToShapes = (...newShapes) => {
+      setShapes(shapes.concat(newShapes))
     },
 
     addRectangle = (x, y) => {
@@ -111,7 +92,7 @@ export default function HomePage() {
         newCircle(x, y))
     },
     drawLine = () => {
-      setAppState(APP_STATES.DRAWING)
+      setAppState(addToSet(appState, APP_STATES.DRAWING))
       setSelectedTool(APP_TOOLS.LINE)
     },
     drawArrow = () => {
@@ -125,31 +106,38 @@ export default function HomePage() {
     drawImage = () => { // #FIXME: what a name
       fileUploadEl.current.click()
     },
+    startJamBoard = () => {
+      setAppState(addToSet(appState, APP_STATES.DRAWING))
+      setSelectedTool(APP_TOOLS.PENCIL)
+    },
 
     deleteShape = (shapeId) => {
-      console.log(`im looking for ${shapeId}`)
-      console.log(shapes.length, shapes)
-
       let index = shapes.findIndex(it => it.id === shapeId)
 
       if (index !== -1)
         setShapes(removeInArray(shapes, index))
     },
+
     cancelOperation = () => {
-      switch (appState) {
-        case APP_STATES.DRAWING:
-          // TODO: i broke drawing
-          break
-
-        case APP_STATES.COLOR_PICKING:
-          break
-
-        default:
-          break
+      if (appState.has(APP_STATES.DRAWING)) {
+        cleanArray(drawingTempData)
+        setTempShapes([])
       }
+      else if (appState.has(APP_STATES.COLOR_PICKING)) { }
 
-      setAppState(APP_STATES.NOTHING)
+      setAppState(new Set())
       setSelectedTool(APP_TOOLS.NOTHING)
+    },
+
+    doneJob = () => {
+      if (appState.has(APP_STATES.DRAWING)) {
+
+        if (selectedTool === APP_TOOLS.PENCIL) {
+          addToShapes(...tempShapes)
+          cancelOperation()
+        }
+
+      }
     },
 
     fileChange = (ev) => {
@@ -165,21 +153,81 @@ export default function HomePage() {
         reader.readAsDataURL(file)
       }
     },
-    undo = () => { }
 
+    // canvas events -------------------------
+    handleClick = (ev) => {
+      // TODO: add drawing mode for other shapes
+      if (appState.has(APP_STATES.DRAWING)) {
+
+        if (selectedTool === APP_TOOLS.LINE) {
+
+          drawingTempData.push(ev.evt.layerX, ev.evt.layerY)
+          if (drawingTempData.length === 4) {
+            addToShapes(newLine([...drawingTempData]))
+            cleanArray(drawingTempData)
+          }
+        }
+
+      }
+      else if (ev.target === ev.target.getStage()) {
+        setSelectedId(null)
+        cancelOperation()
+      }
+    },
+    onShapeSelected = (shapeId) => {
+      setSelectedId(shapeId === selectedId ? null : shapeId)
+    },
+    handleMouseDown = (e) => {
+      if (appState.has(APP_STATES.DRAWING)) {
+        if (selectedTool === APP_TOOLS.PENCIL) {
+          const pos = e.target.getStage().getPointerPosition()
+
+          setTempShapes(tempShapes.concat([
+            newLine([pos.x, pos.y])]))
+
+          setAppState(addToSet(appState, APP_STATES.DRAGING))
+        }
+      }
+    },
+    handleMouseMove = (e) => {
+      if (appState.has(APP_STATES.DRAWING)) {
+        if (selectedTool === APP_TOOLS.PENCIL && appState.has(APP_STATES.DRAGING)) {
+          const point = stageEl.current.getPointerPosition()
+
+          let lastLine = tempShapes[tempShapes.length - 1]
+          lastLine.points = lastLine.points.concat([point.x, point.y])
+
+          setTempShapes(replaceInArray(
+            tempShapes, tempShapes.length - 1, lastLine))
+        }
+      }
+    },
+    handleMouseUp = () => {
+      if (!appState.has(APP_STATES.DRAWING))
+        setAppState(new Set())
+
+      if (appState.has(APP_STATES.DRAWING)) {
+        if (selectedTool === APP_TOOLS.PENCIL) {
+          setAppState(removeInSet(appState, APP_STATES.DRAGING))
+        }
+      }
+    },
+
+    undo = () => { }
 
 
   // if you have any question for what i did that: because of new stupid functional paradigm react way
   useEffect(() => {
     const
       handleWindowKeyboard = (ev) => {
-        console.log(ev.code, selectedId)
-
         if (ev.code === "Delete") {
           if (selectedId) {
             deleteShape(selectedId)
             setSelectedId(null)
           }
+        }
+        else if (ev.code === "Escape") {
+          setSelectedId(null)
         }
       }
 
@@ -199,7 +247,7 @@ export default function HomePage() {
       />
       <div className="btn-group my-2" role="group">
         {/* Default State */
-          appState === APP_STATES.NOTHING && <>
+          appState.size === 0 && <>
             <button className="btn btn-info" onClick={() => addRectangle(randInt(100), randInt(100))}>
               Rectangle
         </button>
@@ -218,29 +266,37 @@ export default function HomePage() {
             <button className="btn btn-info" onClick={drawArrow}>
               Arrow
         </button>
+            <button className="btn btn-info" onClick={startJamBoard}>
+              jamBoard
+        </button>
             <button className="btn btn-info" onClick={() => setModalShow(true)}>
               change background
         </button>
 
             {
-              selectedId !== null &&
-              <button
+              selectedId !== null && <button
                 className="btn btn-info"
                 onClick={() => {
-                  setAppState(APP_STATES.COLOR_PICKING)
-
                   let shape = shapes.find(it => it.id === selectedId)
-                  // TODO: make that check a function
-                  setbg(shape.kind === shapeKinds.Line ? shape.stroke : shape.fill)
+                  if (shape) {
+                    setAppState(addToSet(appState, APP_STATES.COLOR_PICKING))
+                    setbg(shape.kind === shapeKinds.Line ? shape.stroke : shape.fill)
+                  }
                 }}>
-                color picker
-                        </button>
+                color picker </button>
             }
           </>
         }
 
+        {
+          appState.size !== 0 &&
+          <button className={'btn btn-warning'} onClick={doneJob}>
+            done
+        </button>
+        }
+
         {/* Drawing State */
-          (appState === APP_STATES.DRAWING || appState === APP_STATES.COLOR_PICKING) && <>
+          (appState.has(APP_STATES.DRAWING) || appState.has(APP_STATES.COLOR_PICKING)) && <>
             <button className={'btn btn-warning'} onClick={cancelOperation}>
               cancel
         </button>
@@ -248,10 +304,11 @@ export default function HomePage() {
         }
         <button className="btn btn-info" onClick={undo}>
           Undo
-        </button>
+         </button>
       </div>
+
       {// something selected 
-        selectedId !== null && appState === APP_STATES.COLOR_PICKING &&
+        selectedId !== null && appState.has(APP_STATES.COLOR_PICKING) &&
         <div id="color-picker-wrapper" className="position-fixed">
           <ChromePicker
             disableAlpha
@@ -259,13 +316,7 @@ export default function HomePage() {
             onChange={(color) => setbg(color['hex'])}
             onChangeComplete={(color) => {
               let
-                index = shapes.findIndex((it) => it.id === selectedId)
-
-              if (index === -1)
-                return console.log('what?')
-
-
-              let
+                index = shapes.findIndex((it) => it.id === selectedId),
                 shape = shapes[index],
                 key = shape.kind !== shapeKinds.Line ? 'fill' : 'stroke'
 
@@ -287,7 +338,10 @@ export default function HomePage() {
         width={window.innerWidth * 0.9}
         height={window.innerHeight}
         ref={stageEl}
-        onClick={onCanvasClick}
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMousemove={handleMouseMove}
+        onMouseup={handleMouseUp}
       >
         <Layer ref={mainLayer}>
           {/* TODO: add dynamic layers not like circles, rects, ... */}
@@ -358,9 +412,19 @@ export default function HomePage() {
         </Layer>
 
         {/* drawing preview layer */}
-        <Layer ref={drawingPreviewLayer}>
-
-        </Layer>
+        {appState.has(APP_STATES.DRAWING) &&
+          <Layer ref={drawingPreviewLayer}>
+            {tempShapes.map((shape, i) =>
+              <MyLine
+                key={shape.id}
+                shapeProps={{ ...shape }}
+                isSelected={shape.id === selectedId}
+                onSelect={() => onShapeSelected(shape.id)}
+                onChange={newAttrs => {
+                  setTempShapes(replaceInArray(tempShapes, i, newAttrs))
+                }}
+              />)}
+          </Layer>}
       </Stage>
 
     </div >

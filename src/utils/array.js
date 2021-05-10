@@ -8,3 +8,6 @@ export function removeInArray(array, index) {
   myArray.splice(index, 1)
   return myArray
 }
+export function cleanArray(arr) {
+  arr.length = 0
+}
