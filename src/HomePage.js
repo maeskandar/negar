@@ -182,7 +182,7 @@ export default function HomePage() {
       if (appState.has(APP_STATES.DRAWING)) {
 
         // stick lines if they have Intersection, else create new line
-        if (selectedTool === APP_TOOLS.PENCIL && tempShapes.length !== 0) {
+        if (isJamBoardMode() && tempShapes.length !== 0) {
           let resultLines = []
 
           function stickToLast(x, y) {
@@ -192,8 +192,10 @@ export default function HomePage() {
           function addNewLine(...points) {
             resultLines.push(newLine(points, true))
           }
+          
+          addNewLine(...tempShapes[0].points)
 
-          for (let i = 0; i < tempShapes.length - 1; i++) {
+          for (let i = 1; i < tempShapes.length - 1; i++) {
             let
               lcp = tempShapes[i].points, // current line points
               lnp = tempShapes[i + 1].points // next line points
