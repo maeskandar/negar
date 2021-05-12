@@ -1,16 +1,18 @@
 import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
-
 import v1 from 'uuid/dist/v1'
 
-export function newLine(pos1x, pos1y, pos2x, pos2y) {
+import { shapeKinds } from './'
+
+export function newLine(points, customLine = false) {
   return {
-    points: [pos1x, pos1y, pos2x, pos2y],
+    id: v1(),
+    kind: customLine ? shapeKinds.CustomLine : shapeKinds.Line,
+    points,
     stroke: 'red',
     strokeWidth: 11,
     lineCap: 'round',
     lineJoin: 'round',
-    id: v1()
   }
 }
 export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
@@ -32,7 +34,7 @@ export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable
+        draggable={isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,

@@ -1,6 +1,7 @@
 import Konva from "konva"
 import v1 from 'uuid/dist/v1'
 
+// import { shapeKinds } from './'
 import { isSafari, isFirefox, isEdge } from "../utils/browser"
 
 export function addTextNode(stage, layer) {
@@ -77,25 +78,25 @@ export function addTextNode(stage, layer) {
     // remember that text rendering on canvas and on the textarea can be different
     // and sometimes it is hard to make it 100% the same. But we will try...
     textarea.value = textNode.text()
+    
     textarea.style.position = "absolute"
-    textarea.style.top = areaPosition.y + "px"
-    textarea.style.left = areaPosition.x + "px"
-    textarea.style.width = textNode.width() - textNode.padding() * 2 + "px"
-    textarea.style.height =
-      textNode.height() - textNode.padding() * 2 + 5 + "px"
-    textarea.style.fontSize = textNode.fontSize() + "px"
-    textarea.style.border = "none"
-    textarea.style.padding = "0px"
-    textarea.style.margin = "0px"
-    textarea.style.overflow = "hidden"
-    textarea.style.background = "none"
-    textarea.style.outline = "none"
-    textarea.style.resize = "none"
-    textarea.style.lineHeight = textNode.lineHeight()
-    textarea.style.fontFamily = textNode.fontFamily()
-    textarea.style.transformOrigin = "left top"
-    textarea.style.textAlign = textNode.align()
-    textarea.style.color = textNode.fill()
+    textarea.top = areaPosition.y + "px"
+    textarea.left = areaPosition.x + "px"
+    textarea.width = textNode.width() - textNode.padding() * 2 + "px"
+    textarea.height = textNode.height() - textNode.padding() * 2 + 5 + "px"
+    textarea.fontSize = textNode.fontSize() + "px"
+    textarea.border = "none"
+    textarea.padding = "0px"
+    textarea.margin = "0px"
+    textarea.overflow = "hidden"
+    textarea.background = "none"
+    textarea.outline = "none"
+    textarea.resize = "none"
+    textarea.lineHeight = textNode.lineHeight()
+    textarea.fontFamily = textNode.fontFamily()
+    textarea.transformOrigin = "left top"
+    textarea.textAlign = textNode.align()
+    textarea.color = textNode.fill()
 
     let
       rotation = textNode.rotation(),

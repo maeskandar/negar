@@ -1,14 +1,15 @@
 ## Commands:
-  - `npm start`: to start the project demo
+  - `npm install`: to install dependencies
+  - `npm start`: to start demo
 
 ## TODOs:
-  - [ ] add line  
-  - [ ] add arrow
+  - [x] add arrow shape
+  - [x] add line
+  - [x] color picker
+  - [x] jamBoard
 
 ## Known bugs:
-- undo
-- delete
-- object ordering
+  - textNode
 
 ## Others
   increase limit file watcher command on linux:

@@ -1,26 +1,28 @@
-import React, { useState, useEffect } from "react"
-import { Stage, Layer } from "react-konva"
-import v1 from 'uuid/dist/v1'
+import React, { useState, useEffect, useCallback } from "react"
+import { Stage, Layer, Rect } from "react-konva"
+import { ChromePicker } from "react-color"
+// import v1 from 'uuid/dist/v1'
 import randInt from 'random-int'
 
-import Rectangle from "./canvas/Rectangle"
-import Circle from "./canvas/Circle"
-// import { addLine } from "./canvas/Line"
-import { addTextNode } from "./canvas/TextNode"
-import Image from "./canvas/Images"
+import { shapeKinds } from "./canvas/"
+import { Rectangle, newRectangle } from "./canvas/Rectangle"
+import { MyCircle as Circle, newCircle } from "./canvas/Circle"
+import { MyImage as Image, newImage } from "./canvas/Images"
+// import { addTextNode } from "./canvas/TextNode"
 import { MyVerticallyCenteredModal } from "./components/MyVerticallyCenteredModal"
 import { MyLine, newLine } from "./canvas/Line"
 import { newArrow, Arrow } from "./canvas/Arrow"
 
-import { replaceInArray } from "./utils/array"
-import Konva from "konva"
+import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "./utils/array"
+import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "./utils/set"
+import { pointsDistance } from "./utils/math"
 
-// enum
+// enums ----
 const
   APP_STATES = {
-    NOTHING: 0,
-    DRAGING: 1,
-    DRAWING: 2,
+    DRAGING: 0,
+    DRAWING: 1,
+    COLOR_PICKING: 2,
   },
   APP_TOOLS = {
     NOTHING: 0,
@@ -28,32 +30,73 @@ const
     RECTANGLE: 2,
     CIRCLE: 3,
     IMAGE: 4,
+    PENCIL: 5,
+    ERASER: 6,
   },
-  isSet = {
-    documentEventListeners: false,
-  },
-  drawingTempData = []
+  ERASER_RADIUS = 10 // px
 
-// var mouseCursor
+let drawingTempData = []
+
+function objectToShape(obj, isSelected, onSelect, onChange) {
+  const commonProps = {
+    key: obj.id,
+    isSelected, onSelect,  onChange,
+  }
+
+  switch (obj.kind) {
+    case shapeKinds.Reactangle:
+      return <Rectangle
+        {...commonProps}
+        shapeProps={obj}
+      />
+
+    case shapeKinds.Circle:
+      return <Circle
+        {...commonProps}
+        shapeProps={obj}
+      />
+
+    case shapeKinds.Image:
+      return <Image
+        {...commonProps}
+        imageUrl={obj.content}
+      />
+
+    case shapeKinds.CustomShape:
+      return <Arrow
+        {...commonProps}
+        shapeProps={obj}
+      />
+
+    case shapeKinds.Line:
+    case shapeKinds.CustomLine:
+      return <MyLine
+        {...commonProps}
+        shapeProps={obj}
+      />
+
+    default:
+      throw new Error("undefiend shape")
+  }
+}
 
 export default function HomePage() {
   const
     // react stuff
-    forceUpdate = React.useCallback(() => updateState({}), []),
-    [, updateState] = React.useState(),
+    // [, updateState] = React.useState(),
+    // forceUpdate = useCallback(() => updateState({}), []),
+
     // canvas related
-    [circles, setCircles] = useState([]),
-    [rectangles, setRectangles] = useState([]),
-    [lines, setLines] = useState([]),
-    [arrows, setArrows] = useState([]),
-    [images, setImages] = useState([]),
     [shapes, setShapes] = useState([]),
-    [selectedId, selectShape] = useState(null),
+    [tempShapes, setTempShapes] = useState([]),
+    [bg, setbg] = useState("#fff"),
+    [selectedId, setSelectedId] = useState(null),
     stageEl = React.createRef(),
     mainLayer = React.createRef(),
     drawingPreviewLayer = React.createRef(),
+
     // app functionality related
-    [appState, setAppState] = React.useState(APP_STATES.NOTHING),
+    [appState, setAppState] = React.useState(new Set()),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
     [modalShow, setModalShow] = React.useState(false),
     fileUploadEl = React.createRef(),
@@ -76,65 +119,173 @@ export default function HomePage() {
       }
     ]
 
+
   // functions -----------------------------------------
   const
-    onCanvasClick = (ev) => {
-      if (appState === APP_STATES.DRAWING) {
-        // TODO: add drawing mode for other shapes
-        if (selectedTool === APP_TOOLS.LINE) {
-          drawingTempData.push(ev.evt.layerX, ev.evt.layerY)
-
-          if (drawingTempData.length === 4) {
-            setLines(lines.concat([newLine(...drawingTempData)]))
-            setShapes(shapes.concat([`ln${lines.length + 1}`]))
-            drawingTempData.length = 0
-          }
-        }
-      }
+    isJamBoardMode = () =>
+      appState.has(APP_STATES.DRAWING) &&
+      (selectedTool === APP_TOOLS.PENCIL || selectedTool === APP_TOOLS.ERASER)
+    ,
+    addToShapes = (...newShapes) => {
+      setShapes(shapes.concat(newShapes))
     },
+
     addRectangle = (x, y) => {
-      const rect = {
-        x, y,
-        width: 100,
-        height: 100,
-        fill: Konva.Util.getRandomColor(),
-        id: v1(),
-      }
-      setRectangles(rectangles.concat([rect]))
-      setShapes(shapes.concat([rect.id]))
+      addToShapes(
+        newRectangle(x, y))
     },
     addCircle = (x, y) => {
-      const circ = {
-        x, y,
-        width: 100,
-        height: 100,
-        fill: Konva.Util.getRandomColor(),
-        id: v1(),
-      }
-      setCircles(circles.concat([circ]))
-      setShapes(shapes.concat([circ.id]))
+      addToShapes(
+        newCircle(x, y))
     },
     drawLine = () => {
-      setAppState(APP_STATES.DRAWING)
+      setAppState(addToSet(appState, APP_STATES.DRAWING))
       setSelectedTool(APP_TOOLS.LINE)
     },
     drawArrow = () => {
-      var arw = newArrow()
-      console.log(arw)
-      setArrows(arrows.concat([arw]))
-      setShapes(shapes.concat([`arw${arrows.length + 1}`]))
+      addToShapes(
+        newArrow())
     },
     drawText = () => {
-      const id = addTextNode(stageEl.current.getStage(), mainLayer.current)
-      setShapes(shapes.concat([id]))
+      // const id = addTextNode(stageEl.current.getStage(), mainLayer.current)
+      // setShapes(shapes.concat([id]))
     },
-    drawImage = () => {
+    drawImage = () => { // #FIXME: what a name
       fileUploadEl.current.click()
     },
+    startJamBoard = () => {
+      setAppState(addToSet(appState, APP_STATES.DRAWING))
+      setSelectedTool(APP_TOOLS.PENCIL)
+      setSelectedId(null)
+    },
 
-    cancelDrawing = () => {
+    deleteShape = (shapeId) => {
+      let index = shapes.findIndex(it => it.id === shapeId)
+
+      if (index !== -1)
+        setShapes(removeInArray(shapes, index))
+    },
+
+    cancelOperation = () => {
+      if (appState.has(APP_STATES.DRAWING)) {
+        cleanArray(drawingTempData)
+        setTempShapes([])
+      }
+      else if (appState.has(APP_STATES.COLOR_PICKING)) { }
+
+      setAppState(new Set())
       setSelectedTool(APP_TOOLS.NOTHING)
-      setAppState(APP_STATES.NOTHING)
+    },
+    doneJob = () => {
+      if (appState.has(APP_STATES.DRAWING)) {
+
+        // stick lines if they have Intersection, else create new line
+        if (isJamBoardMode() && tempShapes.length !== 0) {
+          let resultLines = []
+
+          function stickToLast(x, y) {
+            let lastLine = resultLines[resultLines.length - 1]
+            lastLine.points.push(x, y)
+          }
+          function addNewLine(...points) {
+            resultLines.push(newLine(points, true))
+          }
+          
+          addNewLine(...tempShapes[0].points)
+
+          for (let i = 1; i < tempShapes.length - 1; i++) {
+            let
+              lcp = tempShapes[i].points, // current line points
+              lnp = tempShapes[i + 1].points // next line points
+
+            // if end points of this line are equal to start points of next line
+            if (arraysEqual(lcp.slice(2), lnp.slice(0, 2)))
+              stickToLast(...lnp.slice(2))
+            else
+              addNewLine(...lnp)
+          }
+
+          addToShapes(...resultLines)
+        }
+
+      }
+      cancelOperation()
+    },
+
+    // canvas events -------------------------
+    handleClick = (ev) => {
+      // TODO: add drawing mode for other shapes
+      if (appState.has(APP_STATES.DRAWING)) {
+
+        if (selectedTool === APP_TOOLS.LINE) {
+
+          drawingTempData.push(ev.evt.layerX, ev.evt.layerY)
+          if (drawingTempData.length === 4) {
+            addToShapes(newLine([...drawingTempData]))
+            cleanArray(drawingTempData)
+          }
+        }
+
+      }
+      else if (ev.target === ev.target.getStage()) {
+        setSelectedId(null)
+        cancelOperation()
+      }
+    },
+    onShapeSelected = (shapeId) => {
+      setSelectedId(shapeId === selectedId ? null : shapeId)
+    },
+    handleMouseDown = (e) => {
+      if (!appState.has(APP_STATES.DRAGING))
+        setAppState(addToSet(appState, APP_STATES.DRAGING))
+
+      if (appState.has(APP_STATES.DRAWING)) {
+        const pos = e.target.getStage().getPointerPosition()
+
+        drawingTempData = [pos.x, pos.y]
+        if (selectedTool === APP_TOOLS.PENCIL) {
+          setTempShapes(tempShapes.concat([newLine([pos.x, pos.y], true)]))
+        }
+      }
+    },
+    handleMouseMove = (e) => {
+      if (setHasParamsAnd(appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
+
+        var mp = stageEl.current.getPointerPosition()
+        mp = [mp.x, mp.y]
+
+        if (selectedTool === APP_TOOLS.PENCIL) {
+          setTempShapes(addToArray(tempShapes,
+            newLine(drawingTempData.concat(mp))))
+
+          drawingTempData = mp
+        }
+        else if (selectedTool === APP_TOOLS.ERASER) {
+          let acc = []
+          for (const l of tempShapes) {
+            let
+              sp = l.points.slice(0, 2),
+              ep = l.points.slice(2)
+
+            if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS))
+              acc.push(l)
+          }
+
+          setTempShapes(acc)
+        }
+
+      }
+    },
+    handleMouseUp = () => {
+      setAppState(removeInSet(appState, APP_STATES.DRAGING))
+
+      // if (appState.has(APP_STATES.DRAWING)) {
+      //   if (selectedTool === APP_TOOLS.PENCIL) {
+
+      //   }
+      //   else if (selectedTool === APP_TOOLS.ERASER) {
+      //   }
+      // }
     },
 
     fileChange = (ev) => {
@@ -143,84 +294,39 @@ export default function HomePage() {
       const reader = new FileReader()
       reader.addEventListener("load", () => {
         fileUploadEl.current.value = null
-
-        const id = v1()
-        images.push({
-          content: reader.result,
-          id,
-        })
-        setImages(images)
-
-        shapes.push(id)
-        setShapes(shapes)
-
-        forceUpdate()
+        addToShapes(newImage(reader.result))
       }, false)
+
       if (file) {
         reader.readAsDataURL(file)
       }
-    },
-    undo = () => {
-      const lastId = shapes[shapes.length - 1]
-      let index = circles.findIndex(c => c.id === lastId)
-
-      if (index !== -1) {
-        circles.splice(index, 1)
-        setCircles(circles)
-      }
-
-      index = rectangles.findIndex(r => r.id === lastId)
-      if (index !== -1) {
-        rectangles.splice(index, 1)
-        setRectangles(rectangles)
-      }
-
-      index = images.findIndex(r => r.id === lastId)
-      if (index !== -1) {
-        images.splice(index, 1)
-        setImages(images)
-      }
-
-      shapes.pop()
-      setShapes(shapes)
-      forceUpdate()
     }
+  // undo = () => { }
 
 
-  // adds event listeners in the first time only
+  // if you have any question for what i did that: because of new stupid functional paradigm react way
   useEffect(() => {
-    if (!isSet.documentEventListeners) {
-      document.addEventListener("keydown", (ev) => {
+    const
+      handleWindowKeyboard = (ev) => {
         if (ev.code === "Delete") {
-          let index = circles.findIndex(c => c.id === selectedId)
-          if (index !== -1) {
-            circles.splice(index, 1)
-            setCircles(circles)
+          if (selectedId) {
+            deleteShape(selectedId)
+            setSelectedId(null)
           }
-
-          index = rectangles.findIndex(r => r.id === selectedId)
-          if (index !== -1) {
-            rectangles.splice(index, 1)
-            setRectangles(rectangles)
-          }
-
-          index = images.findIndex(r => r.id === selectedId)
-          if (index !== -1) {
-            images.splice(index, 1)
-            setImages(images)
-          }
-
-          forceUpdate()
         }
-      })
-      isSet.documentEventListeners = true
-    }
-  })
+        else if (ev.code === "Escape") {
+          setSelectedId(null)
+        }
+      }
+
+    window.addEventListener('keydown', handleWindowKeyboard)
+    return () => window.removeEventListener('keydown', handleWindowKeyboard)
+  }, [selectedId, deleteShape])
 
   return (
-    <div className="home-page" style={{
-      background: `url(${backgroundimage}) no-repeat center fixed`,
-    }}>
+    <div className="home-page"
+      style={{ background: `url(${backgroundimage}) no-repeat center fixed`, }}
+    >
       <MyVerticallyCenteredModal
         images={backimages}
         show={modalShow}
@@ -229,41 +335,91 @@ export default function HomePage() {
       />
       <div className="btn-group my-2" role="group">
         {/* Default State */
-          appState === APP_STATES.NOTHING && <>
-            <button className={'btn btn-info'} onClick={() => addRectangle(randInt(100), randInt(100))}>
+          !appState.has(APP_STATES.DRAWING) && <>
+            <button className="btn btn-info" onClick={() => addRectangle(randInt(100), randInt(100))}>
               Rectangle
         </button>
-            <button className={'btn btn-info'} onClick={() => addCircle(randInt(100), randInt(100))}>
+            <button className="btn btn-info" onClick={() => addCircle(randInt(100), randInt(100))}>
               Circle
         </button>
-            <button className={'btn btn-info'} onClick={drawLine}>
+            <button className="btn btn-info" onClick={drawLine}>
               Line
         </button>
-            <button className={'btn btn-info'} onClick={drawText}>
+            <button className="btn btn-info" onClick={drawText}>
               Text
         </button>
-            <button className={'btn btn-info'} onClick={drawImage}>
+            <button className="btn btn-info" onClick={drawImage}>
               Image
         </button>
-            <button className={'btn btn-info'} onClick={drawArrow}>
+            <button className="btn btn-info" onClick={drawArrow}>
               Arrow
         </button>
-            <button className={'btn btn-info'} onClick={() => setModalShow(true)}>
+            <button className="btn btn-info" onClick={startJamBoard}>
+              jamBoard
+        </button>
+            <button className="btn btn-info" onClick={() => setModalShow(true)}>
               change background
         </button>
+
+            {
+              selectedId !== null && <button
+                className="btn btn-info"
+                onClick={() => {
+                  let shape = shapes.find(it => it.id === selectedId)
+                  if (shape) {
+                    setAppState(addToSet(appState, APP_STATES.COLOR_PICKING))
+                    setbg((shape.kind === shapeKinds.Line, shape.kind === shapeKinds.CustomLine) ? shape.stroke : shape.fill)
+                  }
+                }}>
+                color picker </button>
+            }
           </>
         }
+        {isJamBoardMode() && <>
+          <button
+            className={"btn btn-info " + (selectedTool === APP_TOOLS.PENCIL ? 'active' : '')}
+            onClick={() => setSelectedTool(APP_TOOLS.PENCIL)}>
+            pencil
+            </button>
+          <button
+            className={"btn btn-info " + (selectedTool === APP_TOOLS.ERASER ? 'active' : '')}
+            onClick={() => { setSelectedTool(APP_TOOLS.ERASER) }}>
+            eraser
+          </button>
+        </>
+        }
+
         {/* Drawing State */
-          appState === APP_STATES.DRAWING && <>
-            <button className={'btn btn-warning'} onClick={cancelDrawing}>
+          setHasParamsOr(appState, APP_STATES.DRAWING, APP_STATES.COLOR_PICKING) && <>
+            <button className={'btn btn-warning'} onClick={doneJob}>
+              done
+        </button>
+            <button className={'btn btn-warning'} onClick={cancelOperation}>
               cancel
         </button>
           </>
         }
-        <button className={'btn btn-info'} onClick={undo}>
-          Undo
-        </button>
       </div>
+
+      {// something selected 
+        selectedId !== null && appState.has(APP_STATES.COLOR_PICKING) &&
+        <div id="color-picker-wrapper" className="position-fixed">
+          <ChromePicker
+            disableAlpha
+            color={bg}
+            onChange={(color) => setbg(color['hex'])}
+            onChangeComplete={(color) => {
+              let
+                index = shapes.findIndex((it) => it.id === selectedId),
+                shape = shapes[index],
+                key = (shape.kind !== shapeKinds.Line, shape.kind !== shapeKinds.CustomLine) ? 'fill' : 'stroke'
+
+              setShapes(replaceInArray(shapes, index,
+                { ...shape, [key]: color['hex'] }))
+            }}
+          />
+        </div>
+      }
       <input
         style={{ display: "none" }}
         type="file"
@@ -276,80 +432,39 @@ export default function HomePage() {
         width={window.innerWidth * 0.9}
         height={window.innerHeight}
         ref={stageEl}
-        onClick={onCanvasClick}
-        onMouseDown={e => {
-          // deselect when clicked on empty area
-          if (e.target === e.target.getStage()) selectShape(null)
-        }}
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMousemove={handleMouseMove}
+        onMouseup={handleMouseUp}
       >
         <Layer ref={mainLayer}>
-          {/* TODO: add dynamic layers not like circles, rects, ... */}
           {/* main layer */}
-          {rectangles.map((rect, i) =>
-            <Rectangle
-              key={i}
-              shapeProps={rect}
-              isSelected={rect.id === selectedId}
-              onSelect={() => {
-                selectShape(rect.id)
-              }}
-              onChange={newAttrs => {
-                setRectangles(replaceInArray(rectangles, i, newAttrs))
-              }}
-            />
-          )}
-          {circles.map((circle, i) =>
-            <Circle
-              key={i}
-              shapeProps={circle}
-              isSelected={circle.id === selectedId}
-              onSelect={() => selectShape(circle.id)}
-              onChange={newAttrs => {
-                setCircles(replaceInArray(circles, i, newAttrs))
-              }}
-            />
-          )}
-          {images.map((image, i) =>
-            <Image
-              key={i}
-              imageUrl={image.content}
-              isSelected={image.id === selectedId}
-              onSelect={() => selectShape(image.id)}
-              onChange={newAttrs => {
-                const imgs = images.slice()
-                imgs[i] = newAttrs
-                // FIXME: why you don't have something like `setCircles`?
-              }}
-            />
-          )}
-          {arrows.map((arrow, i) =>
-            <Arrow
-              key={i}
-              shapeProps={arrow}
-              isSelected={arrow.id === selectedId}
-              onSelect={() => selectShape(arrow.id)}
-              onChange={newAttrs => {
-                setArrows(replaceInArray(arrows, i, newAttrs))
-              }}
-            />
-          )}
-          {lines.map((line, i) =>
-            <MyLine
-              key={i}
-              shapeProps={line}
-              isSelected={line.id === selectedId}
-              onSelect={() => selectShape(line.id)}
-              onChange={newAttrs => {
-                setLines(replaceInArray(lines, i, newAttrs))
-              }}
-            />
-          )}
+          {shapes.map((shape, i) => objectToShape(
+            shape, shape.id === selectedId,
+            () => onShapeSelected(shape.id),
+            (newAttrs) => setShapes(replaceInArray(shapes, i, newAttrs)),
+          ))}
         </Layer>
 
         {/* drawing preview layer */}
-        <Layer ref={drawingPreviewLayer}>
-
-        </Layer>
+        {appState.has(APP_STATES.DRAWING) &&
+          <Layer ref={drawingPreviewLayer}>
+            <Rect
+              //  TODO:  make it respect to stageEl
+              width={window.innerWidth * 0.9}
+              height={window.innerHeight}
+              fill="#fff"
+              opacity={0.5}
+            />
+            {tempShapes.map((shape, i) =>
+              <MyLine
+                key={shape.id}
+                shapeProps={{ ...shape }}
+                onChange={newAttrs => {
+                  setTempShapes(replaceInArray(tempShapes, i, newAttrs))
+                }}
+              />)}
+          </Layer>}
       </Stage>
 
     </div >
