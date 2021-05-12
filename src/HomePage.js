@@ -40,9 +40,7 @@ let drawingTempData = []
 function objectToShape(obj, isSelected, onSelect, onChange) {
   const commonProps = {
     key: obj.id,
-    isSelected,
-    onSelect, // () => onShapeSelected(obj.id),
-    onChange, // (newAttrs) => setShapes(replaceInArray(shapes, i, newAttrs)),
+    isSelected, onSelect,  onChange,
   }
 
   switch (obj.kind) {
@@ -187,7 +185,7 @@ export default function HomePage() {
 
           function stickToLast(x, y) {
             let lastLine = resultLines[resultLines.length - 1]
-            lastLine.points = lastLine.points.concat([x, y])
+            lastLine.points.push(x, y)
           }
           function addNewLine(...points) {
             resultLines.push(newLine(points, true))
