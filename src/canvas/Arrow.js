@@ -4,24 +4,32 @@ import v1 from 'uuid/dist/v1'
 
 import { shapeKinds } from './'
 
-export function newArrow() {
+const
+  ORIGIN_WIDTH = 100,
+  ORIGIN_HEIGHT = 150,
+  ORIGIN_POINTS = [
+    [0, 0],
+    [50, 50],
+    [50, 20],
+    [150, 20],
+    [150, -20],
+    [50, -20],
+    [50, -50],
+  ].flat()
+
+export function newArrow(x = 50, y = 50) {
   return {
     id: v1(),
     kind: shapeKinds.CustomShape,
 
-    points: [
-      [0, 0],
-      [50, 50],
-      [50, 20],
-      [150, 20],
-      [150, -20],
-      [50, -20],
-      [50, -50],
-    ].map(it => [it[0] + 50, it[1] + 50]).flat(),
+    points: [],
+    x, y,
+    width: ORIGIN_WIDTH,
+    height: ORIGIN_HEIGHT,
 
     fill: '#00D2FF',
+    strokeWidth: 4,
     stroke: 'black',
-    strokeWidth: 6,
     lineCap: 'round',
     lineJoin: 'round',
     closed: true,
@@ -40,6 +48,8 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
     }
   }, [isSelected])
 
+  shapeProps.points = ORIGIN_POINTS.map((p, i) =>
+    p * (i % 2 === 0 ? shapeProps.width / ORIGIN_WIDTH : shapeProps.height / ORIGIN_HEIGHT))
 
   return (
     <>
@@ -47,27 +57,32 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable = {isSelected}
+        draggable={isSelected}
         onDragEnd={e => {
+          let
+            dx = e.target.x(),
+            dy = e.target.y()
+
           onChange({
             ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
+            x: dx,
+            y: dy,
           })
         }}
         onTransformEnd={e => {
           // transformer is changing scale
           const
             node = shapeRef.current,
-            scaleX = node.scaleX(),
-            scaleY = node.scaleY()
+            sx = node.scaleX(),
+            sy = node.scaleY()
 
           node.scaleX(1)
           node.scaleY(1)
 
           onChange({
             ...shapeProps,
-            points: shapeProps.points.map((p, i) => p * (i % 2 === 0 ? scaleX : scaleY)),
+            width: shapeProps.width * sx,
+            height: shapeProps.height * sy,
           })
         }}
       />

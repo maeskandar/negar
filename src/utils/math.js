@@ -4,3 +4,10 @@ export function pointsDistance(p1, p2) {
     Math.pow(p1[1] - p2[1], 2)
   )
 }
+
+export function sumArraysOneByOne(arr1, arr2) {
+  if (arr1.length !== arr2.length)
+    throw new Error("the array lenghtes are not equal")
+
+  return arr1.map((v, i) => v + arr2[i])
+}

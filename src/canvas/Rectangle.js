@@ -9,11 +9,12 @@ export function newRectangle(x,y) {
   return {
     id: v1(),
     kind: shapeKinds.Reactangle,
-
-    x, y,
+    x:200, y:200,
     width: 100,
     height: 100,
     fill: Konva.Util.getRandomColor(),
+    strokeWidth: 4,
+    stroke: 'black',
   }
 }
 

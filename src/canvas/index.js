@@ -7,3 +7,7 @@ export const shapeKinds = {
   Image: 5,
   Text: 6,
 }
+
+export function isKindOfLine(kindNumber) {
+  return kindNumber === shapeKinds.CustomLine || kindNumber === shapeKinds.Line
+}

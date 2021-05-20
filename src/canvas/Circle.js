@@ -1,6 +1,6 @@
 import React, { useEffect } from "react"
 import Konva from "konva"
-import { Circle, Transformer } from "react-konva"
+import { Ellipse, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
 import { shapeKinds } from './'
@@ -9,11 +9,12 @@ export function newCircle(x, y) {
   return {
     id: v1(),
     kind: shapeKinds.Circle,
-
-    x, y,
+    x : 200, y : 200,
     width: 100,
     height: 100,
     fill: Konva.Util.getRandomColor(),
+    strokeWidth: 4,
+    stroke: 'black',
   }
 }
 
@@ -31,11 +32,11 @@ export function MyCircle({ shapeProps, isSelected, onSelect, onChange }) {
 
   return (
     <>
-      <Circle
+      <Ellipse
         onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable = {isSelected}
+        draggable={isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,

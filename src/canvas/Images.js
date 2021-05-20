@@ -9,8 +9,11 @@ export function newImage(content) {
   return {
     id: v1(),
     kind: shapeKinds.Image,
-    
     content,
+    x: 100,
+    y: 100,
+    width: 300,
+    height: 300,
   }
 }
 
@@ -28,13 +31,22 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
     }
   }, [isSelected])
 
+  // set for the first time
+  if (shapeProps.width == null && image) {
+    shapeProps.width = image.width
+    shapeProps.height = image.height
+  }
+
   return (
     <>
       <Image
+        width={300}
+        height={300}
         onClick={onSelect}
         image={image}
+        {...shapeProps}
         ref={shapeRef}
-        draggable = {isSelected}
+        draggable={isSelected}
         onDragEnd={e => {
           onChange({
             ...shapeProps,
@@ -45,15 +57,16 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
         onTransformEnd={e => {
           const
             node = shapeRef.current,
-            scaleX = node.scaleX(),
-            scaleY = node.scaleY()
+            sx = node.scaleX(),
+            sy = node.scaleY()
+
+          node.scaleX(1)
+          node.scaleY(1)
 
           onChange({
             ...shapeProps,
-            x: node.x(),
-            y: node.y(),
-            width: node.width() * scaleX,
-            height: node.height() * scaleY,
+            width: node.width() * sx,
+            height: node.height() * sy,
           })
         }}
       />

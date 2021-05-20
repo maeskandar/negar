@@ -9,9 +9,7 @@ export function removeInArray(array, index) {
   return myArray
 }
 export function addToArray(array, item) {
-  let myArray = array.slice()
-  myArray.push(item)
-  return myArray
+  return array.concat([item])
 }
 export function cleanArray(arr) {
   arr.length = 0

@@ -2,14 +2,10 @@
   - `npm install`: to install dependencies
   - `npm start`: to start demo
 
-## TODOs:
-  - [x] add arrow shape
-  - [x] add line
-  - [x] color picker
-  - [x] jamBoard
-
 ## Known bugs:
   - textNode
+  - line rotation
+  - line width & height can be negetive
 
 ## Others
   increase limit file watcher command on linux:
