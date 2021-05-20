@@ -499,7 +499,7 @@ export default function HomePage() {
               <ToolBarBtn
                 title="change background"
                 iconEl={<BackgroundIcon />}
-                onClick={() => setModalShow(true)}
+                onClick={() => setBackgroundModalShow(true)}
               />
             </>
           }
