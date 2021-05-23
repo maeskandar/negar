@@ -120,65 +120,80 @@ export default function HomePage() {
     backimages = [
       {
         url: '/images/pexels-eberhard-grossgasteiger-1064162.jpg',
-        title: 'forest and lake!',
-        desc: 'no description is available'
+        title: 'دریاچه و جنگل',
+        desc: 'مناظر و طبیعت'
       },
       {
         url: '/images/pexels-martin-damboldt-814499.jpg',
-        title: 'nice lake!',
-        desc: 'no description is available'
+        title: 'دریاچه ای زیبا',
+        desc: 'مناظر و طبیعت'
       },
       {
         url: '/images/pexels-roberto-shumski-1903702.jpg',
-        title: 'mountains!',
-        desc: 'no description is available'
+        title: 'کوه ها!',
+        desc: 'مناظر و طبیعت'
+      },
+      {
+        url: '/images/solid1.png',
+        title: 'صفحه رنگی',
+        desc: 'صفحه رنگی است!'
+      },
+      {
+        url: '/images/solid2.jpg',
+        title: 'صفحه رنگی',
+        desc: 'صفحه رنگی است!'
+      },
+      {
+        url: '/images/solid3.jpg',
+        title: 'صفحه رنگی',
+        desc: 'صفحه رنگی است!'
       }
     ],
     imagesData = [
       {
         url: '/images/tree1.png',
-        title: 'tree',
-        desc: 'type 1'
+        title: 'درخت',
+        desc: 'نوع شماره 1'
       },
       {
         url: '/images/tree2.png',
-        title: 'tree',
-        desc: 'type 2'
+        title: 'درخت',
+        desc: 'نوع شماره 2'
       },
       {
         url: '/images/tree3.png',
-        title: 'tree',
-        desc: 'type 3'
+        title: 'درخت',
+        desc: 'نوع شماره 3'
       },
       {
         url: '/images/tree5.png',
-        title: 'tree',
-        desc: 'type 5'
+        title: 'درخت',
+        desc: 'نوع شماره 4'
       },
       {
         url: '/images/tree6.png',
-        title: 'tree',
-        desc: 'type 6'
+        title: 'درخت',
+        desc: 'نوع شماره 5'
       },
       {
         url: '/images/tree8.png',
-        title: 'tree',
-        desc: 'type 8'
+        title: 'درخت',
+        desc: 'نوع شماره 6'
       },
       {
         url: '/images/tree9.png',
-        title: 'tree',
-        desc: 'type 9'
+        title: 'درخت',
+        desc: 'نوع شماره 7'
       },
       {
         url: '/images/tree10.png',
-        title: 'tree',
-        desc: 'type 10'
+        title: 'درخت',
+        desc: 'نوع شماره 8'
       },
       {
         url: '/images/tree11.png',
-        title: 'tree',
-        desc: 'type 11'
+        title: 'درخت',
+        desc: 'نوع شماره 9'
       }
     ];
 
@@ -201,7 +216,7 @@ export default function HomePage() {
     },
     deleteShape = (shapeId) => {
       let index = shapes.findIndex(it => it.id === shapeId)
-      
+
       if (index !== -1)
         setShapes(removeInArray(shapes, index))
     },
@@ -396,7 +411,7 @@ export default function HomePage() {
           setSelectedId(null)
         }
       }
- 
+
 
     window.addEventListener('keydown', handleWindowKeyboard)
     return () => window.removeEventListener('keydown', handleWindowKeyboard)
@@ -425,6 +440,7 @@ export default function HomePage() {
   let Cmodal;
   if (backgroundModalShow)
     Cmodal = <MyVerticallyCenteredModal
+      title={"پس زمینه"}
       images={backimages}
       show={backgroundModalShow}
       setimage={setBackgroundimage}
@@ -432,6 +448,7 @@ export default function HomePage() {
     />;
   else if (imageModalShow)
     Cmodal = <MyVerticallyCenteredModal
+      title={"تصویر"}
       images={imagesData}
       show={imageModalShow}
       setimage={(e) => ImageSetterHandler(e)}
@@ -457,47 +474,47 @@ export default function HomePage() {
           {/* Default State */
             !appState.has(APP_STATES.DRAWING) && <>
               <ToolBarBtn
-                title="Rectangle"
+                title="مستطیل"
                 onClick={() => addRectangle(randInt(100), randInt(100))}
                 iconEl={<RectangleIcon />}
               />
               <ToolBarBtn
-                title="Circle"
+                title="دایره"
                 onClick={() => addCircle(randInt(100), randInt(100))}
                 iconEl={<CircleIcon />}
               />
               <ToolBarBtn
-                title="Line"
+                title="خط"
                 onClick={StartLineDrawingMode}
                 iconEl={<LineIcon />}
               />
               <ToolBarBtn
-                title="Text"
+                title="متن"
                 onClick={drawText}
                 iconEl={<TextIcon />}
               />
               <ToolBarBtn
-                title="Image"
+                title="تصویر"
                 iconEl={<ImageIcon />}
                 onClick={() => setImageModalShow(true)}
               />
               <ToolBarBtn
-                title="Arrow"
+                title="فلش"
                 iconEl={<ArrowIcon />}
                 onClick={drawArrow}
               />
               <ToolBarBtn
-                title="Jamboard"
+                title="تخته"
                 iconEl={<JamBoardIcon />}
                 onClick={startJamBoard}
               />
               <ToolBarBtn
-                title="save"
+                title="ذخیره"
                 iconEl={<SaveIcon />}
                 onClick={saveAsImage}
               />
               <ToolBarBtn
-                title="change background"
+                title="پس زمینه"
                 iconEl={<BackgroundIcon />}
                 onClick={() => setBackgroundModalShow(true)}
               />
@@ -506,13 +523,13 @@ export default function HomePage() {
           {/* JamBoard */
             isInJamBoardMode() && <>
               <ToolBarBtn
-                title="Pencil"
+                title="مداد"
                 iconEl={<PencilIcon />}
                 onClick={() => setSelectedTool(APP_TOOLS.PENCIL)}
                 disabled={selectedTool === APP_TOOLS.PENCIL}
               />
               <ToolBarBtn
-                title="Pencil"
+                title="پاک کن"
                 iconEl={<EraserIcon />}
                 disabled={selectedTool === APP_TOOLS.ERASER}
                 onClick={() => { setSelectedTool(APP_TOOLS.ERASER) }}
@@ -522,13 +539,13 @@ export default function HomePage() {
           {/* Drawing State */
             setHasParamsOr(appState, APP_STATES.DRAWING) && <>
               <ToolBarBtn
-                title="done"
+                title="ثبت عملیات"
                 iconEl={<DoneAll />}
                 onClick={doneOperation}
               />
 
               <ToolBarBtn
-                title="cancel"
+                title="لغو عملیات"
                 iconEl={<CancelIcon />}
                 onClick={cancelOperation}
               />

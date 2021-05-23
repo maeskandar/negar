@@ -10,10 +10,12 @@ export function MyVerticallyCenteredModal (props) {
       size="xl"
       aria-labelledby="contained-modal-title-vcenter"
       centered
+      style={{direction:'ltr'}}
     >
-      <Modal.Header closeButton>
-        <Modal.Title id="contained-modal-title-vcenter">
-          Change background Image
+      <Modal.Header closeButton >
+        <Modal.Title className={"text-center"} id="contained-modal-title-vcenter" 
+        style={{fontFamily:'Shabnam',marginLeft:'45%'}}>
+          {props.title}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -26,8 +28,8 @@ export function MyVerticallyCenteredModal (props) {
           ))}
         </div>
       </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={props.onHide}>Cancel</Button>
+      <Modal.Footer style={{direction:'rtl'}}>
+        <Button onClick={props.onHide}>لغو</Button>
       </Modal.Footer>
     </Modal>
   )

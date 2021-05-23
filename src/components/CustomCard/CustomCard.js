@@ -17,7 +17,7 @@ export const CustomCard = (props) => {
           <Card.Text>
            {props.imagess.desc}
     </Card.Text>
-          <Button variant="primary" onClick={ClickHandler}>Submit</Button>
+          <Button variant="primary" onClick={ClickHandler} style={{fontFamily:'Shabnam'}}>انتخاب</Button>
         </Card.Body>
       </Card>
     </div>
