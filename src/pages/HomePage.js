@@ -558,6 +558,7 @@ export default function HomePage() {
         selectedShapeInfo.id !== null &&
         <Paper id="status-bar" className="p-3" square>
           <div className="mb-2">
+           
             <span> kind: </span>
             <span>
               {
@@ -611,6 +612,7 @@ export default function HomePage() {
 
               onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
             }}
+            
           />
           <TextField
             type="number"
@@ -697,6 +699,10 @@ export default function HomePage() {
               }
             </>
           }
+          <br/>
+          <br/>
+          <br/>
+          <button className={"btn btn-danger"} onClick={()=> setSelectedId(null)}>خروج</button>
         </Paper>
       }
       <CustomSearchbar setVerseText={setVerseText} />
