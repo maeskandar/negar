@@ -110,6 +110,7 @@ const CustomSearchbar = ({ setVerseText }) => {
     const clickHandler = (text) => {
         setVerseText(text);
         setIsResultVisible(false);
+        setValue("");
     }
 
 
