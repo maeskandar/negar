@@ -3,18 +3,19 @@ import Konva from "konva"
 import { Ellipse, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
 
 export function newCircle(x, y) {
   return {
     id: v1(),
     kind: shapeKinds.Circle,
-    x : 200, y : 200,
+    x: 200, y: 200,
     width: 100,
     height: 100,
     fill: Konva.Util.getRandomColor(),
-    strokeWidth: 4,
-    stroke: 'black',
+    opacity: 1,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    stroke: DEFAULT_STROKE_COLOR,
   }
 }
 
@@ -33,35 +34,26 @@ export function MyCircle({ shapeProps, isSelected, onSelect, onChange }) {
   return (
     <>
       <Ellipse
-        onClick={onSelect}
         ref={shapeRef}
+        
+        onClick={onSelect}
         {...shapeProps}
         draggable={isSelected}
-        onDragEnd={e => {
-          onChange({
-            ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
-          })
-        }}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
         onTransformEnd={e => {
-          // transformer is changing scale
           const
             node = shapeRef.current,
-            scaleX = node.scaleX(),
-            scaleY = node.scaleY()
+            sx = node.scaleX(),
+            sy = node.scaleY()
 
           node.scaleX(1)
           node.scaleY(1)
 
           onChange({
             ...shapeProps,
-            x: node.x(),
-            y: node.y(),
-            width: node.width() * scaleX,
-            height: node.height() * scaleY,
+            width: node.width() * sx,
+            height: node.height() * sy,
           })
-
         }}
       />
       {isSelected && <Transformer ref={trRef} />}

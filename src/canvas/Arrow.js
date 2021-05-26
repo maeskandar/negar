@@ -1,35 +1,39 @@
+import Konva from "konva"
 import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR, onDragEndCommon } from './'
+import { oddIndexes, evenIndexes } from '../utils/array'
+import { minMaxDistance } from '../utils/math'
 
 const
-  ORIGIN_WIDTH = 100,
-  ORIGIN_HEIGHT = 150,
   ORIGIN_POINTS = [
-    [0, 0],
-    [50, 50],
-    [50, 20],
-    [150, 20],
-    [150, -20],
-    [50, -20],
-    [50, -50],
-  ].flat()
+    0, 0,
+    50, 50,
+    50, 20,
+    150, 20,
+    150, -20,
+    50, -20,
+    50, -50,
+  ],
+  ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
+  ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
 export function newArrow(x = 50, y = 50) {
   return {
     id: v1(),
     kind: shapeKinds.CustomShape,
 
-    points: [],
     x, y,
-    width: ORIGIN_WIDTH,
-    height: ORIGIN_HEIGHT,
+    points: ORIGIN_POINTS,
+    width: ORIGIN_WIDTH,   // cutsom porperty
+    height: ORIGIN_HEIGHT, // cutsom porperty
 
-    fill: '#00D2FF',
-    strokeWidth: 4,
-    stroke: 'black',
+    fill: Konva.Util.getRandomColor(),
+    opacity: 1,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    stroke: DEFAULT_STROKE_COLOR,
     lineCap: 'round',
     lineJoin: 'round',
     closed: true,
@@ -54,23 +58,13 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
   return (
     <>
       <Line
-        onClick={onSelect}
         ref={shapeRef}
+        
+        onClick={onSelect}
         {...shapeProps}
         draggable={isSelected}
-        onDragEnd={e => {
-          let
-            dx = e.target.x(),
-            dy = e.target.y()
-
-          onChange({
-            ...shapeProps,
-            x: dx,
-            y: dy,
-          })
-        }}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
         onTransformEnd={e => {
-          // transformer is changing scale
           const
             node = shapeRef.current,
             sx = node.scaleX(),

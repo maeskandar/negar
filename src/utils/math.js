@@ -11,3 +11,7 @@ export function sumArraysOneByOne(arr1, arr2) {
 
   return arr1.map((v, i) => v + arr2[i])
 }
+
+export const
+  minMaxDistance = (arr) => Math.max(...arr) - Math.min(...arr),
+  prettyFloatNumber = (num) => num.toFixed(2)

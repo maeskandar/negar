@@ -3,13 +3,14 @@ import { Image, Transformer } from "react-konva"
 import useImage from "use-image"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { shapeKinds, onDragEndCommon } from './'
 
 export function newImage(content) {
   return {
     id: v1(),
     kind: shapeKinds.Image,
     content,
+    opacity: 1,
     x: 100,
     y: 100,
     width: 300,
@@ -24,8 +25,7 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
     [image] = useImage(imageUrl)
 
   React.useEffect(() => {
-    if (isSelected) {
-      // we need to attach transformer manually
+    if (isSelected) { // we need to attach transformer manually
       trRef.current.setNode(shapeRef.current)
       trRef.current.getLayer().batchDraw()
     }
@@ -40,20 +40,14 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
   return (
     <>
       <Image
-        width={300}
-        height={300}
+        ref={shapeRef}
+        
         onClick={onSelect}
         image={image}
         {...shapeProps}
-        ref={shapeRef}
+        
         draggable={isSelected}
-        onDragEnd={e => {
-          onChange({
-            ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
-          })
-        }}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
         onTransformEnd={e => {
           const
             node = shapeRef.current,

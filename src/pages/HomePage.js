@@ -8,18 +8,17 @@ import { Rectangle, newRectangle } from "../canvas/Rectangle"
 import { MyCircle as Circle, newCircle } from "../canvas/Circle"
 import { MyImage, newImage } from "../canvas/Images"
 import { addTextNode } from "../canvas/TextNode"
-import { MyLine, newLine } from "../canvas/Line"
+import { MyLine, newStraghtLine } from "../canvas/StraightLine"
+import { newCustomLine } from "../canvas/CustomLine"
 import { newArrow, Arrow } from "../canvas/Arrow"
 
-import { MyVerticallyCenteredModal } from "../components/CustomModal/MyVerticallyCenteredModal"
+import { MyVerticallyCenteredModal } from "../UI/CustomModal/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
 
 import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
-import { pointsDistance, sumArraysOneByOne } from "../utils/math"
-
+import { pointsDistance, sumArraysOneByOne, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
-// import _ from "lodash"
 
 import {
   CropDin as RectangleIcon,
@@ -39,7 +38,7 @@ import {
 
 import { ToolBarBtn } from "../UI/Toolbar"
 import { Paper, TextField, Slider, Typography } from "@material-ui/core"
-import CustomSearchbar from "../components/Searchbar/CustomSearchbar"
+import CustomSearchbar from "../UI/Searchbar/CustomSearchbar"
 
 // enums ----
 const
@@ -67,6 +66,7 @@ function objectToShape(obj, isSelected, onSelect, onChange) {
   const commonProps = {
     key: obj.id,
     shapeProps: obj,
+    opacity: 0.3,
     isSelected, onSelect, onChange,
   }
 
@@ -102,7 +102,7 @@ export default function HomePage() {
     // canvas related
     [shapes, setShapes] = useState([]),
     [tempShapes, setTempShapes] = useState([]),
-    [color, setColor] = useState("#fff"),
+    [color, setColor] = useState('#fff'),
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
     stageEl = React.createRef(),
     mainLayer = React.createRef(),
@@ -111,8 +111,6 @@ export default function HomePage() {
     // app functionality related
     [appState, setAppState] = React.useState(new Set()),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
-    [modalShow, setModalShow] = React.useState(false),
-    fileUploadEl = React.createRef(),
     [backgroundimage, setBackgroundimageDirect] = useState({ url: null, imageObj: null, }),
     [backgroundModalShow, setBackgroundModalShow] = useState(false),
     [imageModalShow, setImageModalShow] = useState(false),
@@ -195,8 +193,7 @@ export default function HomePage() {
         title: 'درخت',
         desc: 'نوع شماره 9'
       }
-    ];
-
+    ]
 
 
   // functions -----------------------------------------
@@ -238,33 +235,36 @@ export default function HomePage() {
     isColorPicking = () =>
       selectedTool === APP_TOOLS.FG_COLOR_PICKER || selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
     ,
-    addToShapes = (...newShapes) => {
+    addToShapes = (select, ...newShapes) => {
+      if (select)
+        setSelectedShapeInfo({
+          id: newShapes[0].id,
+          shapeObj: newShapes[0],
+          index: shapes.length
+        })
+
       setShapes(shapes.concat(newShapes))
     },
     addRectangle = (x, y) => {
-      addToShapes(
-        newRectangle(x, y))
+      addToShapes(true, newRectangle(x, y))
     },
     addCircle = (x, y) => {
-      addToShapes(
-        newCircle(x, y))
+      addToShapes(true, newCircle(x, y))
+    },
+    drawArrow = () => {
+      addToShapes(true, newArrow())
+    },
+    ImageSetterHandler = (e) => {
+      addToShapes(true, newImage(e))
+    },
+    drawText = () => {
+      // FIXME: needs refactoring
+      let txtEl = addTextNode(stageEl.current.getStage(), mainLayer.current, "تایپ کنید", "Shabnam")
+      addToShapes(false, txtEl)
     },
     StartLineDrawingMode = () => {
       setAppState(addToSet(appState, APP_STATES.DRAWING))
       setSelectedTool(APP_TOOLS.LINE)
-    },
-    drawArrow = () => {
-      addToShapes(
-        newArrow())
-    },
-    drawText = () => {
-      // FIXME: needs refactoring
-      let txtEl = addTextNode(stageEl.current.getStage(), mainLayer.current, "تایپ کنید", "Shabnam");
-      console.log(txtEl)
-      addToShapes(txtEl)
-    },
-    drawImage = () => { // #FIXME: what a name
-      fileUploadEl.current.click()
     },
     startJamBoard = () => {
       setAppState(addToSet(appState, APP_STATES.DRAWING))
@@ -295,7 +295,7 @@ export default function HomePage() {
             tempPoints.push(...newPoints)
           }
           function closeLastLine() {
-            resultLines.push(newLine(tempPoints, true))
+            resultLines.push(newCustomLine(tempPoints))
           }
           function addNewLine(...points) {
             tempPoints = points
@@ -322,7 +322,7 @@ export default function HomePage() {
           }
           closeLastLine()
 
-          addToShapes(...resultLines)
+          addToShapes(false, ...resultLines)
         }
 
       }
@@ -340,7 +340,6 @@ export default function HomePage() {
       imageObj.onload = () =>
         setBackgroundimageDirect({ url, imageObj })
     },
-    // undo = () => { }
     // canvas events -------------------------
     onShapeSelected = (shapeId) => {
       // toggle select
@@ -369,7 +368,7 @@ export default function HomePage() {
         if (selectedTool === APP_TOOLS.PENCIL) {
           setTempShapes(
             addToArray(tempShapes,
-              newLine(drawingTempData.concat(mp))))
+              newStraghtLine(drawingTempData.concat(mp))))
           drawingTempData = mp
         }
         else if (selectedTool === APP_TOOLS.ERASER) {
@@ -391,13 +390,14 @@ export default function HomePage() {
     handleMouseUp = (e) => {
       if (selectedTool === APP_TOOLS.LINE) {
         let pos = e.target.getStage().getPointerPosition()
-        addToShapes(newLine(drawingTempData.concat([pos.x, pos.y])))
+        addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
       }
 
       setAppState(removeInSet(appState, APP_STATES.DRAGING))
     }
 
-  // if you have any question for what i did that: because of new stupid functional paradigm react way
+
+  // register events -----
   useEffect(() => {
     const
       handleWindowKeyboard = (ev) => {
@@ -412,49 +412,25 @@ export default function HomePage() {
         }
       }
 
-
     window.addEventListener('keydown', handleWindowKeyboard)
     return () => window.removeEventListener('keydown', handleWindowKeyboard)
   }, [selectedShapeInfo, deleteShape])
 
+  useEffect(() => {
+    if (verseText != "") {
+      const id = addTextNode(stageEl.current.getStage(), mainLayer.current, verseText, "QuranTaha")
+      const shs = shapes.concat([id])
+      setShapes(shs)
+    }
+  }, [verseText])
 
-  if (!backgroundimage.url) {
+
+  // config default states ------
+  if (!backgroundimage.url) { // default state
     setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
   }
 
-
-  const ImageSetterHandler = (e) => {
-    addToShapes(newImage(e))
-  }
-
-  React.useEffect(function () {
-    if (verseText != "") {
-      const id = addTextNode(stageEl.current.getStage(), mainLayer.current, verseText, "QuranTaha");
-      const shs = shapes.concat([id]);
-      setShapes(shs);
-    }
-  }, [verseText]);
-
-
-
-  let Cmodal;
-  if (backgroundModalShow)
-    Cmodal = <MyVerticallyCenteredModal
-      title={"پس زمینه"}
-      images={backimages}
-      show={backgroundModalShow}
-      setimage={setBackgroundimage}
-      onHide={() => setBackgroundModalShow(false)}
-    />;
-  else if (imageModalShow)
-    Cmodal = <MyVerticallyCenteredModal
-      title={"تصویر"}
-      images={imagesData}
-      show={imageModalShow}
-      setimage={(e) => ImageSetterHandler(e)}
-      onHide={() => setImageModalShow(false)}
-    />;
-
+  // render -------=
   return (
     <div id="home-page" style={{
       textAlign: 'center',
@@ -462,8 +438,20 @@ export default function HomePage() {
       width: '100%'
     }}>
 
-      {
-        Cmodal
+      {backgroundModalShow && <MyVerticallyCenteredModal
+        title={"پس زمینه"}
+        images={backimages}
+        show={backgroundModalShow}
+        setimage={setBackgroundimage}
+        onHide={() => setBackgroundModalShow(false)}
+      />
+      }{imageModalShow && <MyVerticallyCenteredModal
+        title={"تصویر"}
+        images={imagesData}
+        show={imageModalShow}
+        setimage={(e) => ImageSetterHandler(e)}
+        onHide={() => setImageModalShow(false)}
+      />
       }
 
       <div id="tool-bar-wrapper"
@@ -558,7 +546,7 @@ export default function HomePage() {
         selectedShapeInfo.id !== null &&
         <Paper id="status-bar" className="p-3" square>
           <div className="mb-2">
-           
+
             <span> kind: </span>
             <span>
               {
@@ -572,8 +560,8 @@ export default function HomePage() {
           {('x' in selectedShapeInfo.shapeObj) &&
             <TextField
               type="number"
-              label="x"
-              value={selectedShapeInfo.shapeObj.x}
+              label="مختصات x"
+              value={prettyFloatNumber(selectedShapeInfo.shapeObj.x)}
               onChange={e => {
                 let nv = parseInt(e.target.value)
                 selectedShapeInfo.shapeObj.x = nv
@@ -584,8 +572,8 @@ export default function HomePage() {
           {('y' in selectedShapeInfo.shapeObj) &&
             <TextField
               type="number"
-              label="y"
-              value={selectedShapeInfo.shapeObj.y}
+              label="مختصات y"
+              value={prettyFloatNumber(selectedShapeInfo.shapeObj.y)}
               onChange={e => {
                 let nv = parseInt(e.target.value)
                 selectedShapeInfo.shapeObj.y = nv
@@ -595,11 +583,12 @@ export default function HomePage() {
           }
           <TextField
             type="number"
-            label="width"
+            label="عرض"
             value={
-              selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
-                selectedShapeInfo.shapeObj.points[2] :
-                selectedShapeInfo.shapeObj.width
+              prettyFloatNumber
+                (selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
+                  selectedShapeInfo.shapeObj.points[2] :
+                  selectedShapeInfo.shapeObj.width)
             }
             onChange={e => {
               let nv = parseInt(e.target.value)
@@ -612,15 +601,16 @@ export default function HomePage() {
 
               onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
             }}
-            
+
           />
           <TextField
             type="number"
-            label="height"
+            label="ارتفاع"
             value={
-              selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
-                selectedShapeInfo.shapeObj.points[3] :
-                selectedShapeInfo.shapeObj.height
+              prettyFloatNumber
+                (selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
+                  selectedShapeInfo.shapeObj.points[3] :
+                  selectedShapeInfo.shapeObj.height)
             }
             onChange={e => {
               let nv = parseInt(e.target.value)
@@ -634,9 +624,9 @@ export default function HomePage() {
               onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
             }}
           />
-          {/* color picking */}
+
           {('strokeWidth' in selectedShapeInfo.shapeObj) && <>
-            <Typography gutterBottom> stroke width </Typography>
+            <Typography gutterBottom> اندازه خط </Typography>
             <Slider
               value={selectedShapeInfo.shapeObj.strokeWidth}
               onChange={(e, nv) => {
@@ -652,12 +642,13 @@ export default function HomePage() {
             />
           </>
           }
+          {/* color picking */}
           {selectedShapeInfo.shapeObj.kind !== shapeKinds.Image &&
             <>
               {
                 !isKindOfLine(selectedShapeInfo.shapeObj.kind) &&
                 <div>
-                  <span> color: </span>
+                  <span> رنگ داخل: </span>
                   <ColorPreview
                     onClick={() => {
                       if (selectedTool === APP_TOOLS.FG_COLOR_PICKER)
@@ -671,7 +662,7 @@ export default function HomePage() {
                 </div>
               }
               <div>
-                <span> border color: </span>
+                <span> رنگ خط: </span>
                 <ColorPreview
                   onClick={() => {
                     if (selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
@@ -699,10 +690,26 @@ export default function HomePage() {
               }
             </>
           }
-          <br/>
-          <br/>
-          <br/>
-          <button className={"btn btn-danger"} onClick={()=> setSelectedId(null)}>خروج</button>
+          {('opacity' in selectedShapeInfo.shapeObj) && <>
+            <Typography gutterBottom> شفافیت </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.opacity}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.opacity = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={0.05}
+              min={0.05}
+              max={1}
+              valueLabelDisplay="auto"
+            />
+          </>
+          }
+
+          <button className="btn btn-danger mt-3" onClick={() => setSelectedId(null)}>
+            خروج
+          </button>
         </Paper>
       }
       <CustomSearchbar setVerseText={setVerseText} />
@@ -718,7 +725,7 @@ export default function HomePage() {
       >
 
         {/* background layer */}
-        {/* <Layer>
+        <Layer>
           <KImage
             width={window.innerWidth}
             height={window.innerHeight}
@@ -726,7 +733,7 @@ export default function HomePage() {
             name="bg-layer"
           />
         </Layer>
-         */}
+
         {/* main layer */}
         <Layer ref={mainLayer}>
           {shapes.map((shape, i) => objectToShape(

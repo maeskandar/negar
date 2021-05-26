@@ -3,18 +3,19 @@ import Konva from "konva"
 import { Rect, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
 
-export function newRectangle(x,y) {
+export function newRectangle(x = 50, y = 50,) {
   return {
     id: v1(),
     kind: shapeKinds.Reactangle,
-    x:200, y:200,
+    x, y,
     width: 100,
+    opacity: 1,
     height: 100,
     fill: Konva.Util.getRandomColor(),
-    strokeWidth: 4,
-    stroke: 'black',
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    stroke: DEFAULT_STROKE_COLOR,
   }
 }
 
@@ -33,19 +34,13 @@ export function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
   return (
     <>
       <Rect
-        onClick={onSelect}
         ref={shapeRef}
+        
+        onClick={onSelect}
         {...shapeProps}
-        draggable = {isSelected}
-        onDragEnd={e => {
-          onChange({
-            ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
-          })
-        }}
+        draggable={isSelected}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
         onTransformEnd={e => {
-          // transformer is changing scale
           const
             node = shapeRef.current,
             scaleX = node.scaleX(),
@@ -56,8 +51,6 @@ export function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
 
           onChange({
             ...shapeProps,
-            x: node.x(),
-            y: node.y(),
             width: node.width() * scaleX,
             height: node.height() * scaleY,
           })

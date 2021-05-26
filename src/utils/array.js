@@ -25,3 +25,7 @@ export function arraysEqual(arr1, arr2) {
 
   return true
 }
+
+export const
+  oddIndexes = (arr) => arr.filter((_, i) => i % 2 === 1),
+  evenIndexes = (arr) => arr.filter((_, i) => i % 2 === 0)

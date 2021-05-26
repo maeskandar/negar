@@ -3,18 +3,22 @@ import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from '.'
 
-export function newLine(points, customLine = false) {
+export function newStraghtLine(points) {
   return {
     id: v1(),
-    kind: customLine ? shapeKinds.CustomLine : shapeKinds.Line,
+    kind: shapeKinds.Line,
 
-    points: [0, 0].concat(points.slice(2).map((p, i) => p - (i % 2 === 0 ? points[0] : points[1]))),
     x: points[0],
     y: points[1],
+    points: [0, 0, points[2] - points[0], points[3] - points[1]],
 
-    strokeWidth: 4,
+    width: 100,
+    height: 100,
+    opacity: 1,
+
+    strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: Konva.Util.getRandomColor(),
     lineCap: 'round',
     lineJoin: 'round',
@@ -32,46 +36,33 @@ export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
     }
   }, [isSelected])
 
-
   return (
     <>
       <Line
-        onClick={onSelect}
         ref={shapeRef}
-        {...shapeProps}
-        draggable={isSelected}
-        onDragEnd={e => {
-          let
-            dx = e.target.x(),
-            dy = e.target.y()
 
-          onChange({
-            ...shapeProps,
-            x: dx,
-            y: dy
-          })
-        }}
+        onClick={onSelect}
+        {...shapeProps}
+
+        draggable={isSelected}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
         onTransformEnd={e => {
-          // transformer is changing scale
           let
             node = shapeRef.current,
             sx = node.scaleX(),
             sy = node.scaleY()
           // ro = node.getAbsoluteRotation()
 
-          onChange({
-            ...shapeProps,
-            points: shapeProps.points.map((p, i) =>
-              p * (i % 2 === 0 ? sx : sy)),
-          })
-
           node.scaleX(1)
           node.scaleY(1)
+
+          onChange({
+            ...shapeProps,
+            points: shapeProps.points.map((p, i) => p * (i % 2 === 0 ? sx : sy)),
+          })
         }}
       />
-      {isSelected &&
-        <Transformer
-          ref={trRef} />}
+      {isSelected && <Transformer ref={trRef} />}
     </>
   )
 }
