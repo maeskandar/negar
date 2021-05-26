@@ -3,7 +3,8 @@ import { Image, Transformer } from "react-konva"
 import useImage from "use-image"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds, onDragEndCommon } from './'
+import {resetTransform, onDragEndCommon, shapeKinds } from './'
+
 
 export function newImage(content) {
   return {
@@ -11,6 +12,7 @@ export function newImage(content) {
     kind: shapeKinds.Image,
     content,
     opacity: 1,
+    rotationDeg: 0,
     x: 100,
     y: 100,
     width: 300,
@@ -41,28 +43,23 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
     <>
       <Image
         ref={shapeRef}
-        
-        onClick={onSelect}
         image={image}
         {...shapeProps}
         
+        offsetX={shapeProps.width / 2}
+        offsetY={shapeProps.height / 2}
         draggable={isSelected}
+        
+        onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={e => {
-          const
-            node = shapeRef.current,
-            sx = node.scaleX(),
-            sy = node.scaleY()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg) => {
           onChange({
             ...shapeProps,
-            width: node.width() * sx,
-            height: node.height() * sy,
+            rotationDeg,
+            width: shapeProps.width * scale.x,
+            height: shapeProps.height * scale.y,
           })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

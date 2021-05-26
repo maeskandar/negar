@@ -3,10 +3,11 @@ import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from '.'
+import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from './'
 
 import { minMaxDistance } from "../utils/math"
 import { oddIndexes, evenIndexes, apply2DScale } from "../utils/array"
+
 
 export function newCustomLine(points) {
   let
@@ -21,13 +22,14 @@ export function newCustomLine(points) {
     kind: shapeKinds.CustomLine,
 
     originPoints, originWidth, originHeight, // keep the original values to apply tranformation correctly
+    x: points[0] + originWidth / 2,  // to fill offset
+    y: points[1] + originHeight / 2, // to fill offset
     points: originPoints,
-    x: points[0],
-    y: points[1],
 
     width: originWidth,
     height: originHeight,
     opacity: 1,
+    rotationDeg: 0,
 
     strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: Konva.Util.getRandomColor(),
@@ -55,27 +57,22 @@ export function CustomLine({ shapeProps, isSelected, onSelect, onChange }) {
     <>
       <Line
         ref={shapeRef}
-
-        onClick={onSelect}
         {...shapeProps}
 
+        offsetX={shapeProps.width / 2}
+        offsetY={shapeProps.height / 2}
         draggable={isSelected}
+
+        onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={e => {
-          let
-            node = shapeRef.current,
-            sx = node.scaleX(),
-            sy = node.scaleY()
-          // ro = node.getAbsoluteRotation()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg) => {
           onChange({
             ...shapeProps,
-            points: shapeProps.points.map((p, i) => p * (i % 2 === 0 ? sx : sy)),
+            rotationDeg,
+            width: shapeProps.width * scale.x,
+            height: shapeProps.height * scale.y,
           })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

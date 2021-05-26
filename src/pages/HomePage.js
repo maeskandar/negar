@@ -9,13 +9,13 @@ import { MyCircle as Circle, newCircle } from "../canvas/Circle"
 import { MyImage, newImage } from "../canvas/Images"
 import { addTextNode } from "../canvas/TextNode"
 import { newArrow, Arrow } from "../canvas/Arrow"
+import { newSimpleLine, SimpleLine } from "../canvas/SimpleLine"
 import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
 import { CustomLine, newCustomLine } from "../canvas/CustomLine"
 
 import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
 import CustomSearchbar from "../UI/CustomSearchbar"
-
 
 import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
@@ -89,7 +89,7 @@ function objectToShape(obj, isSelected, onSelect, onChange) {
       return <Arrow
         {...commonProps}
       />
-    case shapeKinds.Line:
+    case shapeKinds.StraghtLine:
       return <StraghtLine
         {...commonProps}
       />
@@ -303,16 +303,13 @@ export default function HomePage() {
           function addNewLine(...points) {
             tempPoints = points
           }
-          function getAbsolutePoints(line4p) {
-            return sumArraysOneByOne(line4p.points, [line4p.x, line4p.y, line4p.x, line4p.y])
-          }
 
-          tempPoints = getAbsolutePoints(tempShapes[0])
+          tempPoints = tempShapes[0].points
 
           for (let i = 1; i < tempShapes.length - 1; i++) {
             let
-              lcp = getAbsolutePoints(tempShapes[i]), // current line points
-              lnp = getAbsolutePoints(tempShapes[i + 1])  // next line points
+              lcp = tempShapes[i].points, // current line points
+              lnp = tempShapes[i + 1].points  // next line points
 
             // if end points of this line are equal to start points of next line
             if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
@@ -368,19 +365,20 @@ export default function HomePage() {
         var mp = stageEl.current.getPointerPosition()
         mp = [mp.x, mp.y]
 
+        console.log(mp)
+
         if (selectedTool === APP_TOOLS.PENCIL) {
           setTempShapes(
             addToArray(tempShapes,
-              newStraghtLine(drawingTempData.concat(mp))))
+              newSimpleLine(drawingTempData.concat(mp))))
           drawingTempData = mp
         }
         else if (selectedTool === APP_TOOLS.ERASER) {
           let acc = []
           for (const l of tempShapes) {
-            // because the line is [0,0,,x1, y1] by default
             let
-              sp = [l.points[0] + l.x, l.points[1] + l.y],
-              ep = [l.points[2] + l.x, l.points[3] + l.y]
+              sp = [l.points[0], l.points[1]],
+              ep = [l.points[2], l.points[3]]
 
             if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
               acc.push(l)
@@ -549,7 +547,7 @@ export default function HomePage() {
         <Paper id="status-bar" className="p-3" square>
           <div className="mb-2">
 
-            <span> kind: </span>
+            <span> نوع شکل: </span>
             <span>
               {
                 Object.keys(shapeKinds)
@@ -588,14 +586,14 @@ export default function HomePage() {
             label="عرض"
             value={
               prettyFloatNumber
-                (selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
+                (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
                   selectedShapeInfo.shapeObj.points[2] :
                   selectedShapeInfo.shapeObj.width)
             }
             onChange={e => {
               let nv = parseInt(e.target.value)
 
-              if (selectedShapeInfo.shapeObj.kind === shapeKinds.Line)
+              if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
                 selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 2, nv)
 
               else
@@ -610,14 +608,14 @@ export default function HomePage() {
             label="ارتفاع"
             value={
               prettyFloatNumber
-                (selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
+                (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
                   selectedShapeInfo.shapeObj.points[3] :
                   selectedShapeInfo.shapeObj.height)
             }
             onChange={e => {
               let nv = parseInt(e.target.value)
 
-              if (selectedShapeInfo.shapeObj.kind === shapeKinds.Line)
+              if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
                 selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 3, nv)
 
               else
@@ -626,6 +624,23 @@ export default function HomePage() {
               onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
             }}
           />
+
+          {('rotationDeg' in selectedShapeInfo.shapeObj) && <>
+            <Typography gutterBottom> چرخش </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.rotationDeg}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.rotationDeg = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={1}
+              min={0}
+              max={360}
+              valueLabelDisplay="auto"
+            />
+          </>
+          }
 
           {('strokeWidth' in selectedShapeInfo.shapeObj) && <>
             <Typography gutterBottom> اندازه خط </Typography>
@@ -756,12 +771,9 @@ export default function HomePage() {
               opacity={0.5}
             />
             {tempShapes.map((shape, i) =>
-              <StraghtLine
+              <SimpleLine
                 key={shape.id}
                 shapeProps={{ ...shape }}
-                onChange={newAttrs => {
-                  setTempShapes(replaceInArray(tempShapes, i, newAttrs))
-                }}
               />)}
           </Layer>}
       </Stage>

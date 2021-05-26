@@ -3,7 +3,7 @@ import Konva from "konva"
 import { Rect, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
+import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
 
 export function newRectangle(x = 50, y = 50,) {
   return {
@@ -11,8 +11,10 @@ export function newRectangle(x = 50, y = 50,) {
     kind: shapeKinds.Reactangle,
     x, y,
     width: 100,
-    opacity: 1,
     height: 100,
+    opacity: 1,
+    rotationDeg: 0,
+
     fill: Konva.Util.getRandomColor(),
     strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: DEFAULT_STROKE_COLOR,
@@ -35,26 +37,22 @@ export function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
     <>
       <Rect
         ref={shapeRef}
-        
-        onClick={onSelect}
         {...shapeProps}
+
+        offsetX={shapeProps.width / 2}
+        offsetY={shapeProps.height / 2}
         draggable={isSelected}
+
+        onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={e => {
-          const
-            node = shapeRef.current,
-            scaleX = node.scaleX(),
-            scaleY = node.scaleY()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            width: node.width() * scaleX,
-            height: node.height() * scaleY,
+            rotationDeg: rotation,
+            width: shapeProps.width * scale.x,
+            height: shapeProps.height * scale.y,
           })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

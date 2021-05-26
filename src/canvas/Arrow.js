@@ -3,20 +3,22 @@ import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR, onDragEndCommon } from './'
+import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
+
 import { oddIndexes, evenIndexes, apply2DScale } from '../utils/array'
 import { minMaxDistance } from '../utils/math'
 
 const
   ORIGIN_POINTS = [
-    0, 0,
-    50, 50,
-    50, 20,
-    150, 20,
-    150, -20,
-    50, -20,
-    50, -50,
-  ],
+    [0, 0],
+    [50, 50],
+    [50, 20],
+    [150, 20],
+    [150, -20],
+    [50, -20],
+    [50, -50],
+  ].map(p2 => [p2[0], p2[1] + 50]).flat(), // to make coordiantes from (0, 0)
+  
   ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
   ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
@@ -29,6 +31,8 @@ export function newArrow(x = 50, y = 50) {
     points: ORIGIN_POINTS,
     width: ORIGIN_WIDTH,   // cutsom porperty
     height: ORIGIN_HEIGHT, // cutsom porperty
+
+    rotationDeg: 0,
 
     fill: Konva.Util.getRandomColor(),
     opacity: 1,
@@ -52,7 +56,7 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
     }
   }, [isSelected])
 
-  shapeProps.points = apply2DScale(shapeProps.points,
+  shapeProps.points = apply2DScale(ORIGIN_POINTS,
     shapeProps.width / ORIGIN_WIDTH,
     shapeProps.height / ORIGIN_HEIGHT)
 
@@ -61,26 +65,22 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
     <>
       <Line
         ref={shapeRef}
+        {...shapeProps}
+
+        offsetX={shapeProps.width / 2}
+        offsetY={shapeProps.height / 2}
+        draggable={isSelected}
 
         onClick={onSelect}
-        {...shapeProps}
-        draggable={isSelected}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={e => {
-          const
-            node = shapeRef.current,
-            sx = node.scaleX(),
-            sy = node.scaleY()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg,) => {
           onChange({
             ...shapeProps,
-            width: shapeProps.width * sx,
-            height: shapeProps.height * sy,
+            rotationDeg,
+            width: shapeProps.width * scale.x,
+            height: shapeProps.height * scale.y,
           })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

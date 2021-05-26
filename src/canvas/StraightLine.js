@@ -3,20 +3,24 @@ import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from '.'
+import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from './'
+import { apply2DScale } from '../utils/array'
 
 export function newStraghtLine(points) {
+  let
+    deltax = points[2] - points[0],
+    deltay = points[3] - points[1]
+
   return {
     id: v1(),
-    kind: shapeKinds.Line,
+    kind: shapeKinds.StraghtLine,
 
-    x: points[0],
-    y: points[1],
-    points: [0, 0, points[2] - points[0], points[3] - points[1]],
+    x: points[0] + deltax / 2,
+    y: points[1] + deltay / 2,
+    points: [0, 0, deltax, deltay],
 
-    width: 100,
-    height: 100,
     opacity: 1,
+    rotationDeg: 0,
 
     strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: Konva.Util.getRandomColor(),
@@ -40,27 +44,21 @@ export function StraghtLine({ shapeProps, isSelected, onSelect, onChange }) {
     <>
       <Line
         ref={shapeRef}
-
-        onClick={onSelect}
         {...shapeProps}
 
+        offsetX={shapeProps.points[2] / 2}
+        offsetY={shapeProps.points[3] / 2}
         draggable={isSelected}
+
+        onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={e => {
-          let
-            node = shapeRef.current,
-            sx = node.scaleX(),
-            sy = node.scaleY()
-          // ro = node.getAbsoluteRotation()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg) => {
           onChange({
             ...shapeProps,
-            points: shapeProps.points.map((p, i) => p * (i % 2 === 0 ? sx : sy)),
+            rotationDeg,
+            points: apply2DScale(shapeProps.points, scale.x, scale.y),
           })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

@@ -20,7 +20,7 @@ export function MyVerticallyCenteredModal(props) {
       </Modal.Header>
       <Modal.Body>
         <div className={"row"}>
-          {props.images.mapI((img) => (
+          {props.images.map((img) => (
             <CustomCard ischosen={props.setimage}
               imagess={img}
               hide={props.onHide}

@@ -251,10 +251,9 @@ const CustomSearchbar = ({ setVerseText }) => {
 
 
   return (
-    <div className={"app-container"} style={{ textAlign: 'center' }}>
-      <div>
-        <br />
-        <input id={"searchbar1"} type={"text"} value={value} onChange={e => {
+    <div className={"app-container fixed-top w-100 pe-none"} style={{ zIndex: 0, textAlign: 'center' }}>
+      <div className="p-2">
+        <input id="searchbar1" className="pe-auto" type={"text"} value={value} onChange={e => {
           setValue(e.target.value)
           // console.log(value)
           setIsResultVisible(false)
