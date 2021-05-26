@@ -13,6 +13,7 @@ export function newCircle(x, y) {
   return {
     id: v1(),
     kind: shapeKinds.Circle,
+    
     x,
     y,
     width: 100,

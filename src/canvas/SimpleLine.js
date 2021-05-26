@@ -12,9 +12,10 @@ export function newSimpleLine(points) {
 
     points,
     strokeWidth: DEFAULT_STROKE_WIDTH,
-    stroke: Konva.Util.getRandomColor(),
     lineCap: 'round',
     lineJoin: 'round',
+    
+    stroke: Konva.Util.getRandomColor(),
   }
 }
 export function SimpleLine({shapeProps}) {

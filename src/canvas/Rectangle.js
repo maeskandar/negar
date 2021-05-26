@@ -18,6 +18,7 @@ export function newRectangle(x = 50, y = 50,) {
     opacity: 1,
     fill: Konva.Util.getRandomColor(),
     stroke: DEFAULT_STROKE_COLOR,
+    
     strokeWidth: DEFAULT_STROKE_WIDTH,
   }
 }

@@ -30,8 +30,9 @@ export function newCustomLine(points) {
     height: originHeight,
     rotation: 0,
     
-    opacity: 1,
     stroke: Konva.Util.getRandomColor(),
+    opacity: 1,
+
     strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',

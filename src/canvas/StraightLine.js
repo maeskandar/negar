@@ -18,12 +18,12 @@ export function newStraghtLine(points) {
     x: points[0] + deltax / 2,
     y: points[1] + deltay / 2,
     points: [0, 0, deltax, deltay],
-
-    opacity: 1,
     rotation: 0,
 
-    strokeWidth: DEFAULT_STROKE_WIDTH,
+    opacity: 1,
     stroke: Konva.Util.getRandomColor(),
+
+    strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
   }
