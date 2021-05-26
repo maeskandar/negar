@@ -123,7 +123,6 @@ export default function HomePage() {
     [backgroundimage, setBackgroundimageDirect] = useState({ url: null, imageObj: null, }),
     [backgroundModalShow, setBackgroundModalShow] = useState(false),
     [imageModalShow, setImageModalShow] = useState(false),
-    [verseText, setVerseText] = useState(""),
     backimages = [
       {
         url: '/images/pexels-eberhard-grossgasteiger-1064162.jpg',
@@ -243,8 +242,8 @@ export default function HomePage() {
     ImageSetterHandler = (e) => {
       addToShapes(true, newImage(e))
     },
-    drawText = () => {
-      addToShapes(true, newTextNode("type kon"))
+    drawText = (t = "تایپ کن") => {
+      addToShapes(true, newTextNode(t))
     },
 
     StartLineDrawingMode = () => {
@@ -422,13 +421,6 @@ export default function HomePage() {
     return () => window.removeEventListener('keydown', handleWindowKeyboard)
   }, [selectedShapeInfo, deleteShape])
 
-  useEffect(() => {
-    if (verseText != "") {
-      // addTextNode(stageEl.current.getStage(), mainLayer.current, verseText, "QuranTaha")
-      // const shs = shapes.concat([id])
-      // setShapes(shs)
-    }
-  }, [verseText])
 
   // config default states ------
   if (!backgroundimage.url) { // default state
@@ -747,7 +739,9 @@ export default function HomePage() {
           </button>
         </Paper>
       }
-      <CustomSearchbar setVerseText={setVerseText} hidden={selectedShapeInfo.id} />
+      { selectedShapeInfo.id === null && <CustomSearchbar
+        onAyaSelect={t => drawText(t)} />
+      }
       {/* konva canvas */}
       <Stage
         width={window.innerWidth}

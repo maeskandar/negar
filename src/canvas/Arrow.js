@@ -43,7 +43,11 @@ export function newArrow(x = 50, y = 50) {
     closed: true,
   }
 }
-// import { isEdge, isFirefox, isSafari } from "../utils/browser"
+
+export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
+  const
+    shapeRef = React.useRef(),
+    trRef = React.useRef()
 
   useEffect(() => {
     if (isSelected) {

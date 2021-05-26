@@ -20,7 +20,7 @@ export function newTextNode(text) {
     opacity: 1,
     rotation: 0,
     
-    fontSize: 50,
+    fontSize: 30,
     fontFamily: "Shabnam",
     strokeWidth: 0,
     align: 'right',
@@ -67,7 +67,7 @@ export function TextNode({ shapeProps, isSelected, onSelect, onChange }) {
             ...shapeProps,
             rotation,
             width: shapeProps.width * scale.x,
-            height: shapeProps.height * scale.y,
+            // height: shapeProps.height * scale.y,
           })
         })}
       />}

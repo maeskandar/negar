@@ -91,7 +91,7 @@ const useStyle = makeStyles(theme => ({
   }
 }))
 
-const CustomSearchbar = ({ setVerseText, hidden }) => {
+const CustomSearchbar = ({ onAyaSelect }) => {
   var history = useHistory()
   const [index, setIndex] = useState(null)
   const [value, setValue] = useState("")
@@ -192,7 +192,7 @@ const CustomSearchbar = ({ setVerseText, hidden }) => {
     return { __html: text.replace(target, "<a style='color:red'>$&</a>") }
   }
   const clickHandler = (text) => {
-    setVerseText(text)
+    onAyaSelect(text)
     setIsResultVisible(false)
     setValue("")
   }
@@ -252,7 +252,7 @@ const CustomSearchbar = ({ setVerseText, hidden }) => {
 
   return (
     <div className="app-container fixed-top w-100 pe-none"
-      style={{ display: (hidden ? 'none' : 'block'), textAlign: 'center' }}>
+      style={{ textAlign: 'center' }}>
       <div className="p-2 pe-none">
         <input id="searchbar1" type="text" value={value}
           onChange={e => {
