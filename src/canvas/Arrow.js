@@ -4,7 +4,7 @@ import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
 import { shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR, onDragEndCommon } from './'
-import { oddIndexes, evenIndexes } from '../utils/array'
+import { oddIndexes, evenIndexes, apply2DScale } from '../utils/array'
 import { minMaxDistance } from '../utils/math'
 
 const
@@ -52,14 +52,16 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
     }
   }, [isSelected])
 
-  shapeProps.points = ORIGIN_POINTS.map((p, i) =>
-    p * (i % 2 === 0 ? shapeProps.width / ORIGIN_WIDTH : shapeProps.height / ORIGIN_HEIGHT))
+  shapeProps.points = apply2DScale(shapeProps.points,
+    shapeProps.width / ORIGIN_WIDTH,
+    shapeProps.height / ORIGIN_HEIGHT)
+
 
   return (
     <>
       <Line
         ref={shapeRef}
-        
+
         onClick={onSelect}
         {...shapeProps}
         draggable={isSelected}

@@ -8,12 +8,14 @@ import { Rectangle, newRectangle } from "../canvas/Rectangle"
 import { MyCircle as Circle, newCircle } from "../canvas/Circle"
 import { MyImage, newImage } from "../canvas/Images"
 import { addTextNode } from "../canvas/TextNode"
-import { MyLine, newStraghtLine } from "../canvas/StraightLine"
-import { newCustomLine } from "../canvas/CustomLine"
 import { newArrow, Arrow } from "../canvas/Arrow"
+import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
+import { CustomLine, newCustomLine } from "../canvas/CustomLine"
 
-import { MyVerticallyCenteredModal } from "../UI/CustomModal/MyVerticallyCenteredModal"
+import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
+import CustomSearchbar from "../UI/CustomSearchbar"
+
 
 import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
@@ -38,7 +40,6 @@ import {
 
 import { ToolBarBtn } from "../UI/Toolbar"
 import { Paper, TextField, Slider, Typography } from "@material-ui/core"
-import CustomSearchbar from "../UI/Searchbar/CustomSearchbar"
 
 // enums ----
 const
@@ -66,7 +67,6 @@ function objectToShape(obj, isSelected, onSelect, onChange) {
   const commonProps = {
     key: obj.id,
     shapeProps: obj,
-    opacity: 0.3,
     isSelected, onSelect, onChange,
   }
 
@@ -90,8 +90,11 @@ function objectToShape(obj, isSelected, onSelect, onChange) {
         {...commonProps}
       />
     case shapeKinds.Line:
+      return <StraghtLine
+        {...commonProps}
+      />
     case shapeKinds.CustomLine:
-      return <MyLine
+      return <CustomLine
         {...commonProps}
       />
   }
@@ -424,7 +427,6 @@ export default function HomePage() {
     }
   }, [verseText])
 
-
   // config default states ------
   if (!backgroundimage.url) { // default state
     setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
@@ -754,7 +756,7 @@ export default function HomePage() {
               opacity={0.5}
             />
             {tempShapes.map((shape, i) =>
-              <MyLine
+              <StraghtLine
                 key={shape.id}
                 shapeProps={{ ...shape }}
                 onChange={newAttrs => {

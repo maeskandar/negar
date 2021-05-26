@@ -6,7 +6,7 @@ import v1 from 'uuid/dist/v1'
 import { onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from '.'
 
 import { minMaxDistance } from "../utils/math"
-import { oddIndexes, evenIndexes } from "../utils/array"
+import { oddIndexes, evenIndexes, apply2DScale } from "../utils/array"
 
 export function newCustomLine(points) {
   let
@@ -20,13 +20,13 @@ export function newCustomLine(points) {
     id: v1(),
     kind: shapeKinds.CustomLine,
 
-    originPoints, originWidth, originHeight,
+    originPoints, originWidth, originHeight, // keep the original values to apply tranformation correctly
     points: originPoints,
     x: points[0],
     y: points[1],
 
-    width: 100,
-    height: 100,
+    width: originWidth,
+    height: originHeight,
     opacity: 1,
 
     strokeWidth: DEFAULT_STROKE_WIDTH,
@@ -35,7 +35,7 @@ export function newCustomLine(points) {
     lineJoin: 'round',
   }
 }
-export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
+export function CustomLine({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
@@ -46,6 +46,10 @@ export function MyLine({ shapeProps, isSelected, onSelect, onChange }) {
       trRef.current.getLayer().batchDraw()
     }
   }, [isSelected])
+
+  shapeProps.points = apply2DScale(shapeProps.originPoints,
+    shapeProps.width / shapeProps.originWidth,
+    shapeProps.height / shapeProps.originHeight)
 
   return (
     <>

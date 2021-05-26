@@ -4,8 +4,9 @@
 
 ## Known bugs:
   - textNode
-  - line rotation
+  - shape rotation
   - line width & height can be negetive
+  - jamboard performace is low
 
 ## Others
   increase limit file watcher command on linux:
