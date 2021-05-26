@@ -1,6 +1,6 @@
 ﻿@import url(fontiran.css); /* لینک فایلی که وظیفه بارگذاری فونت ها را برعهده دارد */
 body {
-  font-family: Shabnam !important;
+  font-family: Shabnam;
   font-weight: 300;
   direction: rtl;
   background-color: #e2e2e2;
@@ -14,7 +14,7 @@ h5,
 h6,
 input,
 textarea {
-  font-family: Shabnam !important;
+  font-family: Shabnam;
 }
 h1 {
   font-weight: bold;

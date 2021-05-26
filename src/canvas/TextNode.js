@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { Text, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds, onDragEndCommon, resetTransform, DEFAULT_STROKE_WIDTH } from "."
+import { shapeKinds, onDragEndCommon, resetTransform } from "."
 // import { isEdge, isFirefox, isSafari } from "../utils/browser"
 
 export function newTextNode(text) {
@@ -14,27 +14,27 @@ export function newTextNode(text) {
     x: 200,
     y: 200,
     width: 200,
-    
+
     fill: "#000",
     stroke: "#000", // we can add text shadom for textarea
     opacity: 1,
     rotation: 0,
-    
+
+    strokeWidth: 0,
     fontSize: 30,
     fontFamily: "Shabnam",
-    strokeWidth: 0,
+    lineHeight: 1,
     align: 'right',
   }
 }
 
-export function TextNode({ shapeProps, isSelected, onSelect, onChange }) {
+let lastStupidRect = {}
+
+export function TextNode({ shapeProps, isSelected, onSelect, onChange, onWannaEdit }) {
   const
     shapeRef = useRef(),
     trRef = useRef(),
-    [rect, setRect] = useState({ x: 0, y: 0, width: 0, height: 0 }),
-    [isEditing, setIsEditing] = useState(false),
-    [text, setText] = useState('')
-
+    [rect, setRect] = useState({ x: 0, y: 0, width: 0, height: 0 })
 
   useEffect(() => {
     if (isSelected) {
@@ -42,44 +42,54 @@ export function TextNode({ shapeProps, isSelected, onSelect, onChange }) {
       trRef.current.getLayer().batchDraw()
     }
 
-    if (rect.width === 0 && isEditing) {
+    if (rect.width === 0 && shapeRef.current) {
       setRect(shapeRef.current.getClientRect())
     }
-
-  }, [shapeRef, isSelected, isEditing, setRect])
-
+  }, [shapeRef, isSelected, setRect])
+  
+  lastStupidRect = rect
 
   return (
     <>
-      { !isEditing && <Text
+      <Text
         ref={shapeRef}
         {...shapeProps}
 
         offsetX={rect.width / 2}
-        offsetY={rect.height / 2}
         draggable={isSelected}
 
         onClick={onSelect}
-        onDblClick={() => setIsEditing(true)}
+        onDblClick={() => {
+          let styles = {
+            left: shapeProps.x - rect.width / 2,
+            top: shapeProps.y,
+            minHeight: `${lastStupidRect.height}px`,
+            width: shapeProps.width,
+            // minHeight: `${shapeProps.lineHeight}px`,
+            resize: 'none',
+            transform: `rotateZ(${shapeProps.rotation}deg)`,
+            
+            color: shapeProps.fill,
+            textShadow: '',
+            // opacity: shapeProps.opacity,
+
+            fontFamily: shapeProps.fontFamily,
+            fontSize: shapeProps.fontSize,
+            textAlign: shapeProps.align,
+            lineHeight: shapeProps.lineHeight
+          }
+          onWannaEdit(styles, shapeProps.text)
+        }}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
         onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
             rotation,
             width: shapeProps.width * scale.x,
-            // height: shapeProps.height * scale.y,
           })
-        })}
-      />}
-      {!isEditing && isSelected && <Transformer ref={trRef} />}
+        })} />
 
-      { isEditing && <textarea className="text-editing m-0 p-0"
-        value={text}
-        onKeyPress={e => setText(e.target.value)}
-        style={{}}
-      >
-
-      </textarea>}
+      { isSelected && <Transformer ref={trRef} />}
     </>
   )
 }

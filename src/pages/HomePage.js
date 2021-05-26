@@ -39,13 +39,17 @@ import {
 } from '@material-ui/icons'
 
 import { ToolBarBtn } from "../UI/Toolbar"
-import { Paper, TextField, Slider, Typography } from "@material-ui/core"
+import {
+  Paper, TextField, Slider, Typography,
+  Select, MenuItem,
+} from "@material-ui/core"
 
 // enums ----
 const
   APP_STATES = {
     DRAGING: 0,
     DRAWING: 1,
+    TEXT_EDITING: 2,
   },
   APP_TOOLS = {
     NOTHING: 0,
@@ -59,11 +63,16 @@ const
     STROKE_COLOR_PICKER: 8,
   },
   ERASER_RADIUS = 10, // px
-  PIXEL_RATIO_DOWNLAOD = 3
+  PIXEL_RATIO_DOWNLAOD = 3,
+  FONT_NAMES = [
+    'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
+  ]
 
-let drawingTempData = []
+let
+  drawingTempData = [],
+  lastTextNodeSelectedData = { id: null, index: null, shapeObj: null }
 
-function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
+function shapeRenderer(shapeObj, isSelected, onSelect, onChange, onWannaEdit) {
   const commonProps = {
     key: shapeObj.id,
     shapeProps: shapeObj,
@@ -100,6 +109,7 @@ function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
     case shapeKinds.Text:
       return <TextNode
         {...commonProps}
+        onWannaEdit={onWannaEdit}
       />
     default:
       throw new Error("undefiend shape type")
@@ -112,6 +122,10 @@ export default function HomePage() {
     [shapes, setShapes] = useState([]),
     [tempShapes, setTempShapes] = useState([]),
     [color, setColor] = useState('#fff'),
+
+    [text, setText] = useState(''),
+    [textStyles, setTextStyles] = useState({}),
+
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
     stageEl = React.createRef(),
     mainLayer = React.createRef(),
@@ -242,7 +256,7 @@ export default function HomePage() {
     ImageSetterHandler = (e) => {
       addToShapes(true, newImage(e))
     },
-    drawText = (t = "تایپ کن") => {
+    drawText = (t = 'تایپ کن') => {
       addToShapes(true, newTextNode(t))
     },
 
@@ -267,10 +281,31 @@ export default function HomePage() {
       imageObj.onload = () =>
         setBackgroundimageDirect({ url, imageObj })
     },
+    performTextEdit = (styles, t) => {
+      setTextStyles(styles)
+      setText(t)
+      setAppState(addToSet(appState, APP_STATES.TEXT_EDITING))
+
+      lastTextNodeSelectedData = {
+        ...selectedShapeInfo,
+        shapeObj: {...selectedShapeInfo.shapeObj}
+      }
+      
+      onShapeChanged(selectedShapeInfo.index, {
+        ...selectedShapeInfo.shapeObj,
+        opacity: 0,
+      })
+      
+      setSelectedId(null)
+    },
     cancelOperation = () => {
       if (appState.has(APP_STATES.DRAWING)) {
         cleanArray(drawingTempData)
         setTempShapes([])
+      }
+
+      else if (appState.has(APP_STATES.TEXT_EDITING)) {
+        onShapeChanged(lastTextNodeSelectedData.index, lastTextNodeSelectedData.shapeObj)
       }
 
       setAppState(new Set())
@@ -344,11 +379,12 @@ export default function HomePage() {
           shapeObj: newAttrs
         })
       }
+      console.log(newAttrs)
       setShapes(replaceInArray(shapes, i, newAttrs))
     },
     onShapeSelected = (shapeId) => {
-      // toggle select
-      setSelectedId(shapeId === selectedShapeInfo ? null : shapeId)
+      if (!appState.has(APP_STATES.TEXT_EDITING))
+        setSelectedId(shapeId) 
     },
     handleClick = (ev) => {
       if (ev.target.name() === "bg-layer") {
@@ -471,7 +507,7 @@ export default function HomePage() {
               />
               <ToolBarBtn
                 title="متن"
-                onClick={drawText}
+                onClick={() => drawText()}
                 iconEl={<TextIcon />}
               />
               <ToolBarBtn
@@ -652,6 +688,49 @@ export default function HomePage() {
           </>
           }
 
+          {(selectedShapeInfo.shapeObj.kind === shapeKinds.Text) && <>
+            <Typography gutterBottom> نوع فونت </Typography>
+            <Select
+              value={selectedShapeInfo.shapeObj.fontFamily}
+              onChange={e => {
+                selectedShapeInfo.shapeObj.fontFamily = e.target.value
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            >
+              {FONT_NAMES.map(fname =>
+                <MenuItem value={fname}>{fname} </MenuItem>)
+              }
+            </Select>
+
+            <Typography gutterBottom> ارتفاع خط </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.lineHeight}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.lineHeight = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={0.1}
+              min={0.1}
+              max={8}
+              valueLabelDisplay="auto"
+            />
+
+            <Typography gutterBottom> چینش </Typography>
+            <Select
+              value={selectedShapeInfo.shapeObj.align}
+              onChange={e => {
+                selectedShapeInfo.shapeObj.align = e.target.value
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            >
+              {['left', 'right', 'center'].map(v =>
+                <MenuItem value={v}>{v} </MenuItem>)
+              }
+            </Select>
+          </>
+          }
+
           {('strokeWidth' in selectedShapeInfo.shapeObj) && <>
             <Typography gutterBottom> اندازه خط </Typography>
             <Slider
@@ -739,9 +818,35 @@ export default function HomePage() {
           </button>
         </Paper>
       }
-      { selectedShapeInfo.id === null && <CustomSearchbar
-        onAyaSelect={t => drawText(t)} />
+      {
+        selectedShapeInfo.id === null && <CustomSearchbar
+          onAyaSelect={t => drawText(t)} />
       }
+
+      {/* temp shapes */}
+      {appState.has(APP_STATES.TEXT_EDITING) &&
+        <>
+          <textarea id="me-t" className="text-editing m-0 p-0"
+            value={text}
+            onKeyPress={e => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                setAppState(removeInSet(appState, APP_STATES.TEXT_EDITING))
+                lastTextNodeSelectedData.shapeObj.text = text
+                console.log(lastTextNodeSelectedData.shapeObj);
+                onShapeChanged(lastTextNodeSelectedData.index, lastTextNodeSelectedData.shapeObj)
+              }
+            }}
+            onChange={e => setText(e.target.value)}
+            style={
+              {
+                ...textStyles,
+                // height: TODO:
+              }}
+          />
+        </>
+      }
+
       {/* konva canvas */}
       <Stage
         width={window.innerWidth}
@@ -770,6 +875,7 @@ export default function HomePage() {
             shape.id === selectedShapeInfo.id,
             () => onShapeSelected(shape.id),
             (newAttrs) => onShapeChanged(i, newAttrs),
+            performTextEdit,
           ))}
         </Layer>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useHistory } from 'react-router-dom'
+// import { useHistory } from 'react-router-dom'
 
 import { Divider, Grid, Typography } from '@material-ui/core'
 import { makeStyles } from "@material-ui/styles"
@@ -92,10 +92,10 @@ const useStyle = makeStyles(theme => ({
 }))
 
 const CustomSearchbar = ({ onAyaSelect }) => {
-  var history = useHistory()
-  const [index, setIndex] = useState(null)
+  // var history = useHistory()
+  // const [index, setIndex] = useState(null)
   const [value, setValue] = useState("")
-  const [lines, setLines] = useState([])
+  // const [lines, setLines] = useState([])
   const [results, setResults] = useState([])
   const [recommends, setRecommends] = useState([])
   const [isRecomVisible, setIsRecomVisible] = useState(false)
@@ -141,21 +141,21 @@ const CustomSearchbar = ({ onAyaSelect }) => {
     var wordobj = []
     var rootobj = []
 
-    if (result.type == "like") {
+    if (result.type === "like") {
       likeobj = [{
         "like": result.like,
         "words": []
       }]
     }
 
-    if (result.type == "root") {
+    if (result.type === "root") {
       rootobj = [{
         "root": result.root,
         "words": []
       }]
     }
 
-    if (result.type == "word") {
+    if (result.type === "word") {
       wordobj = [{
         "word": result.word,
         "words": []
@@ -175,7 +175,7 @@ const CustomSearchbar = ({ onAyaSelect }) => {
   }
 
   const relateWithServer = (text) => {
-    if (text != "") {
+    if (text !== "") {
       getRecommendedSearch(text, Math.floor(Math.random() * 1616227051964) + 1).then((data) => {
         setRecommends(data)
         console.log(data)

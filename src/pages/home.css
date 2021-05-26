@@ -71,4 +71,9 @@
     position: absolute;
     resize: none;
     outline-style: none;
+    z-index: 2;
+    background: none;
+    box-sizing: content-box;
+    border: 2px solid #7fd0ff;
+    overflow: visible;
 }
