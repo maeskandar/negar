@@ -6,8 +6,17 @@
     
 }
 
+.pe-none{
+    pointer-events: none;
+}
+.pe-all{
+    pointer-events: all;
+}
+
 #home-page {
     text-align: center;
+    width: 100%;
+    overflow: hidden;
 }
 
 #tool-bar-wrapper {

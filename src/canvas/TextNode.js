@@ -7,13 +7,14 @@ export const addTextNode = (stage, layer, text, font) => {
   const
     id = v1(),
     textNode = new Konva.Text({
-      text: text,
-      x: 100,
-      y: 100,
-      fontSize: 30,
-      draggable: true,
-      width: 200,
       id,
+      text,
+      
+      x: 200,
+      y: 200,
+      width: 200,
+      
+      fontSize: 30,
       fontFamily: font,
       align: 'right',
       padding: '10'
@@ -171,6 +172,4 @@ export const addTextNode = (stage, layer, text, font) => {
     setTimeout(() =>
       window.addEventListener("click", handleOutsideClick))
   })
-
-  return id
 }

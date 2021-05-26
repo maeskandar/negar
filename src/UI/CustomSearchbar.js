@@ -91,7 +91,7 @@ const useStyle = makeStyles(theme => ({
   }
 }))
 
-const CustomSearchbar = ({ setVerseText }) => {
+const CustomSearchbar = ({ setVerseText, hidden }) => {
   var history = useHistory()
   const [index, setIndex] = useState(null)
   const [value, setValue] = useState("")
@@ -251,30 +251,32 @@ const CustomSearchbar = ({ setVerseText }) => {
 
 
   return (
-    <div className={"app-container fixed-top w-100 pe-none"} style={{ zIndex: 0, textAlign: 'center' }}>
-      <div className="p-2">
-        <input id="searchbar1" className="pe-auto" type={"text"} value={value} onChange={e => {
-          setValue(e.target.value)
-          // console.log(value)
-          setIsResultVisible(false)
-          if ((e.target.value).length > 1) {
-            setIsRecomVisible(true)
-            relateWithServer((e.target.value))
-          }
-        }
-        }
+    <div className="app-container fixed-top w-100 pe-none"
+      style={{ display: (hidden ? 'none' : 'block'), textAlign: 'center' }}>
+      <div className="p-2 pe-none">
+        <input id="searchbar1" type="text" value={value}
+          onChange={e => {
+
+            setValue(e.target.value)
+            // console.log(value)
+            setIsResultVisible(false)
+            if ((e.target.value).length > 1) {
+              setIsRecomVisible(true)
+              relateWithServer((e.target.value))
+            }
+          }}
           placeholder={"جست و جوی سریع.."}
-          className={classes.inputClass}
+          className={classes.inputClass + " pe-all"}
           onMouseOver={HoverSearchHandler}
           onMouseLeave={LeaveSearchHandler}
         />
       </div>
-      <div className="recommed-container">
+      <div className="recommed-container pe-all">
         {
           <Recommend recom={recommends} />
         }
       </div>
-      <div className="result-container">
+      <div className="result-container pe-all">
         {
           <Result results={results} />
         }

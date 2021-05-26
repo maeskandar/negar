@@ -19,7 +19,7 @@ import CustomSearchbar from "../UI/CustomSearchbar"
 
 import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
-import { pointsDistance, sumArraysOneByOne, prettyFloatNumber } from "../utils/math"
+import { pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
 
 import {
@@ -63,14 +63,14 @@ const
 
 let drawingTempData = []
 
-function objectToShape(obj, isSelected, onSelect, onChange) {
+function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
   const commonProps = {
-    key: obj.id,
-    shapeProps: obj,
+    key: shapeObj.id,
+    shapeProps: shapeObj,
     isSelected, onSelect, onChange,
   }
 
-  switch (obj.kind) {
+  switch (shapeObj.kind) {
 
     case shapeKinds.Reactangle:
       return <Rectangle
@@ -83,7 +83,7 @@ function objectToShape(obj, isSelected, onSelect, onChange) {
     case shapeKinds.Image:
       return <MyImage
         {...commonProps}
-        imageUrl={obj.content}
+        imageUrl={shapeObj.content}
       />
     case shapeKinds.CustomShape:
       return <Arrow
@@ -201,36 +201,6 @@ export default function HomePage() {
 
   // functions -----------------------------------------
   const
-    setSelectedId = (shapeId) => {
-      if (shapeId === selectedShapeInfo.id) return
-
-      let
-        si = shapes.findIndex(it => it.id === shapeId),
-        so = si === -1 ? null : shapes[si]
-
-      setSelectedShapeInfo({
-        id: so ? shapeId : null,
-        index: so ? si : null,
-        shapeObj: so,
-      })
-    },
-    deleteShape = (shapeId) => {
-      let index = shapes.findIndex(it => it.id === shapeId)
-
-      if (index !== -1)
-        setShapes(removeInArray(shapes, index))
-    },
-    onShapeChanged = (i, newAttrs) => {
-      if (newAttrs.id === selectedShapeInfo.id) {
-
-        setSelectedShapeInfo({
-          id: newAttrs.id,
-          index: i,
-          shapeObj: newAttrs
-        })
-      }
-      setShapes(replaceInArray(shapes, i, newAttrs))
-    },
     isInJamBoardMode = () =>
       appState.has(APP_STATES.DRAWING) &&
       (selectedTool === APP_TOOLS.PENCIL || selectedTool === APP_TOOLS.ERASER)
@@ -238,6 +208,13 @@ export default function HomePage() {
     isColorPicking = () =>
       selectedTool === APP_TOOLS.FG_COLOR_PICKER || selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
     ,
+
+    deleteShape = (shapeId) => {
+      let index = shapes.findIndex(it => it.id === shapeId)
+
+      if (index !== -1)
+        setShapes(removeInArray(shapes, index))
+    },
     addToShapes = (select, ...newShapes) => {
       if (select)
         setSelectedShapeInfo({
@@ -265,6 +242,7 @@ export default function HomePage() {
       let txtEl = addTextNode(stageEl.current.getStage(), mainLayer.current, "تایپ کنید", "Shabnam")
       addToShapes(false, txtEl)
     },
+
     StartLineDrawingMode = () => {
       setAppState(addToSet(appState, APP_STATES.DRAWING))
       setSelectedTool(APP_TOOLS.LINE)
@@ -274,7 +252,18 @@ export default function HomePage() {
       setSelectedTool(APP_TOOLS.PENCIL)
       setSelectedId(null)
     },
+    saveAsImage = () => {
+      let dataURL = stageEl.current.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
+      downloadURI(dataURL, 'stage.png')
+    },
+    setBackgroundimage = (url) => {
+      setBackgroundimageDirect({ url, imageObj: null })
 
+      let imageObj = new Image()
+      imageObj.src = url
+      imageObj.onload = () =>
+        setBackgroundimageDirect({ url, imageObj })
+    },
     cancelOperation = () => {
       if (appState.has(APP_STATES.DRAWING)) {
         cleanArray(drawingTempData)
@@ -328,19 +317,32 @@ export default function HomePage() {
       }
       cancelOperation()
     },
-    saveAsImage = () => {
-      let dataURL = stageEl.current.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
-      downloadURI(dataURL, 'stage.png')
-    },
-    setBackgroundimage = (url) => {
-      setBackgroundimageDirect({ url, imageObj: null })
 
-      let imageObj = new Image()
-      imageObj.src = url
-      imageObj.onload = () =>
-        setBackgroundimageDirect({ url, imageObj })
-    },
     // canvas events -------------------------
+    setSelectedId = (shapeId) => {
+      if (shapeId === selectedShapeInfo.id) return
+
+      let
+        si = shapes.findIndex(it => it.id === shapeId),
+        so = si === -1 ? null : shapes[si]
+
+      setSelectedShapeInfo({
+        id: so ? shapeId : null,
+        index: so ? si : null,
+        shapeObj: so,
+      })
+    },
+    onShapeChanged = (i, newAttrs) => {
+      if (newAttrs.id === selectedShapeInfo.id) {
+
+        setSelectedShapeInfo({
+          id: newAttrs.id,
+          index: i,
+          shapeObj: newAttrs
+        })
+      }
+      setShapes(replaceInArray(shapes, i, newAttrs))
+    },
     onShapeSelected = (shapeId) => {
       // toggle select
       setSelectedId(shapeId === selectedShapeInfo ? null : shapeId)
@@ -432,11 +434,7 @@ export default function HomePage() {
 
   // render -------=
   return (
-    <div id="home-page" style={{
-      textAlign: 'center',
-      background: `url(${backgroundimage.url}) no-repeat center fixed`,
-      width: '100%'
-    }}>
+    <div id="home-page">
 
       {backgroundModalShow && <MyVerticallyCenteredModal
         title={"پس زمینه"}
@@ -729,7 +727,7 @@ export default function HomePage() {
           </button>
         </Paper>
       }
-      <CustomSearchbar setVerseText={setVerseText} />
+      <CustomSearchbar setVerseText={setVerseText} hidden={selectedShapeInfo.id} />
       {/* konva canvas */}
       <Stage
         width={window.innerWidth}
@@ -746,14 +744,14 @@ export default function HomePage() {
           <KImage
             width={window.innerWidth}
             height={window.innerHeight}
-            // image={backgroundimage.imageObj}
+            image={backgroundimage.imageObj}
             name="bg-layer"
           />
         </Layer>
 
         {/* main layer */}
         <Layer ref={mainLayer}>
-          {shapes.map((shape, i) => objectToShape(
+          {shapes.map((shape, i) => shapeRenderer(
             shape,
             shape.id === selectedShapeInfo.id,
             () => onShapeSelected(shape.id),
