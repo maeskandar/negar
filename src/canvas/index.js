@@ -1,3 +1,5 @@
+import { validDeg } from "../utils/math"
+
 export const shapeKinds = {
   StraghtLine: 0,
   CustomLine: 1,
@@ -27,14 +29,23 @@ export function resetTransform(shapeRef, func) {
     node.scaleX(1)
     node.scaleY(1)
 
-    node.setRotation(-(node.rotaion || 0))
+    node.setRotation(-node.rotaion || 0)
 
-    func(event, { x: sx, y: sy }, Math.floor(rotation < 0 ? 360 + rotation : rotation))
+    rotation = validDeg(Math.trunc(rotation))
+    // if (sx * sy < 0) // shaped flipped (think of mirror)
+    // rotation = validDeg(rotation + (sx < 0 ? +180 : 270))
+
+    console.log(rotation)
+    func(event, { x: Math.abs(sx), y: Math.abs(sy) }, rotation)
   }
 }
 
 export function isKindOfLine(kindNumber) {
-  return kindNumber === shapeKinds.CustomLine || kindNumber === shapeKinds.StraghtLine
+  return kindNumber === shapeKinds.StraghtLine || kindNumber === shapeKinds.CustomLine
+}
+
+export function hasStroke(kindNumber) {
+  return kindNumber !== shapeKinds.Text || kindNumber !== shapeKinds.Image
 }
 
 export const

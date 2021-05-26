@@ -20,7 +20,7 @@ export function newStraghtLine(points) {
     points: [0, 0, deltax, deltay],
 
     opacity: 1,
-    rotationDeg: 0,
+    rotation: 0,
 
     strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: Konva.Util.getRandomColor(),
@@ -52,10 +52,10 @@ export function StraghtLine({ shapeProps, isSelected, onSelect, onChange }) {
 
         onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg) => {
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            rotationDeg,
+            rotation,
             points: apply2DScale(shapeProps.points, scale.x, scale.y),
           })
         })}

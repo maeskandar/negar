@@ -31,13 +31,13 @@ export function newArrow(x = 50, y = 50) {
     points: ORIGIN_POINTS,
     width: ORIGIN_WIDTH,   // cutsom porperty
     height: ORIGIN_HEIGHT, // cutsom porperty
-
-    rotationDeg: 0,
+    rotation: 0,
 
     fill: Konva.Util.getRandomColor(),
     opacity: 1,
-    strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: DEFAULT_STROKE_COLOR,
+    
+    strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
     closed: true,
@@ -73,10 +73,10 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
 
         onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg,) => {
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            rotationDeg,
+            rotation,
             width: shapeProps.width * scale.x,
             height: shapeProps.height * scale.y,
           })

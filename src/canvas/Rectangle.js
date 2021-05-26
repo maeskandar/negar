@@ -9,15 +9,16 @@ export function newRectangle(x = 50, y = 50,) {
   return {
     id: v1(),
     kind: shapeKinds.Reactangle,
+    
     x, y,
     width: 100,
     height: 100,
+    rotation: 0,
+    
     opacity: 1,
-    rotationDeg: 0,
-
     fill: Konva.Util.getRandomColor(),
-    strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: DEFAULT_STROKE_COLOR,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
   }
 }
 
@@ -48,7 +49,7 @@ export function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
         onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            rotationDeg: rotation,
+            rotation: rotation,
             width: shapeProps.width * scale.x,
             height: shapeProps.height * scale.y,
           })

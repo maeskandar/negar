@@ -3,11 +3,11 @@ import { Stage, Layer, Rect, Image as KImage } from "react-konva"
 import { SketchPicker } from "react-color"
 import randInt from 'random-int'
 
-import { shapeKinds, isKindOfLine } from "../canvas"
+import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
 import { Rectangle, newRectangle } from "../canvas/Rectangle"
 import { MyCircle as Circle, newCircle } from "../canvas/Circle"
 import { MyImage, newImage } from "../canvas/Images"
-import { addTextNode } from "../canvas/TextNode"
+import { TextNode, newTextNode } from "../canvas/TextNode"
 import { newArrow, Arrow } from "../canvas/Arrow"
 import { newSimpleLine, SimpleLine } from "../canvas/SimpleLine"
 import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
@@ -97,6 +97,12 @@ function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
       return <CustomLine
         {...commonProps}
       />
+    case shapeKinds.Text:
+      return <TextNode
+        {...commonProps}
+      />
+    default:
+      throw new Error("undefiend shape type")
   }
 }
 
@@ -215,8 +221,8 @@ export default function HomePage() {
       if (index !== -1)
         setShapes(removeInArray(shapes, index))
     },
-    addToShapes = (select, ...newShapes) => {
-      if (select)
+    addToShapes = (isSelected, ...newShapes) => {
+      if (isSelected)
         setSelectedShapeInfo({
           id: newShapes[0].id,
           shapeObj: newShapes[0],
@@ -238,9 +244,7 @@ export default function HomePage() {
       addToShapes(true, newImage(e))
     },
     drawText = () => {
-      // FIXME: needs refactoring
-      let txtEl = addTextNode(stageEl.current.getStage(), mainLayer.current, "تایپ کنید", "Shabnam")
-      addToShapes(false, txtEl)
+      addToShapes(true, newTextNode("type kon"))
     },
 
     StartLineDrawingMode = () => {
@@ -367,7 +371,6 @@ export default function HomePage() {
         var mp = stageEl.current.getPointerPosition()
         mp = [mp.x, mp.y]
 
-        console.log(mp)
 
         if (selectedTool === APP_TOOLS.PENCIL) {
           setTempShapes(
@@ -421,9 +424,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (verseText != "") {
-      const id = addTextNode(stageEl.current.getStage(), mainLayer.current, verseText, "QuranTaha")
-      const shs = shapes.concat([id])
-      setShapes(shs)
+      // addTextNode(stageEl.current.getStage(), mainLayer.current, verseText, "QuranTaha")
+      // const shs = shapes.concat([id])
+      // setShapes(shs)
     }
   }, [verseText])
 
@@ -623,18 +626,35 @@ export default function HomePage() {
             }}
           />
 
-          {('rotationDeg' in selectedShapeInfo.shapeObj) && <>
+          {('rotation' in selectedShapeInfo.shapeObj) && <>
             <Typography gutterBottom> چرخش </Typography>
             <Slider
-              value={selectedShapeInfo.shapeObj.rotationDeg}
+              value={selectedShapeInfo.shapeObj.rotation}
               onChange={(e, nv) => {
-                selectedShapeInfo.shapeObj.rotationDeg = nv
+                selectedShapeInfo.shapeObj.rotation = nv
                 onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
               }}
               aria-labelledby="discrete-slider-small-steps"
               step={1}
               min={0}
               max={360}
+              valueLabelDisplay="auto"
+            />
+          </>
+          }
+
+          {('fontSize' in selectedShapeInfo.shapeObj) && <>
+            <Typography gutterBottom> اندازه فونت </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.fontSize}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.fontSize = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={0.5}
+              min={1}
+              max={150}
               valueLabelDisplay="auto"
             />
           </>
@@ -649,16 +669,16 @@ export default function HomePage() {
                 onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
               }}
               aria-labelledby="discrete-slider-small-steps"
-              step={1}
+              step={selectedShapeInfo.shapeObj.kind === shapeKinds.Text ? 0.1 : 0.5}
               min={isKindOfLine(selectedShapeInfo.shapeObj.kind) ? 1 : 0}
               max={20}
-              marks
               valueLabelDisplay="auto"
             />
           </>
           }
+
           {/* color picking */}
-          {selectedShapeInfo.shapeObj.kind !== shapeKinds.Image &&
+          {hasStroke(selectedShapeInfo.shapeObj.kind) &&
             <>
               {
                 !isKindOfLine(selectedShapeInfo.shapeObj.kind) &&

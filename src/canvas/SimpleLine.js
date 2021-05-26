@@ -9,6 +9,7 @@ export function newSimpleLine(points) {
   return {
     id: v1(),
     kind: shapeKinds.StraghtLine,
+
     points,
     strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: Konva.Util.getRandomColor(),

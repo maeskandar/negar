@@ -28,11 +28,11 @@ export function newCustomLine(points) {
 
     width: originWidth,
     height: originHeight,
+    rotation: 0,
+    
     opacity: 1,
-    rotationDeg: 0,
-
-    strokeWidth: DEFAULT_STROKE_WIDTH,
     stroke: Konva.Util.getRandomColor(),
+    strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
   }
@@ -65,10 +65,10 @@ export function CustomLine({ shapeProps, isSelected, onSelect, onChange }) {
 
         onClick={onSelect}
         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotationDeg) => {
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            rotationDeg,
+            rotation,
             width: shapeProps.width * scale.x,
             height: shapeProps.height * scale.y,
           })
