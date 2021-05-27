@@ -3459,7 +3459,7 @@ buffer@^5.1.0, buffer@^5.5.0:
 
 build@^0.1.4:
   version "0.1.4"
-  resolved "https://registry.npmjs.org/build/-/build-0.1.4.tgz"
+  resolved "https://registry.yarnpkg.com/build/-/build-0.1.4.tgz#707fe026ffceddcacbfdcdf356eafda64f151046"
   integrity sha1-cH/gJv/O3crL/c3zVur9pk8VEEY=
   dependencies:
     cssmin "0.3.x"

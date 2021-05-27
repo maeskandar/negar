@@ -191,8 +191,9 @@ const CustomSearchbar = ({ onAyaSelect }) => {
     console.log(target)
     return { __html: text.replace(target, "<a style='color:red'>$&</a>") }
   }
-  const clickHandler = (text) => {
-    onAyaSelect(text)
+  const clickHandler = (text,sura,ayaNo) => {
+    let desc = "(سوره مبارکه " + (sura) + " آیه" + (ayaNo)+")";
+    onAyaSelect(text+"        "+desc);
     setIsResultVisible(false)
     setValue("")
   }
@@ -208,7 +209,8 @@ const CustomSearchbar = ({ onAyaSelect }) => {
               <div className={"container"}
               >
                 <Grid className={"uni_flex_column"} style={{ flex: 1 }}>
-                  <Typography className={classes.suraAya} onClick={() => clickHandler(result.Arabic)}>
+                  <Typography className={classes.suraAya} 
+                  onClick={() => clickHandler(result.Arabic,result.SuraName,result.AyaNo)}>
                     {"سوره مبارکه " + (result.SuraName) + " آیه" + (result.AyaNo)}
                   </Typography>
                   <Typography className={classes.ayyehText} component={"p"}
