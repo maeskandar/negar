@@ -3,18 +3,23 @@ import Konva from "konva"
 import { Rect, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
 
-export function newRectangle(x,y) {
+export function newRectangle(x = 50, y = 50,) {
   return {
     id: v1(),
     kind: shapeKinds.Reactangle,
-    x:200, y:200,
+    
+    x, y,
     width: 100,
     height: 100,
+    rotation: 0,
+    
+    opacity: 1,
     fill: Konva.Util.getRandomColor(),
-    strokeWidth: 4,
-    stroke: 'black',
+    stroke: DEFAULT_STROKE_COLOR,
+    
+    strokeWidth: DEFAULT_STROKE_WIDTH,
   }
 }
 
@@ -33,35 +38,23 @@ export function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
   return (
     <>
       <Rect
-        onClick={onSelect}
         ref={shapeRef}
         {...shapeProps}
-        draggable = {isSelected}
-        onDragEnd={e => {
+
+        offsetX={shapeProps.width / 2}
+        offsetY={shapeProps.height / 2}
+        draggable={isSelected}
+
+        onClick={onSelect}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
+            rotation: rotation,
+            width: shapeProps.width * scale.x,
+            height: shapeProps.height * scale.y,
           })
-        }}
-        onTransformEnd={e => {
-          // transformer is changing scale
-          const
-            node = shapeRef.current,
-            scaleX = node.scaleX(),
-            scaleY = node.scaleY()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
-          onChange({
-            ...shapeProps,
-            x: node.x(),
-            y: node.y(),
-            width: node.width() * scaleX,
-            height: node.height() * scaleY,
-          })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

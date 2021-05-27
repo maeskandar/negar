@@ -11,3 +11,12 @@ export function sumArraysOneByOne(arr1, arr2) {
 
   return arr1.map((v, i) => v + arr2[i])
 }
+
+export function validDeg(deg) {
+  deg = deg % 360
+  return (deg < 0) ? 360 + deg : deg
+}
+
+export const
+  minMaxDistance = (arr) => Math.max(...arr) - Math.min(...arr),
+  prettyFloatNumber = (num) => num // TODO 

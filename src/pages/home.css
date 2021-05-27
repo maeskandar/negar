@@ -3,11 +3,21 @@
     border         : none;
     padding        : 0;
     margin         : 0;
-    
+
+}
+
+.pe-none {
+    pointer-events: none;
+}
+
+.pe-all {
+    pointer-events: all;
 }
 
 #home-page {
     text-align: center;
+    width     : 100%;
+    overflow  : hidden;
 }
 
 #tool-bar-wrapper {
@@ -36,7 +46,8 @@
     right           : 0;
     background-color: #fafafa;
     z-index         : 1;
-    overflow-y: scroll;
+    overflow-y      : scroll;
+    overflow-x      : hidden;
 }
 
 .konvajs-content {
@@ -44,14 +55,25 @@
 }
 
 #color-picker-wrapper {
-    z-index: 3;
-    width: 100%;
-    display: flex;
+    z-index        : 3;
+    width          : 100%;
+    display        : flex;
     justify-content: center;
 }
 
 .color-preview {
-    width : 20px;
-    height: 20px;
+    width        : 20px;
+    height       : 20px;
     border-radius: 3px;
+}
+
+.text-editing {
+    position: absolute;
+    resize: none;
+    outline-style: none;
+    z-index: 2;
+    background: none;
+    box-sizing: content-box;
+    border: 2px solid #7fd0ff;
+    overflow: visible;
 }

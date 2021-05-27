@@ -3,17 +3,22 @@ import { Image, Transformer } from "react-konva"
 import useImage from "use-image"
 import v1 from 'uuid/dist/v1'
 
-import { shapeKinds } from './'
+import { resetTransform, onDragEndCommon, shapeKinds } from './'
+
 
 export function newImage(content) {
   return {
     id: v1(),
     kind: shapeKinds.Image,
-    content,
+
     x: 100,
     y: 100,
     width: 300,
     height: 300,
+    rotation: 0,
+
+    content,
+    opacity: 1,
   }
 }
 
@@ -24,8 +29,7 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
     [image] = useImage(imageUrl)
 
   React.useEffect(() => {
-    if (isSelected) {
-      // we need to attach transformer manually
+    if (isSelected) { // we need to attach transformer manually
       trRef.current.setNode(shapeRef.current)
       trRef.current.getLayer().batchDraw()
     }
@@ -40,35 +44,24 @@ export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }
   return (
     <>
       <Image
-        width={300}
-        height={300}
-        onClick={onSelect}
+        ref={shapeRef}
         image={image}
         {...shapeProps}
-        ref={shapeRef}
+
+        offsetX={shapeProps.width / 2}
+        offsetY={shapeProps.height / 2}
         draggable={isSelected}
-        onDragEnd={e => {
+
+        onClick={onSelect}
+        onDragEnd={onDragEndCommon(shapeProps, onChange)}
+        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
           onChange({
             ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
+            rotation,
+            width: shapeProps.width * scale.x,
+            height: shapeProps.height * scale.y,
           })
-        }}
-        onTransformEnd={e => {
-          const
-            node = shapeRef.current,
-            sx = node.scaleX(),
-            sy = node.scaleY()
-
-          node.scaleX(1)
-          node.scaleY(1)
-
-          onChange({
-            ...shapeProps,
-            width: node.width() * sx,
-            height: node.height() * sy,
-          })
-        }}
+        })}
       />
       {isSelected && <Transformer ref={trRef} />}
     </>

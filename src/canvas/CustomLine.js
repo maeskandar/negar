@@ -3,48 +3,42 @@ import React, { useEffect } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
-import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
+import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from './'
 
-import { oddIndexes, evenIndexes, apply2DScale } from '../utils/array'
-import { minMaxDistance } from '../utils/math'
+import { minMaxDistance } from "../utils/math"
+import { oddIndexes, evenIndexes, apply2DScale } from "../utils/array"
 
-const
-  ORIGIN_POINTS = [
-    [0, 0],
-    [50, 50],
-    [50, 20],
-    [150, 20],
-    [150, -20],
-    [50, -20],
-    [50, -50],
-  ].map(p2 => [p2[0], p2[1] + 50]).flat(), // to make coordiantes from (0, 0)
-  
-  ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
-  ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
-export function newArrow(x = 50, y = 50) {
+export function newCustomLine(points) {
+  let
+    originPoints = [0, 0,
+      ...points.slice(2).map((p, i) => p - (i % 2 === 0 ? points[0] : points[1]))],
+
+    originWidth = minMaxDistance(evenIndexes(originPoints)),
+    originHeight = minMaxDistance(oddIndexes(originPoints))
+
   return {
     id: v1(),
-    kind: shapeKinds.CustomShape,
+    kind: shapeKinds.CustomLine,
 
-    x, y,
-    points: ORIGIN_POINTS,
-    width: ORIGIN_WIDTH,   // cutsom porperty
-    height: ORIGIN_HEIGHT, // cutsom porperty
+    originPoints, originWidth, originHeight, // keep the original values to apply tranformation correctly
+    x: points[0] + originWidth / 2,  // to fill offset
+    y: points[1] + originHeight / 2, // to fill offset
+    points: originPoints,
+
+    width: originWidth,
+    height: originHeight,
     rotation: 0,
-
-    fill: Konva.Util.getRandomColor(),
-    opacity: 1,
-    stroke: DEFAULT_STROKE_COLOR,
     
+    stroke: Konva.Util.getRandomColor(),
+    opacity: 1,
+
     strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
-    closed: true,
   }
 }
-
-export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
+export function CustomLine({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),
     trRef = React.useRef()
@@ -56,10 +50,9 @@ export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
     }
   }, [isSelected])
 
-  shapeProps.points = apply2DScale(ORIGIN_POINTS,
-    shapeProps.width / ORIGIN_WIDTH,
-    shapeProps.height / ORIGIN_HEIGHT)
-
+  shapeProps.points = apply2DScale(shapeProps.originPoints,
+    shapeProps.width / shapeProps.originWidth,
+    shapeProps.height / shapeProps.originHeight)
 
   return (
     <>

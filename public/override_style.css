@@ -1,12 +1,12 @@
 body {
-  direction: rtl !important;
+  direction: rtl;
   /*background: linear-gradient(90deg, rgba(201, 201, 204, 1) 0%, rgba(200, 200, 203, 1) 39%, rgba(228, 228, 229, 1) 75%, rgba(255, 255, 255, 1) 100%) !important;*/
   background: #dce4e7;
-  text-align: right !important;
+  text-align: right;
 }
 
 .Toastify__toast-body {
-  font-family: 'Shabnam', serif !important;
+  font-family: 'Shabnam', serif;
 }
 
 .rating_icon_layout {

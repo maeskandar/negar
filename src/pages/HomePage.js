@@ -3,23 +3,24 @@ import { Stage, Layer, Rect, Image as KImage } from "react-konva"
 import { SketchPicker } from "react-color"
 import randInt from 'random-int'
 
-import { shapeKinds, isKindOfLine } from "../canvas"
+import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
 import { Rectangle, newRectangle } from "../canvas/Rectangle"
 import { MyCircle as Circle, newCircle } from "../canvas/Circle"
 import { MyImage, newImage } from "../canvas/Images"
-import { addTextNode } from "../canvas/TextNode"
-import { MyLine, newLine } from "../canvas/Line"
+import { TextNode, newTextNode } from "../canvas/TextNode"
 import { newArrow, Arrow } from "../canvas/Arrow"
+import { newSimpleLine, SimpleLine } from "../canvas/SimpleLine"
+import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
+import { CustomLine, newCustomLine } from "../canvas/CustomLine"
 
-import { MyVerticallyCenteredModal } from "../components/CustomModal/MyVerticallyCenteredModal"
+import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
+import CustomSearchbar from "../UI/CustomSearchbar"
 
 import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
-import { pointsDistance, sumArraysOneByOne } from "../utils/math"
-
+import { pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
-// import _ from "lodash"
 
 import {
   CropDin as RectangleIcon,
@@ -38,14 +39,17 @@ import {
 } from '@material-ui/icons'
 
 import { ToolBarBtn } from "../UI/Toolbar"
-import { Paper, TextField, Slider, Typography } from "@material-ui/core"
-import CustomSearchbar from "../components/Searchbar/CustomSearchbar"
+import {
+  Paper, TextField, Slider, Typography,
+  Select, MenuItem,
+} from "@material-ui/core"
 
 // enums ----
 const
   APP_STATES = {
     DRAGING: 0,
     DRAWING: 1,
+    TEXT_EDITING: 2,
   },
   APP_TOOLS = {
     NOTHING: 0,
@@ -59,18 +63,23 @@ const
     STROKE_COLOR_PICKER: 8,
   },
   ERASER_RADIUS = 10, // px
-  PIXEL_RATIO_DOWNLAOD = 3
+  PIXEL_RATIO_DOWNLAOD = 3,
+  FONT_NAMES = [
+    'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
+  ]
 
-let drawingTempData = []
+let
+  drawingTempData = [],
+  lastTextNodeSelectedData = { id: null, index: null, shapeObj: null }
 
-function objectToShape(obj, isSelected, onSelect, onChange) {
+function shapeRenderer(shapeObj, isSelected, onSelect, onChange, onWannaEdit) {
   const commonProps = {
-    key: obj.id,
-    shapeProps: obj,
+    key: shapeObj.id,
+    shapeProps: shapeObj,
     isSelected, onSelect, onChange,
   }
 
-  switch (obj.kind) {
+  switch (shapeObj.kind) {
 
     case shapeKinds.Reactangle:
       return <Rectangle
@@ -83,17 +92,27 @@ function objectToShape(obj, isSelected, onSelect, onChange) {
     case shapeKinds.Image:
       return <MyImage
         {...commonProps}
-        imageUrl={obj.content}
+        imageUrl={shapeObj.content}
       />
     case shapeKinds.CustomShape:
       return <Arrow
         {...commonProps}
       />
-    case shapeKinds.Line:
-    case shapeKinds.CustomLine:
-      return <MyLine
+    case shapeKinds.StraghtLine:
+      return <StraghtLine
         {...commonProps}
       />
+    case shapeKinds.CustomLine:
+      return <CustomLine
+        {...commonProps}
+      />
+    case shapeKinds.Text:
+      return <TextNode
+        {...commonProps}
+        onWannaEdit={onWannaEdit}
+      />
+    default:
+      throw new Error("undefiend shape type")
   }
 }
 
@@ -102,7 +121,11 @@ export default function HomePage() {
     // canvas related
     [shapes, setShapes] = useState([]),
     [tempShapes, setTempShapes] = useState([]),
-    [color, setColor] = useState("#fff"),
+    [color, setColor] = useState('#fff'),
+
+    [text, setText] = useState(''),
+    [textStyles, setTextStyles] = useState({}),
+
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
     stageEl = React.createRef(),
     mainLayer = React.createRef(),
@@ -111,12 +134,9 @@ export default function HomePage() {
     // app functionality related
     [appState, setAppState] = React.useState(new Set()),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
-    [modalShow, setModalShow] = React.useState(false),
-    fileUploadEl = React.createRef(),
     [backgroundimage, setBackgroundimageDirect] = useState({ url: null, imageObj: null, }),
     [backgroundModalShow, setBackgroundModalShow] = useState(false),
     [imageModalShow, setImageModalShow] = useState(false),
-    [verseText, setVerseText] = useState(""),
     backimages = [
       {
         url: '/images/pexels-eberhard-grossgasteiger-1064162.jpg',
@@ -195,42 +215,11 @@ export default function HomePage() {
         title: 'درخت',
         desc: 'نوع شماره 9'
       }
-    ];
-
+    ]
 
 
   // functions -----------------------------------------
   const
-    setSelectedId = (shapeId) => {
-      if (shapeId === selectedShapeInfo.id) return
-
-      let
-        si = shapes.findIndex(it => it.id === shapeId),
-        so = si === -1 ? null : shapes[si]
-
-      setSelectedShapeInfo({
-        id: so ? shapeId : null,
-        index: so ? si : null,
-        shapeObj: so,
-      })
-    },
-    deleteShape = (shapeId) => {
-      let index = shapes.findIndex(it => it.id === shapeId)
-
-      if (index !== -1)
-        setShapes(removeInArray(shapes, index))
-    },
-    onShapeChanged = (i, newAttrs) => {
-      if (newAttrs.id === selectedShapeInfo.id) {
-
-        setSelectedShapeInfo({
-          id: newAttrs.id,
-          index: i,
-          shapeObj: newAttrs
-        })
-      }
-      setShapes(replaceInArray(shapes, i, newAttrs))
-    },
     isInJamBoardMode = () =>
       appState.has(APP_STATES.DRAWING) &&
       (selectedTool === APP_TOOLS.PENCIL || selectedTool === APP_TOOLS.ERASER)
@@ -238,44 +227,85 @@ export default function HomePage() {
     isColorPicking = () =>
       selectedTool === APP_TOOLS.FG_COLOR_PICKER || selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
     ,
-    addToShapes = (...newShapes) => {
+
+    deleteShape = (shapeId) => {
+      let index = shapes.findIndex(it => it.id === shapeId)
+
+      if (index !== -1)
+        setShapes(removeInArray(shapes, index))
+    },
+    addToShapes = (isSelected, ...newShapes) => {
+      if (isSelected)
+        setSelectedShapeInfo({
+          id: newShapes[0].id,
+          shapeObj: newShapes[0],
+          index: shapes.length
+        })
+
       setShapes(shapes.concat(newShapes))
     },
     addRectangle = (x, y) => {
-      addToShapes(
-        newRectangle(x, y))
+      addToShapes(true, newRectangle(x, y))
     },
     addCircle = (x, y) => {
-      addToShapes(
-        newCircle(x, y))
+      addToShapes(true, newCircle(x, y))
     },
+    drawArrow = () => {
+      addToShapes(true, newArrow())
+    },
+    ImageSetterHandler = (e) => {
+      addToShapes(true, newImage(e))
+    },
+    drawText = (t = 'تایپ کن') => {
+      addToShapes(true, newTextNode(t))
+    },
+
     StartLineDrawingMode = () => {
       setAppState(addToSet(appState, APP_STATES.DRAWING))
       setSelectedTool(APP_TOOLS.LINE)
-    },
-    drawArrow = () => {
-      addToShapes(
-        newArrow())
-    },
-    drawText = () => {
-      // FIXME: needs refactoring
-      let txtEl = addTextNode(stageEl.current.getStage(), mainLayer.current, "تایپ کنید", "Shabnam");
-      console.log(txtEl)
-      addToShapes(txtEl)
-    },
-    drawImage = () => { // #FIXME: what a name
-      fileUploadEl.current.click()
     },
     startJamBoard = () => {
       setAppState(addToSet(appState, APP_STATES.DRAWING))
       setSelectedTool(APP_TOOLS.PENCIL)
       setSelectedId(null)
     },
+    saveAsImage = () => {
+      let dataURL = stageEl.current.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
+      downloadURI(dataURL, 'stage.png')
+    },
+    setBackgroundimage = (url) => {
+      setBackgroundimageDirect({ url, imageObj: null })
 
+      let imageObj = new Image()
+      imageObj.src = url
+      imageObj.onload = () =>
+        setBackgroundimageDirect({ url, imageObj })
+    },
+    performTextEdit = (styles, t) => {
+      setTextStyles(styles)
+      setText(t)
+      setAppState(addToSet(appState, APP_STATES.TEXT_EDITING))
+
+      lastTextNodeSelectedData = {
+        ...selectedShapeInfo,
+        shapeObj: {...selectedShapeInfo.shapeObj}
+      }
+      
+      onShapeChanged(selectedShapeInfo.index, {
+        ...selectedShapeInfo.shapeObj,
+        opacity: 0,
+      })
+      
+      setSelectedId(null)
+    },
     cancelOperation = () => {
       if (appState.has(APP_STATES.DRAWING)) {
         cleanArray(drawingTempData)
         setTempShapes([])
+      }
+
+      else if (appState.has(APP_STATES.TEXT_EDITING)) {
+        onShapeChanged(lastTextNodeSelectedData.index, lastTextNodeSelectedData.shapeObj)
       }
 
       setAppState(new Set())
@@ -295,21 +325,18 @@ export default function HomePage() {
             tempPoints.push(...newPoints)
           }
           function closeLastLine() {
-            resultLines.push(newLine(tempPoints, true))
+            resultLines.push(newCustomLine(tempPoints))
           }
           function addNewLine(...points) {
             tempPoints = points
           }
-          function getAbsolutePoints(line4p) {
-            return sumArraysOneByOne(line4p.points, [line4p.x, line4p.y, line4p.x, line4p.y])
-          }
 
-          tempPoints = getAbsolutePoints(tempShapes[0])
+          tempPoints = tempShapes[0].points
 
           for (let i = 1; i < tempShapes.length - 1; i++) {
             let
-              lcp = getAbsolutePoints(tempShapes[i]), // current line points
-              lnp = getAbsolutePoints(tempShapes[i + 1])  // next line points
+              lcp = tempShapes[i].points, // current line points
+              lnp = tempShapes[i + 1].points  // next line points
 
             // if end points of this line are equal to start points of next line
             if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
@@ -322,29 +349,42 @@ export default function HomePage() {
           }
           closeLastLine()
 
-          addToShapes(...resultLines)
+          addToShapes(false, ...resultLines)
         }
 
       }
       cancelOperation()
     },
-    saveAsImage = () => {
-      let dataURL = stageEl.current.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
-      downloadURI(dataURL, 'stage.png')
-    },
-    setBackgroundimage = (url) => {
-      setBackgroundimageDirect({ url, imageObj: null })
 
-      let imageObj = new Image()
-      imageObj.src = url
-      imageObj.onload = () =>
-        setBackgroundimageDirect({ url, imageObj })
-    },
-    // undo = () => { }
     // canvas events -------------------------
+    setSelectedId = (shapeId) => {
+      if (shapeId === selectedShapeInfo.id) return
+
+      let
+        si = shapes.findIndex(it => it.id === shapeId),
+        so = si === -1 ? null : shapes[si]
+
+      setSelectedShapeInfo({
+        id: so ? shapeId : null,
+        index: so ? si : null,
+        shapeObj: so,
+      })
+    },
+    onShapeChanged = (i, newAttrs) => {
+      if (newAttrs.id === selectedShapeInfo.id) {
+
+        setSelectedShapeInfo({
+          id: newAttrs.id,
+          index: i,
+          shapeObj: newAttrs
+        })
+      }
+      console.log(newAttrs)
+      setShapes(replaceInArray(shapes, i, newAttrs))
+    },
     onShapeSelected = (shapeId) => {
-      // toggle select
-      setSelectedId(shapeId === selectedShapeInfo ? null : shapeId)
+      if (!appState.has(APP_STATES.TEXT_EDITING))
+        setSelectedId(shapeId) 
     },
     handleClick = (ev) => {
       if (ev.target.name() === "bg-layer") {
@@ -366,19 +406,19 @@ export default function HomePage() {
         var mp = stageEl.current.getPointerPosition()
         mp = [mp.x, mp.y]
 
+
         if (selectedTool === APP_TOOLS.PENCIL) {
           setTempShapes(
             addToArray(tempShapes,
-              newLine(drawingTempData.concat(mp))))
+              newSimpleLine(drawingTempData.concat(mp))))
           drawingTempData = mp
         }
         else if (selectedTool === APP_TOOLS.ERASER) {
           let acc = []
           for (const l of tempShapes) {
-            // because the line is [0,0,,x1, y1] by default
             let
-              sp = [l.points[0] + l.x, l.points[1] + l.y],
-              ep = [l.points[2] + l.x, l.points[3] + l.y]
+              sp = [l.points[0], l.points[1]],
+              ep = [l.points[2], l.points[3]]
 
             if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
               acc.push(l)
@@ -391,13 +431,14 @@ export default function HomePage() {
     handleMouseUp = (e) => {
       if (selectedTool === APP_TOOLS.LINE) {
         let pos = e.target.getStage().getPointerPosition()
-        addToShapes(newLine(drawingTempData.concat([pos.x, pos.y])))
+        addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
       }
 
       setAppState(removeInSet(appState, APP_STATES.DRAGING))
     }
 
-  // if you have any question for what i did that: because of new stupid functional paradigm react way
+
+  // register events -----
   useEffect(() => {
     const
       handleWindowKeyboard = (ev) => {
@@ -412,58 +453,34 @@ export default function HomePage() {
         }
       }
 
-
     window.addEventListener('keydown', handleWindowKeyboard)
     return () => window.removeEventListener('keydown', handleWindowKeyboard)
   }, [selectedShapeInfo, deleteShape])
 
 
-  if (!backgroundimage.url) {
+  // config default states ------
+  if (!backgroundimage.url) { // default state
     setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
   }
 
-
-  const ImageSetterHandler = (e) => {
-    addToShapes(newImage(e))
-  }
-
-  React.useEffect(function () {
-    if (verseText != "") {
-      const id = addTextNode(stageEl.current.getStage(), mainLayer.current, verseText, "QuranTaha");
-      const shs = shapes.concat([id]);
-      setShapes(shs);
-    }
-  }, [verseText]);
-
-
-
-  let Cmodal;
-  if (backgroundModalShow)
-    Cmodal = <MyVerticallyCenteredModal
-      title={"پس زمینه"}
-      images={backimages}
-      show={backgroundModalShow}
-      setimage={setBackgroundimage}
-      onHide={() => setBackgroundModalShow(false)}
-    />;
-  else if (imageModalShow)
-    Cmodal = <MyVerticallyCenteredModal
-      title={"تصویر"}
-      images={imagesData}
-      show={imageModalShow}
-      setimage={(e) => ImageSetterHandler(e)}
-      onHide={() => setImageModalShow(false)}
-    />;
-
+  // render -------=
   return (
-    <div id="home-page" style={{
-      textAlign: 'center',
-      background: `url(${backgroundimage.url}) no-repeat center fixed`,
-      width: '100%'
-    }}>
+    <div id="home-page">
 
-      {
-        Cmodal
+      {backgroundModalShow && <MyVerticallyCenteredModal
+        title={"پس زمینه"}
+        images={backimages}
+        show={backgroundModalShow}
+        setimage={setBackgroundimage}
+        onHide={() => setBackgroundModalShow(false)}
+      />
+      }{imageModalShow && <MyVerticallyCenteredModal
+        title={"تصویر"}
+        images={imagesData}
+        show={imageModalShow}
+        setimage={(e) => ImageSetterHandler(e)}
+        onHide={() => setImageModalShow(false)}
+      />
       }
 
       <div id="tool-bar-wrapper"
@@ -490,7 +507,7 @@ export default function HomePage() {
               />
               <ToolBarBtn
                 title="متن"
-                onClick={drawText}
+                onClick={() => drawText()}
                 iconEl={<TextIcon />}
               />
               <ToolBarBtn
@@ -558,8 +575,8 @@ export default function HomePage() {
         selectedShapeInfo.id !== null &&
         <Paper id="status-bar" className="p-3" square>
           <div className="mb-2">
-           
-            <span> kind: </span>
+
+            <span> نوع شکل: </span>
             <span>
               {
                 Object.keys(shapeKinds)
@@ -572,8 +589,8 @@ export default function HomePage() {
           {('x' in selectedShapeInfo.shapeObj) &&
             <TextField
               type="number"
-              label="x"
-              value={selectedShapeInfo.shapeObj.x}
+              label="مختصات x"
+              value={prettyFloatNumber(selectedShapeInfo.shapeObj.x)}
               onChange={e => {
                 let nv = parseInt(e.target.value)
                 selectedShapeInfo.shapeObj.x = nv
@@ -584,8 +601,8 @@ export default function HomePage() {
           {('y' in selectedShapeInfo.shapeObj) &&
             <TextField
               type="number"
-              label="y"
-              value={selectedShapeInfo.shapeObj.y}
+              label="مختصات y"
+              value={prettyFloatNumber(selectedShapeInfo.shapeObj.y)}
               onChange={e => {
                 let nv = parseInt(e.target.value)
                 selectedShapeInfo.shapeObj.y = nv
@@ -595,16 +612,17 @@ export default function HomePage() {
           }
           <TextField
             type="number"
-            label="width"
+            label="عرض"
             value={
-              selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
-                selectedShapeInfo.shapeObj.points[2] :
-                selectedShapeInfo.shapeObj.width
+              prettyFloatNumber
+                (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
+                  selectedShapeInfo.shapeObj.points[2] :
+                  selectedShapeInfo.shapeObj.width)
             }
             onChange={e => {
               let nv = parseInt(e.target.value)
 
-              if (selectedShapeInfo.shapeObj.kind === shapeKinds.Line)
+              if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
                 selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 2, nv)
 
               else
@@ -612,20 +630,21 @@ export default function HomePage() {
 
               onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
             }}
-            
+
           />
           <TextField
             type="number"
-            label="height"
+            label="ارتفاع"
             value={
-              selectedShapeInfo.shapeObj.kind === shapeKinds.Line ?
-                selectedShapeInfo.shapeObj.points[3] :
-                selectedShapeInfo.shapeObj.height
+              prettyFloatNumber
+                (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
+                  selectedShapeInfo.shapeObj.points[3] :
+                  selectedShapeInfo.shapeObj.height)
             }
             onChange={e => {
               let nv = parseInt(e.target.value)
 
-              if (selectedShapeInfo.shapeObj.kind === shapeKinds.Line)
+              if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
                 selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 3, nv)
 
               else
@@ -634,9 +653,86 @@ export default function HomePage() {
               onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
             }}
           />
-          {/* color picking */}
+
+          {('rotation' in selectedShapeInfo.shapeObj) && <>
+            <Typography gutterBottom> چرخش </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.rotation}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.rotation = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={1}
+              min={0}
+              max={360}
+              valueLabelDisplay="auto"
+            />
+          </>
+          }
+
+          {('fontSize' in selectedShapeInfo.shapeObj) && <>
+            <Typography gutterBottom> اندازه فونت </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.fontSize}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.fontSize = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={0.5}
+              min={1}
+              max={150}
+              valueLabelDisplay="auto"
+            />
+          </>
+          }
+
+          {(selectedShapeInfo.shapeObj.kind === shapeKinds.Text) && <>
+            <Typography gutterBottom> نوع فونت </Typography>
+            <Select
+              value={selectedShapeInfo.shapeObj.fontFamily}
+              onChange={e => {
+                selectedShapeInfo.shapeObj.fontFamily = e.target.value
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            >
+              {FONT_NAMES.map(fname =>
+                <MenuItem value={fname}>{fname} </MenuItem>)
+              }
+            </Select>
+
+            <Typography gutterBottom> ارتفاع خط </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.lineHeight}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.lineHeight = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={0.1}
+              min={0.1}
+              max={8}
+              valueLabelDisplay="auto"
+            />
+
+            <Typography gutterBottom> چینش </Typography>
+            <Select
+              value={selectedShapeInfo.shapeObj.align}
+              onChange={e => {
+                selectedShapeInfo.shapeObj.align = e.target.value
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            >
+              {['left', 'right', 'center'].map(v =>
+                <MenuItem value={v}>{v} </MenuItem>)
+              }
+            </Select>
+          </>
+          }
+
           {('strokeWidth' in selectedShapeInfo.shapeObj) && <>
-            <Typography gutterBottom> stroke width </Typography>
+            <Typography gutterBottom> اندازه خط </Typography>
             <Slider
               value={selectedShapeInfo.shapeObj.strokeWidth}
               onChange={(e, nv) => {
@@ -644,20 +740,21 @@ export default function HomePage() {
                 onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
               }}
               aria-labelledby="discrete-slider-small-steps"
-              step={1}
+              step={selectedShapeInfo.shapeObj.kind === shapeKinds.Text ? 0.1 : 0.5}
               min={isKindOfLine(selectedShapeInfo.shapeObj.kind) ? 1 : 0}
               max={20}
-              marks
               valueLabelDisplay="auto"
             />
           </>
           }
-          {selectedShapeInfo.shapeObj.kind !== shapeKinds.Image &&
+
+          {/* color picking */}
+          {hasStroke(selectedShapeInfo.shapeObj.kind) &&
             <>
               {
                 !isKindOfLine(selectedShapeInfo.shapeObj.kind) &&
                 <div>
-                  <span> color: </span>
+                  <span> رنگ داخل: </span>
                   <ColorPreview
                     onClick={() => {
                       if (selectedTool === APP_TOOLS.FG_COLOR_PICKER)
@@ -671,7 +768,7 @@ export default function HomePage() {
                 </div>
               }
               <div>
-                <span> border color: </span>
+                <span> رنگ خط: </span>
                 <ColorPreview
                   onClick={() => {
                     if (selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
@@ -699,13 +796,57 @@ export default function HomePage() {
               }
             </>
           }
-          <br/>
-          <br/>
-          <br/>
-          <button className={"btn btn-danger"} onClick={()=> setSelectedId(null)}>خروج</button>
+          {('opacity' in selectedShapeInfo.shapeObj) && <>
+            <Typography gutterBottom> شفافیت </Typography>
+            <Slider
+              value={selectedShapeInfo.shapeObj.opacity}
+              onChange={(e, nv) => {
+                selectedShapeInfo.shapeObj.opacity = nv
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+              aria-labelledby="discrete-slider-small-steps"
+              step={0.05}
+              min={0.05}
+              max={1}
+              valueLabelDisplay="auto"
+            />
+          </>
+          }
+
+          <button className="btn btn-danger mt-3" onClick={() => setSelectedId(null)}>
+            خروج
+          </button>
         </Paper>
       }
-      <CustomSearchbar setVerseText={setVerseText} />
+      {
+        selectedShapeInfo.id === null && <CustomSearchbar
+          onAyaSelect={t => drawText(t)} />
+      }
+
+      {/* temp shapes */}
+      {appState.has(APP_STATES.TEXT_EDITING) &&
+        <>
+          <textarea id="me-t" className="text-editing m-0 p-0"
+            value={text}
+            onKeyPress={e => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                setAppState(removeInSet(appState, APP_STATES.TEXT_EDITING))
+                lastTextNodeSelectedData.shapeObj.text = text
+                console.log(lastTextNodeSelectedData.shapeObj);
+                onShapeChanged(lastTextNodeSelectedData.index, lastTextNodeSelectedData.shapeObj)
+              }
+            }}
+            onChange={e => setText(e.target.value)}
+            style={
+              {
+                ...textStyles,
+                // height: TODO:
+              }}
+          />
+        </>
+      }
+
       {/* konva canvas */}
       <Stage
         width={window.innerWidth}
@@ -718,22 +859,23 @@ export default function HomePage() {
       >
 
         {/* background layer */}
-        {/* <Layer>
+        <Layer>
           <KImage
             width={window.innerWidth}
             height={window.innerHeight}
-            // image={backgroundimage.imageObj}
+            image={backgroundimage.imageObj}
             name="bg-layer"
           />
         </Layer>
-         */}
+
         {/* main layer */}
         <Layer ref={mainLayer}>
-          {shapes.map((shape, i) => objectToShape(
+          {shapes.map((shape, i) => shapeRenderer(
             shape,
             shape.id === selectedShapeInfo.id,
             () => onShapeSelected(shape.id),
             (newAttrs) => onShapeChanged(i, newAttrs),
+            performTextEdit,
           ))}
         </Layer>
 
@@ -747,12 +889,9 @@ export default function HomePage() {
               opacity={0.5}
             />
             {tempShapes.map((shape, i) =>
-              <MyLine
+              <SimpleLine
                 key={shape.id}
                 shapeProps={{ ...shape }}
-                onChange={newAttrs => {
-                  setTempShapes(replaceInArray(tempShapes, i, newAttrs))
-                }}
               />)}
           </Layer>}
       </Stage>
