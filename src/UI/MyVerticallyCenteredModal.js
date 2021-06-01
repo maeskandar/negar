@@ -5,7 +5,7 @@ import { CustomCard } from './CustomCard'
 
 export function MyVerticallyCenteredModal(props) {
   const fileUploadHandler = (e) => {
-    
+
     if (e.target.files && e.target.files[0]) {
       props.setimage(URL.createObjectURL(e.target.files[0]))
       props.onHide();
@@ -20,13 +20,10 @@ export function MyVerticallyCenteredModal(props) {
       style={{ direction: 'ltr' }}
     >
       <Modal.Header closeButton >
-        {
-          (props.mode == "back") && (
-            <div className={"text-left position-fixed"}>
-              <input type={"file"} id={"customFile"} onChange={(e) => fileUploadHandler(e)} />
-            </div>
-          )
-        }
+
+        <div className={"text-left position-fixed"}>
+          <input type={"file"} id={"customFile"} onChange={(e) => fileUploadHandler(e)} />
+        </div>
 
         <Modal.Title className={"text-center"} id="contained-modal-title-vcenter"
           style={{ fontFamily: 'Shabnam', marginLeft: '45%' }}>
