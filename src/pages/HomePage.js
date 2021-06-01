@@ -437,6 +437,7 @@ export default function HomePage() {
       setAppState(removeInSet(appState, APP_STATES.DRAGING))
     }
 
+    
 
   // register events -----
   useEffect(() => {
@@ -473,6 +474,7 @@ export default function HomePage() {
         show={backgroundModalShow}
         setimage={setBackgroundimage}
         onHide={() => setBackgroundModalShow(false)}
+        mode = {"back"}
       />
       }{imageModalShow && <MyVerticallyCenteredModal
         title={"تصویر"}
@@ -480,6 +482,7 @@ export default function HomePage() {
         show={imageModalShow}
         setimage={(e) => ImageSetterHandler(e)}
         onHide={() => setImageModalShow(false)}
+        mode = {"img"}
       />
       }
 
