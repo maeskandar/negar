@@ -63,7 +63,7 @@ const
     STROKE_COLOR_PICKER: 8,
   },
   ERASER_RADIUS = 10, // px
-  PIXEL_RATIO_DOWNLAOD = 3,
+  PIXEL_RATIO_DOWNLAOD = 1,
   FONT_NAMES = [
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
   ]
