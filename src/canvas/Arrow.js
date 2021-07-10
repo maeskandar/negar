@@ -1,5 +1,5 @@
 import Konva from "konva"
-import React, { useEffect } from "react"
+import React, { useEffect, useRef } from "react"
 import { Line, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
@@ -17,7 +17,7 @@ const
     [150, -20],
     [50, -20],
     [50, -50],
-  ].map(p2 => [p2[0], p2[1] + 50]).flat(), // to make coordiantes from (0, 0)
+  ].map(p => [p[0], p[1] + 50]).flat(), // to make coordiantes from (0, 0)
   
   ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
   ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
@@ -46,8 +46,8 @@ export function newArrow(x = 50, y = 50) {
 
 export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
   const
-    shapeRef = React.useRef(),
-    trRef = React.useRef()
+    shapeRef = useRef(),
+    trRef = useRef()
 
   useEffect(() => {
     if (isSelected) {

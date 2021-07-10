@@ -28,6 +28,7 @@ export function newStraghtLine(points) {
     lineJoin: 'round',
   }
 }
+
 export function StraghtLine({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),

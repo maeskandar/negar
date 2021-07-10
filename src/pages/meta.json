@@ -1,0 +1,82 @@
+{
+  "backgrounds":[
+    {
+      "url": "/images/pexels-eberhard-grossgasteiger-1064162.jpg",
+      "title": "دریاچه و جنگل",
+      "desc": "مناظر و طبیعت"
+    },
+    {
+      "url": "/images/pexels-martin-damboldt-814499.jpg",
+      "title": "دریاچه ای زیبا",
+      "desc": "مناظر و طبیعت"
+    },
+    {
+      "url": "/images/pexels-roberto-shumski-1903702.jpg",
+      "title": "کوه ها!",
+      "desc": "مناظر و طبیعت"
+    },
+    {
+      "url": "/images/solid1.png",
+      "title": "صفحه رنگی",
+      "desc": "صفحه رنگی است!"
+    },
+    {
+      "url": "/images/solid2.jpg",
+      "title": "صفحه رنگی",
+      "desc": "صفحه رنگی است!"
+    },
+    {
+      "url": "/images/solid3.jpg",
+      "title": "صفحه رنگی",
+      "desc": "صفحه رنگی است!"
+    }
+  ],
+
+  "imagesData": [
+    {
+      "url": "/images/tree1.png",
+      "title": "درخت",
+      "desc": "نوع شماره 1"
+    },
+    {
+      "url": "/images/tree2.png",
+      "title": "درخت",
+      "desc": "نوع شماره 2"
+    },
+    {
+      "url": "/images/tree3.png",
+      "title": "درخت",
+      "desc": "نوع شماره 3"
+    },
+    {
+      "url": "/images/tree5.png",
+      "title": "درخت",
+      "desc": "نوع شماره 4"
+    },
+    {
+      "url": "/images/tree6.png",
+      "title": "درخت",
+      "desc": "نوع شماره 5"
+    },
+    {
+      "url": "/images/tree8.png",
+      "title": "درخت",
+      "desc": "نوع شماره 6"
+    },
+    {
+      "url": "/images/tree9.png",
+      "title": "درخت",
+      "desc": "نوع شماره 7"
+    },
+    {
+      "url": "/images/tree10.png",
+      "title": "درخت",
+      "desc": "نوع شماره 8"
+    },
+    {
+      "url": "/images/tree11.png",
+      "title": "درخت",
+      "desc": "نوع شماره 9"
+    }
+  ]
+}

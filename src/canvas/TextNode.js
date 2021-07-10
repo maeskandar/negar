@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useRef, useEffect } from "react"
 import { Text, Transformer } from "react-konva"
 import v1 from 'uuid/dist/v1'
 
@@ -26,7 +26,6 @@ export function newTextNode(text) {
     align: 'right',
   }
 }
-
 
 export function TextNode({ shapeProps, isSelected, onSelect, onChange}) {
   const

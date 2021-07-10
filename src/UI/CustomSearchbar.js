@@ -191,9 +191,9 @@ const CustomSearchbar = ({ onAyaSelect }) => {
     console.log(target)
     return { __html: text.replace(target, "<a style='color:red'>$&</a>") }
   }
-  const clickHandler = (text,sura,ayaNo) => {
-    let desc = "(سوره مبارکه " + (sura) + " آیه" + (ayaNo)+")";
-    onAyaSelect(text+"        "+desc);
+  const clickHandler = (text, sura, ayaNo) => {
+    let desc = "(سوره مبارکه " + (sura) + " آیه" + (ayaNo) + ")"
+    onAyaSelect(text + "        " + desc)
     setIsResultVisible(false)
     setValue("")
   }
@@ -209,8 +209,8 @@ const CustomSearchbar = ({ onAyaSelect }) => {
               <div className={"container"}
               >
                 <Grid className={"uni_flex_column"} style={{ flex: 1 }}>
-                  <Typography className={classes.suraAya} 
-                  onClick={() => clickHandler(result.Arabic,result.SuraName,result.AyaNo)}>
+                  <Typography className={classes.suraAya}
+                    onClick={() => clickHandler(result.Arabic, result.SuraName, result.AyaNo)}>
                     {"سوره مبارکه " + (result.SuraName) + " آیه" + (result.AyaNo)}
                   </Typography>
                   <Typography className={classes.ayyehText} component={"p"}
@@ -274,18 +274,12 @@ const CustomSearchbar = ({ onAyaSelect }) => {
         />
       </div>
       <div className="recommed-container pe-all">
-        {
-          <Recommend recom={recommends} />
-        }
+        <Recommend recom={recommends} />
       </div>
       <div className="result-container pe-all">
-        {
-          <Result results={results} />
-        }
+        <Result results={results} />
       </div>
     </div>
-
-
   )
 }
 
