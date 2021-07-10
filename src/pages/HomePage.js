@@ -49,7 +49,6 @@ const
   APP_STATES = {
     DRAGING: 0,
     DRAWING: 1,
-    TEXT_EDITING: 2,
   },
   APP_TOOLS = {
     NOTHING: 0,
@@ -68,11 +67,9 @@ const
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
   ]
 
-let
-  drawingTempData = [],
-  lastTextNodeSelectedData = { id: null, index: null, shapeObj: null }
+let drawingTempData = []
 
-function shapeRenderer(shapeObj, isSelected, onSelect, onChange, onWannaEdit) {
+function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
   const commonProps = {
     key: shapeObj.id,
     shapeProps: shapeObj,
@@ -109,7 +106,6 @@ function shapeRenderer(shapeObj, isSelected, onSelect, onChange, onWannaEdit) {
     case shapeKinds.Text:
       return <TextNode
         {...commonProps}
-        onWannaEdit={onWannaEdit}
       />
     default:
       throw new Error("undefiend shape type")
@@ -124,7 +120,6 @@ export default function HomePage() {
     [color, setColor] = useState('#fff'),
 
     [text, setText] = useState(''),
-    [textStyles, setTextStyles] = useState({}),
 
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
     stageEl = React.createRef(),
@@ -281,31 +276,10 @@ export default function HomePage() {
       imageObj.onload = () =>
         setBackgroundimageDirect({ url, imageObj })
     },
-    performTextEdit = (styles, t) => {
-      setTextStyles(styles)
-      setText(t)
-      setAppState(addToSet(appState, APP_STATES.TEXT_EDITING))
-
-      lastTextNodeSelectedData = {
-        ...selectedShapeInfo,
-        shapeObj: {...selectedShapeInfo.shapeObj}
-      }
-      
-      onShapeChanged(selectedShapeInfo.index, {
-        ...selectedShapeInfo.shapeObj,
-        opacity: 0,
-      })
-      
-      setSelectedId(null)
-    },
     cancelOperation = () => {
       if (appState.has(APP_STATES.DRAWING)) {
         cleanArray(drawingTempData)
         setTempShapes([])
-      }
-
-      else if (appState.has(APP_STATES.TEXT_EDITING)) {
-        onShapeChanged(lastTextNodeSelectedData.index, lastTextNodeSelectedData.shapeObj)
       }
 
       setAppState(new Set())
@@ -372,19 +346,16 @@ export default function HomePage() {
     },
     onShapeChanged = (i, newAttrs) => {
       if (newAttrs.id === selectedShapeInfo.id) {
-
         setSelectedShapeInfo({
           id: newAttrs.id,
           index: i,
           shapeObj: newAttrs
         })
       }
-      console.log(newAttrs)
       setShapes(replaceInArray(shapes, i, newAttrs))
     },
     onShapeSelected = (shapeId) => {
-      if (!appState.has(APP_STATES.TEXT_EDITING))
-        setSelectedId(shapeId) 
+      setSelectedId(shapeId)
     },
     handleClick = (ev) => {
       if (ev.target.name() === "bg-layer") {
@@ -437,7 +408,7 @@ export default function HomePage() {
       setAppState(removeInSet(appState, APP_STATES.DRAGING))
     }
 
-    
+
 
   // register events -----
   useEffect(() => {
@@ -474,7 +445,7 @@ export default function HomePage() {
         show={backgroundModalShow}
         setimage={setBackgroundimage}
         onHide={() => setBackgroundModalShow(false)}
-        
+
       />
       }{imageModalShow && <MyVerticallyCenteredModal
         title={"تصویر"}
@@ -482,7 +453,7 @@ export default function HomePage() {
         show={imageModalShow}
         setimage={(e) => ImageSetterHandler(e)}
         onHide={() => setImageModalShow(false)}
-        
+
       />
       }
 
@@ -613,49 +584,52 @@ export default function HomePage() {
               }}
             />
           }
-          <TextField
-            type="number"
-            label="عرض"
-            value={
-              prettyFloatNumber
-                (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
-                  selectedShapeInfo.shapeObj.points[2] :
-                  selectedShapeInfo.shapeObj.width)
-            }
-            onChange={e => {
-              let nv = parseInt(e.target.value)
+          {
+            <TextField
+              type="number"
+              label="عرض"
+              value={
+                prettyFloatNumber
+                  (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
+                    selectedShapeInfo.shapeObj.points[2] :
+                    selectedShapeInfo.shapeObj.width)
+              }
+              onChange={e => {
+                let nv = parseInt(e.target.value)
 
-              if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
-                selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 2, nv)
+                if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
+                  selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 2, nv)
 
-              else
-                selectedShapeInfo.shapeObj.width = nv
+                else
+                  selectedShapeInfo.shapeObj.width = nv
 
-              onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-            }}
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            />
+          }
+          {selectedShapeInfo.shapeObj.kind !== shapeKinds.Text &&
+            <TextField
+              type="number"
+              label="ارتفاع"
+              value={
+                prettyFloatNumber
+                  (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
+                    selectedShapeInfo.shapeObj.points[3] :
+                    selectedShapeInfo.shapeObj.height)
+              }
+              onChange={e => {
+                let nv = parseInt(e.target.value)
 
-          />
-          <TextField
-            type="number"
-            label="ارتفاع"
-            value={
-              prettyFloatNumber
-                (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
-                  selectedShapeInfo.shapeObj.points[3] :
-                  selectedShapeInfo.shapeObj.height)
-            }
-            onChange={e => {
-              let nv = parseInt(e.target.value)
+                if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
+                  selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 3, nv)
 
-              if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
-                selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 3, nv)
+                else
+                  selectedShapeInfo.shapeObj.height = nv
 
-              else
-                selectedShapeInfo.shapeObj.height = nv
-
-              onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-            }}
-          />
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            />
+          }
 
           {('rotation' in selectedShapeInfo.shapeObj) && <>
             <Typography gutterBottom> چرخش </Typography>
@@ -673,7 +647,18 @@ export default function HomePage() {
             />
           </>
           }
-
+          {('text' in selectedShapeInfo.shapeObj) &&
+            <TextField
+              label="متن"
+              rows={3}
+              multiline
+              value={selectedShapeInfo.shapeObj.text}
+              onChange={e => {
+                selectedShapeInfo.shapeObj.text = e.target.value
+                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+              }}
+            />
+          }
           {('fontSize' in selectedShapeInfo.shapeObj) && <>
             <Typography gutterBottom> اندازه فونت </Typography>
             <Slider
@@ -696,8 +681,9 @@ export default function HomePage() {
             <Select
               value={selectedShapeInfo.shapeObj.fontFamily}
               onChange={e => {
-                selectedShapeInfo.shapeObj.fontFamily = e.target.value
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+                let obj = { ...selectedShapeInfo.shapeObj }
+                obj.fontFamily = e.target.value
+                onShapeChanged(selectedShapeInfo.index, obj)
               }}
             >
               {FONT_NAMES.map(fname =>
@@ -826,30 +812,6 @@ export default function HomePage() {
           onAyaSelect={t => drawText(t)} />
       }
 
-      {/* temp shapes */}
-      {appState.has(APP_STATES.TEXT_EDITING) &&
-        <>
-          <textarea id="me-t" className="text-editing m-0 p-0"
-            value={text}
-            onKeyPress={e => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                setAppState(removeInSet(appState, APP_STATES.TEXT_EDITING))
-                lastTextNodeSelectedData.shapeObj.text = text
-                console.log(lastTextNodeSelectedData.shapeObj);
-                onShapeChanged(lastTextNodeSelectedData.index, lastTextNodeSelectedData.shapeObj)
-              }
-            }}
-            onChange={e => setText(e.target.value)}
-            style={
-              {
-                ...textStyles,
-                // height: TODO:
-              }}
-          />
-        </>
-      }
-
       {/* konva canvas */}
       <Stage
         width={window.innerWidth}
@@ -878,7 +840,6 @@ export default function HomePage() {
             shape.id === selectedShapeInfo.id,
             () => onShapeSelected(shape.id),
             (newAttrs) => onShapeChanged(i, newAttrs),
-            performTextEdit,
           ))}
         </Layer>
 
