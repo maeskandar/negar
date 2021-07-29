@@ -38,6 +38,7 @@ export function newCustomLine(points) {
     lineJoin: 'round',
   }
 }
+
 export function CustomLine({ shapeProps, isSelected, onSelect, onChange }) {
   const
     shapeRef = React.useRef(),

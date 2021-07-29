@@ -29,13 +29,7 @@ export function resetTransform(shapeRef, func) {
     node.scaleX(1)
     node.scaleY(1)
 
-    node.setRotation(-node.rotaion || 0)
-
     rotation = validDeg(Math.trunc(rotation))
-    // if (sx * sy < 0) // shaped flipped (think of mirror)
-    // rotation = validDeg(rotation + (sx < 0 ? +180 : 270))
-
-    console.log(rotation)
     func(event, { x: Math.abs(sx), y: Math.abs(sy) }, rotation)
   }
 }
