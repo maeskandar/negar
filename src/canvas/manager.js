@@ -1,33 +1,33 @@
 import Konva from "konva"
 
-var 
-    stage = null,
+const convasWrapperID = "container"
+
+export var
+    board = {},
     mainLayer = null,
     bgLayer = null,
     data = {}
 
+
 export function initCanvas() {
-    stage = new Konva.Stage({
-        container: 'container',   // id of container <div>
-        width: 600,
-        height: 600
+    let wrapper = document.getElementById(convasWrapperID)
+
+    board = new Konva.Stage({
+        container: convasWrapperID,
+        width: wrapper.clientWidth,
+        height: wrapper.clientHeight
     })
 
-    // then create layer
     mainLayer = new Konva.Layer()
+    bgLayer = new Konva.Layer()
 
-    // add the layer to the stage
-    stage.add(mainLayer)
-
-    // draw the image
-    mainLayer.draw()
+    board.add(bgLayer, mainLayer)
 }
 
-export function drawSample(){
-    // create our shape
+export function drawSample() {
     var circle = new Konva.Circle({
-        x: stage.width() / 2,
-        y: stage.height() / 2,
+        x: board.width() / 2,
+        y: board.height() / 2,
         radius: 70,
         fill: 'red',
         stroke: 'black',
@@ -39,13 +39,39 @@ export function drawSample(){
     mainLayer.draw()
 }
 
-// window.addEventListener('canvas-update')
+window.addEventListener('canvas', e => {
+    let 
+        type = e.type,
+        shape = e.shape,
+        id = shape.id
+
+    if (type == "create"){
+        board[id] = shape
+        mainLayer.add(shape)
+    }
+    else if (type == "update"){
+    }
+    else if(type == "delete"){
+        board[id].destroy()
+        delete board[id]
+    }
+    else throw new Error(`undefined canvas event '${type}'`)
+
+    mainLayer.draw()
+})
+
+export function triggerCanvas(eventName, shapeObject) {
+    let e = new Event(eventName)
+    e.shape = shapeObject
+    window.dispatchEvent(e)
+}
 
 export function addShape(
     shapeObj,
-    onclick,
+    onClick,
     onMove,
 ) {
+    
 }
 export function updateShape() {
 }
