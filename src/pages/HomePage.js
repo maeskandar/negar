@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react"
-import { Stage, Layer, Rect, Image as KImage } from "react-konva"
 import { SketchPicker } from "react-color"
 import randInt from 'random-int'
 
@@ -47,6 +46,8 @@ import { backgrounds, imagesData } from "./meta.json"
 
 import { ToolBarBtn } from "../UI/Toolbar"
 
+import { initCanvas, drawSample } from "../canvas/manager"
+
 // enums ----
 const
   APP_STATES = {
@@ -69,6 +70,9 @@ const
   FONT_NAMES = [
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
   ]
+
+initCanvas()
+drawSample()
 
 function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
   const commonProps = {
@@ -726,53 +730,6 @@ export default function HomePage() {
         selectedShapeInfo.id === null && <CustomSearchbar
           onAyaSelect={t => drawText(t)} />
       }
-      {/* konva canvas */}
-      <Stage
-        width={window.innerWidth}
-        height={window.innerHeight}
-        ref={stageEl}
-        onClick={handleClick}
-        onMouseDown={handleMouseDown}
-        onMousemove={handleMouseMove}
-        onMouseup={handleMouseUp}
-      >
-
-        {/* background layer */}
-        <Layer>
-          <KImage
-            width={window.innerWidth}
-            height={window.innerHeight}
-            image={backgroundimage.imageObj}
-            name="bg-layer"
-          />
-        </Layer>
-
-        {/* main layer */}
-        <Layer ref={mainLayer}>
-          {shapes.map((shape, i) => shapeRenderer(
-            shape,
-            shape.id === selectedShapeInfo.id,
-            () => onShapeSelected(shape.id),
-            (newAttrs) => onShapeChanged(i, newAttrs),
-          ))}
-        </Layer>
-
-        {/* drawing preview layer */}
-        {isInJamBoardMode() &&
-          <Layer ref={drawingPreviewLayer}>
-            <Rect
-              width={window.innerWidth}
-              height={window.innerHeight}
-              fill="#fff"
-              opacity={0.5}
-            />
-            {tempShapes.map((shape, i) =>
-              <SimpleLine
-                key={shape.id}
-                shapeProps={{ ...shape }}
-              />)}
-          </Layer>}
-      </Stage>
     </div>
   )
 }
