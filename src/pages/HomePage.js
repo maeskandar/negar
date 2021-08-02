@@ -43,79 +43,13 @@ import {
 
 import './home.css'
 import { backgrounds, imagesData } from "./meta.json"
-
 import { ToolBarBtn } from "../UI/Toolbar"
+import {APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD} from "./defaults"
 
 import { initCanvas, drawSample } from "../canvas/manager"
 
-// enums ----
-const
-  APP_STATES = {
-    DRAGING: 0,
-    DRAWING: 1,
-  },
-  APP_TOOLS = {
-    NOTHING: 0,
-    LINE: 1,
-    RECTANGLE: 2,
-    CIRCLE: 3,
-    IMAGE: 4,
-    PENCIL: 5,
-    ERASER: 6,
-    FG_COLOR_PICKER: 7,
-    STROKE_COLOR_PICKER: 8,
-  },
-  ERASER_RADIUS = 10, // px
-  PIXEL_RATIO_DOWNLAOD = 1,
-  FONT_NAMES = [
-    'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
-  ]
-
 initCanvas()
 drawSample()
-
-function shapeRenderer(shapeObj, isSelected, onSelect, onChange) {
-  const commonProps = {
-    key: shapeObj.id,
-    shapeProps: shapeObj,
-    isSelected, onSelect, onChange,
-  }
-
-  switch (shapeObj.kind) {
-
-    case shapeKinds.Reactangle:
-      return <Rectangle
-        {...commonProps}
-      />
-    case shapeKinds.Circle:
-      return <Circle
-        {...commonProps}
-      />
-    case shapeKinds.Image:
-      return <MyImage
-        {...commonProps}
-        imageUrl={shapeObj.content}
-      />
-    case shapeKinds.CustomShape:
-      return <Arrow
-        {...commonProps}
-      />
-    case shapeKinds.StraghtLine:
-      return <StraghtLine
-        {...commonProps}
-      />
-    case shapeKinds.CustomLine:
-      return <CustomLine
-        {...commonProps}
-      />
-    case shapeKinds.Text:
-      return <TextNode
-        {...commonProps}
-      />
-    default:
-      throw new Error("undefiend shape type")
-  }
-}
 
 let drawingTempData = []
 export default function HomePage() {
@@ -126,8 +60,6 @@ export default function HomePage() {
     [color, setColor] = useState('#fff'),
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
     stageEl = React.createRef(),
-    mainLayer = React.createRef(),
-    drawingPreviewLayer = React.createRef(),
 
     // app functionality related
     [appState, setAppState] = React.useState(new Set()),

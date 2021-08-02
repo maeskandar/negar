@@ -66,11 +66,7 @@ export function triggerCanvas(eventName, shapeObject) {
     window.dispatchEvent(e)
 }
 
-export function addShape(
-    shapeObj,
-    onClick,
-    onMove,
-) {
+export function addShape(shapeObj) {
     
 }
 export function updateShape() {

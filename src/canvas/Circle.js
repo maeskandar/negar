@@ -10,7 +10,7 @@ import {
 
 
 export function newCircle(x, y) {
-  return {
+  return Konva.Ellipse({
     id: v1(),
     kind: shapeKinds.Circle,
     
@@ -25,7 +25,7 @@ export function newCircle(x, y) {
     opacity: 1,
 
     strokeWidth: DEFAULT_STROKE_WIDTH,
-  }
+  })
 }
 
 export function MyCircle({ shapeProps, isSelected, onSelect, onChange }) {
