@@ -3,20 +3,23 @@ import v1 from 'uuid/dist/v1'
 
 import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
 
-export function newRectangle({x, y, onSelect}) {
+export function newRectangle() {
   let shape = new Konva.Rect({
     id: v1(),
     kind: shapeKinds.Reactangle,
-    
-    x, y,
+
+    x: 50,
+    y: 50,
     width: 100,
     height: 100,
     rotation: 0,
-    
+
     opacity: 1,
     fill: Konva.Util.getRandomColor(),
     stroke: DEFAULT_STROKE_COLOR,
-    strokeWidth: DEFAULT_STROKE_WIDTH
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+
+    draggable: false, // TODO add default abstract shape and spread it in every object [ on top ]
   })
 
   return shape

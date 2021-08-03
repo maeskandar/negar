@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react"
+import Konva from "konva"
 import { SketchPicker } from "react-color"
 import randInt from 'random-int'
 
@@ -46,14 +47,14 @@ import { backgrounds, imagesData } from "./meta.json"
 import { ToolBarBtn } from "../UI/Toolbar"
 import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD } from "./defaults"
 
-import { initCanvas, board, shapes, addShape, mainLayer } from "../canvas/manager"
+import { initCanvas, board, shapes, transformer, addShape, mainLayer, updateShape } from "../canvas/manager"
 
 let drawingTempData = []
 export default function HomePage() {
   const
     // canvas related
     [color, setColor] = useState('#fff'),
-    [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
+    [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, shapeAttrs: null }),
     // app functionality related
     [appState, setAppState] = React.useState(new Set()),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
@@ -176,37 +177,49 @@ export default function HomePage() {
     },
 
     // canvas events -------------------------
+
     setSelectedId = (shapeId) => {
-      if (shapeId === selectedShapeInfo.id) return
-
-      console.log(shapes)
-
-      setSelectedShapeInfo({
-        id: shapeId,
-        shapeObj: shapes[shapeId],
-      })
-    },
-    onShapeChanged = (i, newAttrs) => {
-      if (newAttrs.id === selectedShapeInfo.id) {
+      if (shapeId === null && selectedShapeInfo.id !== null) {
+        transformer.nodes([])
+        transformer.hide()
+        updateShape(shapes[selectedShapeInfo.id], { draggable: false })
+        
         setSelectedShapeInfo({
-          id: newAttrs.id,
-          index: i,
-          shapeObj: newAttrs
+          id: null,
+          shapeAttrs: null,
         })
       }
-      // setShapes(replaceInArray(shapes, i, newAttrs))
+      else if (shapeId !== null) {
+        let shape = shapes[shapeId]
+
+        updateShape(shape, { draggable: true })
+        transformer.show()
+        transformer.nodes([shape])
+        transformer.moveToTop()
+
+        // TODO the next step is https://konvajs.org/docs/select_and_transform/Transform_Events.html
+
+        setSelectedShapeInfo({
+          id: shapeId,
+          shapeAttrs: shape.attrs,
+        })
+      }
+    },
+    onShapeChanged = (changedAttrs) => {
+      if (selectedShapeInfo.id !== null) {
+        updateShape(shapes[selectedShapeInfo.id], changedAttrs)
+        setSelectedShapeInfo({ ...selectedShapeInfo })
+      }
     },
     onShapeSelected = (shapeId) => {
       setSelectedId(shapeId)
     },
     handleClick = (ev) => {
-      console.log(ev)
-
       if ('id' in ev.target.attrs) { // if a shape selected
         let id = ev.target.attrs.id
         onShapeSelected(id)
       }
-      else if (ev.target === mainLayer) { // FIXME it's not working for now - maybe i should set szie for layaer
+      else { // FIXME it's not working for now - maybe i should set szie for layaer
         setSelectedId(null)
         cancelOperation()
       }
@@ -402,33 +415,29 @@ export default function HomePage() {
             <span>
               {
                 Object.keys(shapeKinds)
-                  .find(it => shapeKinds[it] === selectedShapeInfo.shapeObj.kind)
+                  .find(it => shapeKinds[it] === selectedShapeInfo.shapeAttrs.kind)
                   .toLowerCase()
               }
             </span>
           </div>
 
-          {('x' in selectedShapeInfo.shapeObj) &&
+          {('x' in selectedShapeInfo.shapeAttrs) &&
             <TextField
               type="number"
               label="مختصات x"
-              value={prettyFloatNumber(selectedShapeInfo.shapeObj.x)}
+              value={prettyFloatNumber(selectedShapeInfo.shapeAttrs.x)}
               onChange={e => {
-                let nv = parseInt(e.target.value)
-                selectedShapeInfo.shapeObj.x = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+                onShapeChanged({ x: parseInt(e.target.value) })
               }}
             />
           }
-          {('y' in selectedShapeInfo.shapeObj) &&
+          {('y' in selectedShapeInfo.shapeAttrs) &&
             <TextField
               type="number"
               label="مختصات y"
-              value={prettyFloatNumber(selectedShapeInfo.shapeObj.y)}
+              value={prettyFloatNumber(selectedShapeInfo.shapeAttrs.y)}
               onChange={e => {
-                let nv = parseInt(e.target.value)
-                selectedShapeInfo.shapeObj.y = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+                onShapeChanged({ y: parseInt(e.target.value) })
               }}
             />
           }
@@ -438,54 +447,49 @@ export default function HomePage() {
               label="عرض"
               value={
                 prettyFloatNumber
-                  (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
-                    selectedShapeInfo.shapeObj.points[2] :
-                    selectedShapeInfo.shapeObj.width)
+                  (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
+                    selectedShapeInfo.shapeAttrs.points[2] :
+                    selectedShapeInfo.shapeAttrs.width)
               }
               onChange={e => {
-                let nv = parseInt(e.target.value)
+                // if (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
+                //   selectedShapeInfo.shapeAttrs.points = replaceInArray(selectedShapeInfo.shapeAttrs.points, 2, nv)
 
-                if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
-                  selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 2, nv)
+                // else
+                //   selectedShapeInfo.shapeAttrs.width = nv
 
-                else
-                  selectedShapeInfo.shapeObj.width = nv
-
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+                onShapeChanged({ width: parseInt(e.target.value) })
               }}
             />
           }
-          {selectedShapeInfo.shapeObj.kind !== shapeKinds.Text &&
+          {selectedShapeInfo.shapeAttrs.kind !== shapeKinds.Text &&
             <TextField
               type="number"
               label="ارتفاع"
               value={
                 prettyFloatNumber
-                  (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine ?
-                    selectedShapeInfo.shapeObj.points[3] :
-                    selectedShapeInfo.shapeObj.height)
+                  (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
+                    selectedShapeInfo.shapeAttrs.points[3] :
+                    selectedShapeInfo.shapeAttrs.height)
               }
               onChange={e => {
-                let nv = parseInt(e.target.value)
+                // let nv = parseInt(e.target.value)
 
-                if (selectedShapeInfo.shapeObj.kind === shapeKinds.StraghtLine)
-                  selectedShapeInfo.shapeObj.points = replaceInArray(selectedShapeInfo.shapeObj.points, 3, nv)
+                // if (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
+                //   selectedShapeInfo.shapeAttrs.points = replaceInArray(selectedShapeInfo.shapeAttrs.points, 3, nv)
 
-                else
-                  selectedShapeInfo.shapeObj.height = nv
+                // else
+                //   selectedShapeInfo.shapeAttrs.height = nv
 
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
+                onShapeChanged({ height: parseInt(e.target.value) })
               }}
             />
           }
-          {('rotation' in selectedShapeInfo.shapeObj) && <>
+          {('rotation' in selectedShapeInfo.shapeAttrs) && <>
             <Typography gutterBottom> چرخش </Typography>
             <Slider
-              value={selectedShapeInfo.shapeObj.rotation}
-              onChange={(e, nv) => {
-                selectedShapeInfo.shapeObj.rotation = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.rotation}
+              onChange={(e, nv) => onShapeChanged({ rotation: nv })}
               aria-labelledby="discrete-slider-small-steps"
               step={1}
               min={0}
@@ -494,26 +498,20 @@ export default function HomePage() {
             />
           </>
           }
-          {('text' in selectedShapeInfo.shapeObj) &&
+          {('text' in selectedShapeInfo.shapeAttrs) &&
             <TextField
               label="متن"
               rows={5}
               multiline
-              value={selectedShapeInfo.shapeObj.text}
-              onChange={e => {
-                selectedShapeInfo.shapeObj.text = e.target.value
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.text}
+              onChange={e => onShapeChanged({ text: e.target.value })}
             />
           }
-          {('fontSize' in selectedShapeInfo.shapeObj) && <>
+          {('fontSize' in selectedShapeInfo.shapeAttrs) && <>
             <Typography gutterBottom> اندازه فونت </Typography>
             <Slider
-              value={selectedShapeInfo.shapeObj.fontSize}
-              onChange={(e, nv) => {
-                selectedShapeInfo.shapeObj.fontSize = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.fontSize}
+              onChange={(e, nv) => onShapeChanged({ fontSize: nv })}
               aria-labelledby="discrete-slider-small-steps"
               step={0.5}
               min={1}
@@ -522,15 +520,11 @@ export default function HomePage() {
             />
           </>
           }
-          {(selectedShapeInfo.shapeObj.kind === shapeKinds.Text) && <>
+          {(selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text) && <>
             <Typography gutterBottom> نوع فونت </Typography>
             <Select
-              value={selectedShapeInfo.shapeObj.fontFamily}
-              onChange={e => {
-                let obj = { ...selectedShapeInfo.shapeObj }
-                obj.fontFamily = e.target.value
-                onShapeChanged(selectedShapeInfo.index, obj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.fontFamily}
+              onChange={e => onShapeChanged({ fontFamily: e.target.value })}
             >
               {FONT_NAMES.map(fname =>
                 <MenuItem value={fname}>{fname} </MenuItem>)
@@ -539,11 +533,8 @@ export default function HomePage() {
 
             <Typography gutterBottom> ارتفاع خط </Typography>
             <Slider
-              value={selectedShapeInfo.shapeObj.lineHeight}
-              onChange={(e, nv) => {
-                selectedShapeInfo.shapeObj.lineHeight = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.lineHeight}
+              onChange={(e, nv) => onShapeChanged({ lineHeight: nv })}
               aria-labelledby="discrete-slider-small-steps"
               step={0.1}
               min={0.1}
@@ -553,11 +544,8 @@ export default function HomePage() {
 
             <Typography gutterBottom> چینش </Typography>
             <Select
-              value={selectedShapeInfo.shapeObj.align}
-              onChange={e => {
-                selectedShapeInfo.shapeObj.align = e.target.value
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.align}
+              onChange={e => onShapeChanged({ align: e.target.value })}
             >
               {['left', 'right', 'center'].map(v =>
                 <MenuItem value={v}>{v} </MenuItem>)
@@ -565,27 +553,24 @@ export default function HomePage() {
             </Select>
           </>
           }
-          {('strokeWidth' in selectedShapeInfo.shapeObj) && <>
+          {('strokeWidth' in selectedShapeInfo.shapeAttrs) && <>
             <Typography gutterBottom> اندازه خط </Typography>
             <Slider
-              value={selectedShapeInfo.shapeObj.strokeWidth}
-              onChange={(e, nv) => {
-                selectedShapeInfo.shapeObj.strokeWidth = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.strokeWidth}
+              onChange={(e, nv) => onShapeChanged({ strokeWidth: nv })}
               aria-labelledby="discrete-slider-small-steps"
-              step={selectedShapeInfo.shapeObj.kind === shapeKinds.Text ? 0.1 : 0.5}
-              min={isKindOfLine(selectedShapeInfo.shapeObj.kind) ? 1 : 0}
+              step={selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text ? 0.1 : 0.5}
+              min={isKindOfLine(selectedShapeInfo.shapeAttrs.kind) ? 1 : 0}
               max={20}
               valueLabelDisplay="auto"
             />
           </>
           }
           {/* color picking */}
-          {hasStroke(selectedShapeInfo.shapeObj.kind) &&
+          {hasStroke(selectedShapeInfo.shapeAttrs.kind) &&
             <>
               {
-                !isKindOfLine(selectedShapeInfo.shapeObj.kind) &&
+                !isKindOfLine(selectedShapeInfo.shapeAttrs.kind) &&
                 <div>
                   <span> رنگ داخل: </span>
                   <ColorPreview
@@ -594,10 +579,10 @@ export default function HomePage() {
                         setSelectedTool(APP_TOOLS.NOTHING)
                       else {
                         setSelectedTool(APP_TOOLS.FG_COLOR_PICKER)
-                        setColor(selectedShapeInfo.shapeObj.fill)
+                        setColor(selectedShapeInfo.shapeAttrs.fill)
                       }
                     }}
-                    hexColor={selectedShapeInfo.shapeObj.fill} />
+                    hexColor={selectedShapeInfo.shapeAttrs.fill} />
                 </div>
               }
               <div>
@@ -608,10 +593,10 @@ export default function HomePage() {
                       setSelectedTool(APP_TOOLS.NOTHING)
                     else {
                       setSelectedTool(APP_TOOLS.STROKE_COLOR_PICKER)
-                      setColor(selectedShapeInfo.shapeObj.stroke)
+                      setColor(selectedShapeInfo.shapeAttrs.stroke)
                     }
                   }}
-                  hexColor={selectedShapeInfo.shapeObj.stroke} />
+                  hexColor={selectedShapeInfo.shapeAttrs.stroke} />
               </div>
               {
                 isColorPicking() &&
@@ -622,23 +607,20 @@ export default function HomePage() {
                     onChange={(color) => setColor(color['hex'])}
                     onChangeComplete={(color) => {
                       let key = selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
-                      onShapeChanged(selectedShapeInfo.index, { ...selectedShapeInfo.shapeObj, [key]: color['hex'] })
+                      onShapeChanged({ [key]: color['hex'] })
                     }}
                   />
                 </div>
               }
             </>
           }
-          {('opacity' in selectedShapeInfo.shapeObj) && <>
+          {('opacity' in selectedShapeInfo.shapeAttrs) && <>
             <Typography gutterBottom> شفافیت </Typography>
             <Slider
-              value={selectedShapeInfo.shapeObj.opacity}
-              onChange={(e, nv) => {
-                selectedShapeInfo.shapeObj.opacity = nv
-                onShapeChanged(selectedShapeInfo.index, selectedShapeInfo.shapeObj)
-              }}
+              value={selectedShapeInfo.shapeAttrs.opacity}
+              onChange={(e, nv) => { onShapeChanged({ opacity: nv }) }}
               aria-labelledby="discrete-slider-small-steps"
-              step={0.05}
+              step={0.01}
               min={0.05}
               max={1}
               valueLabelDisplay="auto"

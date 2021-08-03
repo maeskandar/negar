@@ -6,10 +6,11 @@ export var
     board = null,
     mainLayer = null,
     bgLayer = null,
-    shapes = {}
+    shapes = {},
+    transformer = null
 
 
-export function initCanvas({onClick, onMouseDown, onMouseMove, onMouseUp}) {
+export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
     board = new Konva.Stage({
         container: canvasWrapperID,
         width: window.innerWidth,
@@ -19,6 +20,11 @@ export function initCanvas({onClick, onMouseDown, onMouseMove, onMouseUp}) {
     mainLayer = new Konva.Layer()
     bgLayer = new Konva.Layer()
 
+    transformer = new Konva.Transformer()
+    transformer.nodes([])
+    transformer.hide()
+
+    mainLayer.add(transformer)
     board.add(bgLayer, mainLayer)
 
     board.on('click', onClick)
@@ -30,19 +36,19 @@ export function initCanvas({onClick, onMouseDown, onMouseMove, onMouseUp}) {
 window.addEventListener('canvas', e => {
     let
         type = e.detail.type,
-        shape = e.detail.shape,
-        id = shape.attrs.id
+        shape = e.detail.shape
 
     if (type === "create") {
         mainLayer.add(shape)
+        mainLayer.draw()
     }
     else if (type === "update") {
     }
     else if (type === "delete") {
+        mainLayer.draw()
     }
-    else throw new Error(`undefined canvas event '${type}'`)
-
-    mainLayer.draw()
+    else
+        throw new Error(`undefined canvas event '${type}'`)
 })
 
 function triggerCanvas(eventType, shapeObject) {
@@ -56,13 +62,27 @@ function triggerCanvas(eventType, shapeObject) {
 }
 
 export function addShape(shapeObject) {
-    shapes[shapeObject.id] = shapeObject
+    shapes[shapeObject.attrs.id] = shapeObject
     triggerCanvas('create', shapeObject)
 }
-export function updateShape(shapeObject) {
-    triggerCanvas('update', shapeObject)
+export function updateShape(shape, newAttrs) {
+    for (let prop in newAttrs) {
+        let val = newAttrs[prop]
+
+        if (prop === 'width')
+            shape.size({ width: val, height: shape.attrs.height })
+        else if (prop === 'height')
+            shape.size({ width: shape.attrs.width, height: val })
+        else
+            shape[prop](val)
+
+        shape.attrs[prop] = val
+    }
+
+
+    triggerCanvas('update', shape)
 }
 export function removeShape(shapeObject) {
-    delete shapes[shapeObject.id]
+    delete shapes[shapeObject.attrs.id]
     triggerCanvas('delete', shapeObject)
 }
