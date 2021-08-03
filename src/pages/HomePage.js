@@ -3,14 +3,14 @@ import { SketchPicker } from "react-color"
 import randInt from 'random-int'
 
 import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
-import { Rectangle, newRectangle } from "../canvas/Rectangle"
-import { MyCircle as Circle, newCircle } from "../canvas/Circle"
-import { MyImage, newImage } from "../canvas/Images"
-import { TextNode, newTextNode } from "../canvas/TextNode"
-import { newArrow, Arrow } from "../canvas/Arrow"
-import { newSimpleLine, SimpleLine } from "../canvas/SimpleLine"
-import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
-import { CustomLine, newCustomLine } from "../canvas/CustomLine"
+import { newRectangle } from "../canvas/Rectangle"
+// import { MyCircle as Circle, newCircle } from "../canvas/Circle"
+// import { MyImage, newImage } from "../canvas/Images"
+// import { TextNode, newTextNode } from "../canvas/TextNode"
+// import { newArrow, Arrow } from "../canvas/Arrow"
+// import { newSimpleLine, SimpleLine } from "../canvas/SimpleLine"
+// import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
+// import { CustomLine, newCustomLine } from "../canvas/CustomLine"
 
 import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
@@ -44,12 +44,14 @@ import {
 import './home.css'
 import { backgrounds, imagesData } from "./meta.json"
 import { ToolBarBtn } from "../UI/Toolbar"
-import {APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD} from "./defaults"
+import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD } from "./defaults"
 
-import { initCanvas, drawSample } from "../canvas/manager"
+import { initCanvas, drawSample, board, addShape } from "../canvas/manager"
 
-initCanvas()
-drawSample()
+setTimeout(() => {
+  initCanvas()
+  drawSample()
+}, 1000);
 
 let drawingTempData = []
 export default function HomePage() {
@@ -59,8 +61,6 @@ export default function HomePage() {
     [tempShapes, setTempShapes] = useState([]),
     [color, setColor] = useState('#fff'),
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
-    stageEl = React.createRef(),
-
     // app functionality related
     [appState, setAppState] = React.useState(new Set()),
     [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
@@ -101,19 +101,20 @@ export default function HomePage() {
       setShapes(shapes.concat(newShapes))
     },
     addRectangle = (x, y) => {
-      addToShapes(true, newRectangle(x, y))
+      // addToShapes(true, newRectangle(x, y))
+      addShape(newRectangle(x, y))
     },
     addCircle = (x, y) => {
-      addToShapes(true, newCircle(x, y))
+      // addToShapes(true, newCircle(x, y))
     },
     drawArrow = () => {
-      addToShapes(true, newArrow())
+      // addToShapes(true, newArrow())
     },
     ImageSetterHandler = (e) => {
-      addToShapes(true, newImage(e))
+      // addToShapes(true, newImage(e))
     },
     drawText = (t = 'تایپ کن') => {
-      addToShapes(true, newTextNode(t))
+      // addToShapes(true, newTextNode(t))
     },
 
     StartLineDrawingMode = () => {
@@ -126,7 +127,7 @@ export default function HomePage() {
       setSelectedId(null)
     },
     saveAsImage = () => {
-      let dataURL = stageEl.current.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
+      let dataURL = board.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
       downloadURI(dataURL, 'stage.png')
     },
     setBackgroundimage = (url) => {
@@ -160,7 +161,7 @@ export default function HomePage() {
             tempPoints.push(...newPoints)
           }
           function closeLastLine() {
-            resultLines.push(newCustomLine(tempPoints))
+            // resultLines.push(newCustomLine(tempPoints))
           }
           function addNewLine(...points) {
             tempPoints = points
@@ -235,14 +236,14 @@ export default function HomePage() {
     },
     handleMouseMove = (e) => {
       if (setHasParamsAnd(appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
-        var mp = stageEl.current.getPointerPosition()
+        var mp = board.getPointerPosition()
         mp = [mp.x, mp.y]
 
 
         if (selectedTool === APP_TOOLS.PENCIL) {
-          setTempShapes(
-            addToArray(tempShapes,
-              newSimpleLine(drawingTempData.concat(mp))))
+          // setTempShapes(
+          //   addToArray(tempShapes,
+          //     newSimpleLine(drawingTempData.concat(mp))))
           drawingTempData = mp
         }
         else if (selectedTool === APP_TOOLS.ERASER) {
@@ -263,7 +264,7 @@ export default function HomePage() {
     handleMouseUp = (e) => {
       if (selectedTool === APP_TOOLS.LINE) {
         let pos = e.target.getStage().getPointerPosition()
-        addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+        // addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
       }
 
       excludeFromAppState(appState, APP_STATES.DRAGING)
@@ -662,6 +663,12 @@ export default function HomePage() {
         selectedShapeInfo.id === null && <CustomSearchbar
           onAyaSelect={t => drawText(t)} />
       }
+      <div id="container" className="w-100 h-100"
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+      ></div>
     </div>
   )
 }

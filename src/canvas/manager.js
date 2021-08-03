@@ -14,8 +14,8 @@ export function initCanvas() {
 
     board = new Konva.Stage({
         container: convasWrapperID,
-        width: wrapper.clientWidth,
-        height: wrapper.clientHeight
+        width: window.innerWidth,
+        height: window.innerHeight
     })
 
     mainLayer = new Konva.Layer()
@@ -40,18 +40,18 @@ export function drawSample() {
 }
 
 window.addEventListener('canvas', e => {
-    let 
-        type = e.type,
-        shape = e.shape,
-        id = shape.id
+    let
+        type = e.detail.type,
+        shape = e.detail.shape,
+        id = shape.attrs.id
 
-    if (type == "create"){
+    if (type === "create") {
         board[id] = shape
         mainLayer.add(shape)
     }
-    else if (type == "update"){
+    else if (type === "update") {
     }
-    else if(type == "delete"){
+    else if (type === "delete") {
         board[id].destroy()
         delete board[id]
     }
@@ -60,16 +60,20 @@ window.addEventListener('canvas', e => {
     mainLayer.draw()
 })
 
-export function triggerCanvas(eventName, shapeObject) {
-    let e = new Event(eventName)
-    e.shape = shapeObject
+function triggerCanvas(eventType, shapeObject) {
+    let e = new CustomEvent('canvas',{detail: {
+        type: eventType,
+        shape: shapeObject
+    }})
     window.dispatchEvent(e)
 }
 
-export function addShape(shapeObj) {
-    
+export function addShape(shapeObject) {
+    triggerCanvas('create', shapeObject)
 }
-export function updateShape() {
+export function updateShape(shapeObject) {
+    triggerCanvas('update', shapeObject)
 }
-export function removeShape() {
+export function removeShape(shapeObject) {
+    triggerCanvas('delete', shapeObject)
 }
