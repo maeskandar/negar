@@ -48,9 +48,7 @@ import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD 
 
 import { initCanvas, board, shapes, transformer, addShape, removeShape, updateShape, ActivateTransformer } from "../canvas/manager"
 
-let
-  drawingTempData = [],
-  hasDrawn = false
+let drawingTempData = []
 
 export default class HomePage extends React.Component {
   state = {
@@ -68,11 +66,12 @@ export default class HomePage extends React.Component {
 
     this.isInJamBoardMode = this.isInJamBoardMode.bind(this)
     this.isColorPicking = this.isColorPicking.bind(this)
+    this.isSomethingSelected = this.isSomethingSelected.bind(this)
     this.addRectangle = this.addRectangle.bind(this)
     this.addCircle = this.addCircle.bind(this)
-    this.drawArrow = this.drawArrow.bind(this)
-    this.ImageSetterHandler = this.ImageSetterHandler.bind(this)
-    this.drawText = this.drawText.bind(this)
+    this.addArrow = this.addArrow.bind(this)
+    this.addImage = this.addImage.bind(this)
+    this.addText = this.addText.bind(this)
     this.StartLineDrawingMode = this.StartLineDrawingMode.bind(this)
     this.startJamBoard = this.startJamBoard.bind(this)
     this.saveAsImage = this.saveAsImage.bind(this)
@@ -81,23 +80,16 @@ export default class HomePage extends React.Component {
     this.doneOperation = this.doneOperation.bind(this)
     this.setSelectedId = this.setSelectedId.bind(this)
     this.onShapeChanged = this.onShapeChanged.bind(this)
-    this.handleClick = this.handleClick.bind(this)
-    this.handleMouseDown = this.handleMouseDown.bind(this)
-    this.handleMouseMove = this.handleMouseMove.bind(this)
-    this.handleMouseUp = this.handleMouseUp.bind(this)
+    this.handleCanvasClick = this.handleCanvasClick.bind(this)
+    this.handleCanvasMouseDown = this.handleCanvasMouseDown.bind(this)
+    this.handleCanvasMouseMove = this.handleCanvasMouseMove.bind(this)
+    this.handleCanvasMouseUp = this.handleCanvasMouseUp.bind(this)
     this.deleteShape = this.deleteShape.bind(this)
     this.includeToAppStates = this.includeToAppStates.bind(this)
     this.excludeFromAppState = this.excludeFromAppState.bind(this)
   }
 
-  // functions -----------------------------------------
-  includeToAppStates(val) {
-    this.setState({ appState: addToSet(this.state.appState, val) })
-  }
-  excludeFromAppState(val) {
-    this.setState({ appState: removeInSet(this.state.appState, val) })
-  }
-
+  // advanced state checker
   isInJamBoardMode() {
     return this.state.appState.has(APP_STATES.DRAWING) &&
       (this.state.selectedTool === APP_TOOLS.PENCIL || this.state.selectedTool === APP_TOOLS.ERASER)
@@ -106,23 +98,137 @@ export default class HomePage extends React.Component {
     return this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER || this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
   }
 
+  // advenced state functionalities
+  includeToAppStates(val) {
+    this.setState({ appState: addToSet(this.state.appState, val) })
+  }
+  excludeFromAppState(val) {
+    this.setState({ appState: removeInSet(this.state.appState, val) })
+  }
+  isSomethingSelected() {
+    return this.state.selectedShapeInfo.id !== null
+  }
+
+  // related to the canvas
   addRectangle(x, y) {
     addShape(newRectangle(x, y))
   }
-
   addCircle(x, y) {
     // addToShapes(true, newCircle(x, y))
   }
-  drawArrow() {
+  addArrow() {
     // addToShapes(true, newArrow())
   }
-  ImageSetterHandler(e) {
+  addImage(e) {
     // addToShapes(true, newImage(e))
   }
-  drawText(t = 'تایپ کن') {
-    // addToShapes(true, newTextNode(t))
+  addText(text = 'تایپ کن') {
+    // addToShapes(true, newTextNode(text))
   }
 
+  handleCanvasClick(ev) {
+    if ('id' in ev.target.attrs) { // if a shape selected
+      let id = ev.target.attrs.id
+      this.setSelectedId(id)
+    }
+    else { // FIXME it's not working for now - maybe i should set szie for layar
+      this.setSelectedId(null)
+      this.cancelOperation()
+    }
+  }
+  handleCanvasMouseDown(e) {
+    if (!this.state.appState.has(APP_STATES.DRAGING))
+      this.includeToAppStates(APP_STATES.DRAGING)
+
+    if (this.state.appState.has(APP_STATES.DRAWING)) {
+      const pos = e.target.getStage().getPointerPosition()
+      drawingTempData = [pos.x, pos.y]
+    }
+  }
+  handleCanvasMouseMove(e) {
+    if (setHasParamsAnd(this.state.appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
+      var mp = board.getPointerPosition()
+      mp = [mp.x, mp.y]
+
+
+      if (this.state.selectedTool === APP_TOOLS.PENCIL) {
+        // setTempShapes(
+        //   addToArray(tempShapes,
+        //     newSimpleLine(drawingTempData.concat(mp))))
+        drawingTempData = mp
+      }
+      else if (this.state.selectedTool === APP_TOOLS.ERASER) {
+        let acc = []
+        // for (const l of tempShapes) {
+        //   let
+        //     sp = [l.points[0], l.points[1]],
+        //     ep = [l.points[2], l.points[3]]
+
+        //   if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
+        //     acc.push(l)
+        //   }
+        // }
+        // setTempShapes(acc)
+      }
+    }
+  }
+  handleCanvasMouseUp(e) {
+    if (this.state.selectedTool === APP_TOOLS.LINE) {
+      let pos = e.target.getStage().getPointerPosition()
+      // addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+    }
+
+    this.excludeFromAppState(APP_STATES.DRAGING)
+  }
+
+  // app functionalities
+  setSelectedId(shapeId) {
+    let lastSelectedId = this.state.selectedShapeInfo.id
+    if (shapeId === null && lastSelectedId !== null) {
+      let lastShape = shapes[this.state.selectedShapeInfo.id]
+
+      transformer.nodes([])
+      transformer.hide()
+      updateShape(lastShape, { draggable: false })
+
+
+      this.setState({
+        selectedShapeInfo: {
+          id: null,
+          shapeAttrs: null,
+        }
+      })
+    }
+    else if (shapeId !== null) {
+      let shape = shapes[shapeId]
+
+      if (lastSelectedId)
+        updateShape(shapes[lastSelectedId], { draggable: false })
+
+      ActivateTransformer(shape)
+      updateShape(shape, { draggable: true })
+
+      this.setState({
+        selectedShapeInfo: {
+          id: shapeId,
+          shapeAttrs: shape.attrs,
+        }
+      })
+    }
+  }
+  onShapeChanged(changedAttrs) {
+    if (this.isSomethingSelected()) {
+      updateShape(shapes[this.state.selectedShapeInfo.id], changedAttrs)
+      this.setState({ selectedShapeInfo: { ...this.state.selectedShapeInfo } })
+    }
+  }
+  deleteShape() {
+    let shapeId = this.state.selectedShapeInfo.id
+    if (shapeId) {
+      this.setSelectedId(null)
+      removeShape(shapes[shapeId])
+    }
+  }
   StartLineDrawingMode() {
     this.includeToAppStates(APP_STATES.DRAWING)
     this.setState({ selectedTool: APP_TOOLS.LINE })
@@ -136,7 +242,6 @@ export default class HomePage extends React.Component {
     let dataURL = board.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
     downloadURI(dataURL, 'stage.png')
   }
-
   setBackgroundimage(url) {
     this.setState({ backgroundimage: { url, imageObj: null } })
 
@@ -144,6 +249,8 @@ export default class HomePage extends React.Component {
     imageObj.src = url
     imageObj.onload = () =>
       this.setState({ backgroundimage: { url, imageObj } })
+
+    // FIXME set to bgLayer
   }
   cancelOperation() {
     if (this.state.appState.has(APP_STATES.DRAWING)) {
@@ -200,125 +307,26 @@ export default class HomePage extends React.Component {
     this.cancelOperation()
   }
 
-  // canvas events -------------------------
-
-  setSelectedId(shapeId) {
-    let lastSelectedId = this.state.selectedShapeInfo.id
-    if (shapeId === null && lastSelectedId !== null) {
-      let lastShape = shapes[this.state.selectedShapeInfo.id]
-
-      transformer.nodes([])
-      transformer.hide()
-      updateShape(lastShape, { draggable: false })
-
-
-      this.setState({
-        selectedShapeInfo: {
-          id: null,
-          shapeAttrs: null,
-        }
-      })
-    }
-    else if (shapeId !== null) {
-      let shape = shapes[shapeId]
-
-      if (lastSelectedId)
-        updateShape(shapes[lastSelectedId], { draggable: false })
-
-      ActivateTransformer(shape)
-      updateShape(shape, { draggable: true })
-
-      this.setState({
-        selectedShapeInfo: {
-          id: shapeId,
-          shapeAttrs: shape.attrs,
-        }
-      })
-    }
-  }
-  onShapeChanged(changedAttrs) {
-    if (this.state.selectedShapeInfo.id !== null) {
-      updateShape(shapes[this.state.selectedShapeInfo.id], changedAttrs)
-      this.setState({ selectedShapeInfo: { ...this.state.selectedShapeInfo } })
-    }
-  }
-  deleteShape() {
-    let shapeId = this.state.selectedShapeInfo.id
-    if (shapeId) {
-      this.setSelectedId(null)
-      removeShape(shapes[shapeId])
-    }
-  }
-
-  handleClick(ev) {
-    if ('id' in ev.target.attrs) { // if a shape selected
-      let id = ev.target.attrs.id
-      this.setSelectedId(id)
-    }
-    else { // FIXME it's not working for now - maybe i should set szie for layar
-      this.setSelectedId(null)
-      this.cancelOperation()
-    }
-  }
-  handleMouseDown(e) {
-    if (!this.state.appState.has(APP_STATES.DRAGING))
-      this.includeToAppStates(APP_STATES.DRAGING)
-
-    if (this.state.appState.has(APP_STATES.DRAWING)) {
-      const pos = e.target.getStage().getPointerPosition()
-      drawingTempData = [pos.x, pos.y]
-    }
-  }
-  handleMouseMove(e) {
-    if (setHasParamsAnd(this.state.appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
-      var mp = board.getPointerPosition()
-      mp = [mp.x, mp.y]
-
-
-      if (this.state.selectedTool === APP_TOOLS.PENCIL) {
-        // setTempShapes(
-        //   addToArray(tempShapes,
-        //     newSimpleLine(drawingTempData.concat(mp))))
-        drawingTempData = mp
-      }
-      else if (this.state.selectedTool === APP_TOOLS.ERASER) {
-        let acc = []
-        // for (const l of tempShapes) {
-        //   let
-        //     sp = [l.points[0], l.points[1]],
-        //     ep = [l.points[2], l.points[3]]
-
-        //   if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
-        //     acc.push(l)
-        //   }
-        // }
-        // setTempShapes(acc)
-      }
-    }
-  }
-  handleMouseUp(e) {
-    if (this.state.selectedTool === APP_TOOLS.LINE) {
-      let pos = e.target.getStage().getPointerPosition()
-      // addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
-    }
-
-    this.excludeFromAppState(APP_STATES.DRAGING)
-  }
-
-  // ----------------  register events -------------------------
+  // register native events 
   componentDidMount() {
+    // TODO use external dependency to manager keyboard events
     window.addEventListener('keydown', (ev) => {
       if (ev.code === "Delete") this.deleteShape()
       else if (ev.code === "Escape") this.setSelectedId(null)
     })
+
     initCanvas({
-      onClick: this.handleClick,
-      onMouseDown: this.handleMouseDown,
-      onMouseMove: this.handleMouseMove,
-      onMouseUp: this.handleMouseUp
+      onClick: this.handleCanvasClick,
+      onMouseDown: this.handleCanvasMouseDown,
+      onMouseMove: this.handleCanvasMouseMove,
+      onMouseUp: this.handleCanvasMouseUp
     })
 
     this.setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
+  }
+
+  componentWillUnmount() {
+    // TODO unregister events
   }
 
   render() {
@@ -329,15 +337,15 @@ export default class HomePage extends React.Component {
           title={"پس زمینه"}
           images={backgrounds}
           show={this.state.backgroundModalShow}
-          // setimage={setBackgroundimage}
+          setimage={this.setBackgroundimage}
           onHide={() => this.setState({ backgroundModalShow: false })}
         />
         }{this.state.imageModalShow && <MyVerticallyCenteredModal
           title={"تصویر"}
           images={imagesData}
           show={this.state.imageModalShow}
-          setimage={(e) => this.ImageSetterHandler(e)}
-          onHide={() => this.setImageModalShow(false)}
+          setimage={(e) => this.addImage(e)}
+          onHide={() => this.setState({ imageModalShow: false })}
         />
         }
 
@@ -364,18 +372,18 @@ export default class HomePage extends React.Component {
                 />
                 <ToolBarBtn
                   title="متن"
-                  onClick={this.drawText}
+                  onClick={this.addText}
                   iconEl={<TextIcon />}
                 />
                 <ToolBarBtn
                   title="تصویر"
                   iconEl={<ImageIcon />}
-                  onClick={() => this.setState({ imageModalShow: true })} // FIXME what???
+                  onClick={() => this.setState({ imageModalShow: true })}
                 />
                 <ToolBarBtn
                   title="فلش"
                   iconEl={<ArrowIcon />}
-                  onClick={this.drawArrow}
+                  onClick={this.addArrow}
                 />
                 <ToolBarBtn
                   title="تخته"
@@ -390,7 +398,7 @@ export default class HomePage extends React.Component {
                 <ToolBarBtn
                   title="پس زمینه"
                   iconEl={<BackgroundIcon />}
-                  onClick={() => this.setState({ backgroundModalShow: true })} // FIXME what???
+                  onClick={() => this.setState({ backgroundModalShow: true })}
                 />
               </>
             }
@@ -428,7 +436,7 @@ export default class HomePage extends React.Component {
           </Paper>
         </div>
         {// something selected 
-          this.state.selectedShapeInfo.id !== null &&
+          this.isSomethingSelected() &&
           <Paper id="status-bar" className="p-3" square>
             <div className="mb-2">
 
@@ -658,8 +666,8 @@ export default class HomePage extends React.Component {
           </Paper>
         }
         {
-          this.state.selectedShapeInfo.id === null && <CustomSearchbar
-            onAyaSelect={t => this.drawText(t)} />
+          !this.isSomethingSelected() && <CustomSearchbar
+            onAyaSelect={t => this.addText(t)} />
         }
         <div id="container" className="w-100 h-100"></div>
       </div>
