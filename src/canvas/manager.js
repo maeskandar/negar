@@ -1,19 +1,17 @@
 import Konva from "konva"
 
-const convasWrapperID = "container"
+const canvasWrapperID = "container"
 
 export var
-    board = {},
+    board = null,
     mainLayer = null,
     bgLayer = null,
-    data = {}
+    shapes = {}
 
 
-export function initCanvas() {
-    let wrapper = document.getElementById(convasWrapperID)
-
+export function initCanvas({onClick, onMouseDown, onMouseMove, onMouseUp}) {
     board = new Konva.Stage({
-        container: convasWrapperID,
+        container: canvasWrapperID,
         width: window.innerWidth,
         height: window.innerHeight
     })
@@ -22,21 +20,11 @@ export function initCanvas() {
     bgLayer = new Konva.Layer()
 
     board.add(bgLayer, mainLayer)
-}
 
-export function drawSample() {
-    var circle = new Konva.Circle({
-        x: board.width() / 2,
-        y: board.height() / 2,
-        radius: 70,
-        fill: 'red',
-        stroke: 'black',
-        strokeWidth: 4
-    })
-
-    // add the shape to the layer
-    mainLayer.add(circle)
-    mainLayer.draw()
+    board.on('click', onClick)
+    board.on('mousedown', onMouseDown)
+    board.on('mousemove', onMouseMove)
+    board.on('mouseup', onMouseUp)
 }
 
 window.addEventListener('canvas', e => {
@@ -46,14 +34,11 @@ window.addEventListener('canvas', e => {
         id = shape.attrs.id
 
     if (type === "create") {
-        board[id] = shape
         mainLayer.add(shape)
     }
     else if (type === "update") {
     }
     else if (type === "delete") {
-        board[id].destroy()
-        delete board[id]
     }
     else throw new Error(`undefined canvas event '${type}'`)
 
@@ -61,19 +46,23 @@ window.addEventListener('canvas', e => {
 })
 
 function triggerCanvas(eventType, shapeObject) {
-    let e = new CustomEvent('canvas',{detail: {
-        type: eventType,
-        shape: shapeObject
-    }})
+    let e = new CustomEvent('canvas', {
+        detail: {
+            type: eventType,
+            shape: shapeObject
+        }
+    })
     window.dispatchEvent(e)
 }
 
 export function addShape(shapeObject) {
+    shapes[shapeObject.id] = shapeObject
     triggerCanvas('create', shapeObject)
 }
 export function updateShape(shapeObject) {
     triggerCanvas('update', shapeObject)
 }
 export function removeShape(shapeObject) {
+    delete shapes[shapeObject.id]
     triggerCanvas('delete', shapeObject)
 }

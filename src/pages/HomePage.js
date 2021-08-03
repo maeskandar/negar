@@ -46,19 +46,12 @@ import { backgrounds, imagesData } from "./meta.json"
 import { ToolBarBtn } from "../UI/Toolbar"
 import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD } from "./defaults"
 
-import { initCanvas, drawSample, board, addShape } from "../canvas/manager"
-
-setTimeout(() => {
-  initCanvas()
-  drawSample()
-}, 1000);
+import { initCanvas, board, shapes, addShape, mainLayer } from "../canvas/manager"
 
 let drawingTempData = []
 export default function HomePage() {
   const
     // canvas related
-    [shapes, setShapes] = useState([]),
-    [tempShapes, setTempShapes] = useState([]),
     [color, setColor] = useState('#fff'),
     [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, index: null, shapeObj: null }),
     // app functionality related
@@ -85,20 +78,10 @@ export default function HomePage() {
       selectedTool === APP_TOOLS.FG_COLOR_PICKER || selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
 
     , deleteShape = (shapeId) => {
-      let index = shapes.findIndex(it => it.id === shapeId)
+      // let index = shapes.findIndex(it => it.id === shapeId)
 
-      if (index !== -1)
-        setShapes(removeInArray(shapes, index))
-    },
-    addToShapes = (isSelected, ...newShapes) => {
-      if (isSelected)
-        setSelectedShapeInfo({
-          id: newShapes[0].id,
-          shapeObj: newShapes[0],
-          index: shapes.length
-        })
-
-      setShapes(shapes.concat(newShapes))
+      // if (index !== -1)
+      //   setShapes(removeInArray(shapes, index))
     },
     addRectangle = (x, y) => {
       // addToShapes(true, newRectangle(x, y))
@@ -141,7 +124,7 @@ export default function HomePage() {
     cancelOperation = () => {
       if (appState.has(APP_STATES.DRAWING)) {
         cleanArray(drawingTempData)
-        setTempShapes([])
+        // setTempShapes([])
       }
 
       setAppState(new Set())
@@ -151,42 +134,42 @@ export default function HomePage() {
       if (appState.has(APP_STATES.DRAWING)) {
 
         // stick lines if they have Intersection, else create new line
-        if (isInJamBoardMode() && tempShapes.length !== 0) {
-          let
-            resultLines = [],
-            tempPoints = []
+        // if (isInJamBoardMode() && tempShapes.length !== 0) {
+        //   let
+        //     resultLines = [],
+        //     tempPoints = []
 
 
-          function stickToLast(...newPoints) {
-            tempPoints.push(...newPoints)
-          }
-          function closeLastLine() {
-            // resultLines.push(newCustomLine(tempPoints))
-          }
-          function addNewLine(...points) {
-            tempPoints = points
-          }
+        //   function stickToLast(...newPoints) {
+        //     tempPoints.push(...newPoints)
+        //   }
+        //   function closeLastLine() {
+        //     // resultLines.push(newCustomLine(tempPoints))
+        //   }
+        //   function addNewLine(...points) {
+        //     tempPoints = points
+        //   }
 
-          tempPoints = tempShapes[0].points
+        //   tempPoints = tempShapes[0].points
 
-          for (let i = 1; i < tempShapes.length - 1; i++) {
-            let
-              lcp = tempShapes[i].points, // current line points
-              lnp = tempShapes[i + 1].points  // next line points
+        //   for (let i = 1; i < tempShapes.length - 1; i++) {
+        //     let
+        //       lcp = tempShapes[i].points, // current line points
+        //       lnp = tempShapes[i + 1].points  // next line points
 
-            // if end points of this line are equal to start points of next line
-            if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
-              stickToLast(...lnp.slice(2))
-            }
-            else {
-              closeLastLine()
-              addNewLine(...lnp)
-            }
-          }
-          closeLastLine()
+        //     // if end points of this line are equal to start points of next line
+        //     if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
+        //       stickToLast(...lnp.slice(2))
+        //     }
+        //     else {
+        //       closeLastLine()
+        //       addNewLine(...lnp)
+        //     }
+        //   }
+        //   closeLastLine()
 
-          addToShapes(false, ...resultLines)
-        }
+        //   addToShapes(false, ...resultLines)
+        // }
 
       }
       cancelOperation()
@@ -196,14 +179,11 @@ export default function HomePage() {
     setSelectedId = (shapeId) => {
       if (shapeId === selectedShapeInfo.id) return
 
-      let
-        si = shapes.findIndex(it => it.id === shapeId),
-        so = si === -1 ? null : shapes[si]
+      console.log(shapes)
 
       setSelectedShapeInfo({
-        id: so ? shapeId : null,
-        index: so ? si : null,
-        shapeObj: so,
+        id: shapeId,
+        shapeObj: shapes[shapeId],
       })
     },
     onShapeChanged = (i, newAttrs) => {
@@ -214,13 +194,19 @@ export default function HomePage() {
           shapeObj: newAttrs
         })
       }
-      setShapes(replaceInArray(shapes, i, newAttrs))
+      // setShapes(replaceInArray(shapes, i, newAttrs))
     },
     onShapeSelected = (shapeId) => {
       setSelectedId(shapeId)
     },
     handleClick = (ev) => {
-      if (ev.target.name() === "bg-layer") {
+      console.log(ev)
+
+      if ('id' in ev.target.attrs) { // if a shape selected
+        let id = ev.target.attrs.id
+        onShapeSelected(id)
+      }
+      else if (ev.target === mainLayer) { // FIXME it's not working for now - maybe i should set szie for layaer
         setSelectedId(null)
         cancelOperation()
       }
@@ -248,16 +234,16 @@ export default function HomePage() {
         }
         else if (selectedTool === APP_TOOLS.ERASER) {
           let acc = []
-          for (const l of tempShapes) {
-            let
-              sp = [l.points[0], l.points[1]],
-              ep = [l.points[2], l.points[3]]
+          // for (const l of tempShapes) {
+          //   let
+          //     sp = [l.points[0], l.points[1]],
+          //     ep = [l.points[2], l.points[3]]
 
-            if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
-              acc.push(l)
-            }
-          }
-          setTempShapes(acc)
+          //   if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
+          //     acc.push(l)
+          //   }
+          // }
+          // setTempShapes(acc)
         }
       }
     },
@@ -286,8 +272,13 @@ export default function HomePage() {
       }
 
     window.addEventListener('keydown', handleWindowKeyboard)
-    return () => window.removeEventListener('keydown', handleWindowKeyboard)
-  }, [selectedShapeInfo, setSelectedId, deleteShape])
+    initCanvas({
+      onClick: handleClick,
+      onMouseDown: handleMouseDown,
+      onMouseMove: handleMouseMove,
+      onMouseUp: handleMouseUp
+    })
+  }, [])
 
 
   // config default states ------
@@ -663,12 +654,7 @@ export default function HomePage() {
         selectedShapeInfo.id === null && <CustomSearchbar
           onAyaSelect={t => drawText(t)} />
       }
-      <div id="container" className="w-100 h-100"
-        onClick={handleClick}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-      ></div>
+      <div id="container" className="w-100 h-100"></div>
     </div>
   )
 }

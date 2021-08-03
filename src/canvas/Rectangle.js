@@ -1,4 +1,3 @@
-import React from "react"
 import Konva from "konva"
 import v1 from 'uuid/dist/v1'
 
@@ -17,14 +16,7 @@ export function newRectangle({x, y, onSelect}) {
     opacity: 1,
     fill: Konva.Util.getRandomColor(),
     stroke: DEFAULT_STROKE_COLOR,
-    
-    strokeWidth: DEFAULT_STROKE_WIDTH,
-
-    isSelected: false,
-  })
-
-  shape.on('click', e => {
-    console.log("yyyyyyyyyyyyyyyyyyyyaayaya")
+    strokeWidth: DEFAULT_STROKE_WIDTH
   })
 
   return shape
