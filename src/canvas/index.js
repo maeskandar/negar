@@ -1,4 +1,9 @@
+import { updateShape } from "./manager"
 import { validDeg } from "../utils/math"
+
+export const
+  DEFAULT_STROKE_WIDTH = 4,
+  DEFAULT_STROKE_COLOR = 'black'
 
 export const shapeKinds = {
   StraghtLine: 0,
@@ -10,28 +15,29 @@ export const shapeKinds = {
   Text: 6,
 }
 
-export function onDragEndCommon(shapeProps, onChange) {
-  return (e) => onChange({
-    ...shapeProps,
-    x: e.target.x(),
-    y: e.target.y(),
-  })
+export function resetTransformGen(shape) {
+  return () => {
+    let
+      sx = shape.scaleX(),
+      sy = shape.scaleY(),
+      rotation = shape.getAbsoluteRotation()
+
+    shape.scaleX(1)
+    shape.scaleY(1)
+
+    let oldSize = shape.size()
+    shape.size({
+      width: oldSize.width * sx,
+      height: oldSize.height * sy
+    })
+    shape.attrs.rotation = validDeg(rotation)
+
+    updateShape(shape.attrs.id)
+  }
 }
 
-export function resetTransform(shapeRef, func) {
-  return (event) => {
-    let
-      node = shapeRef.current,
-      sx = node.scaleX(),
-      sy = node.scaleY(),
-      rotation = node.getAbsoluteRotation()
-
-    node.scaleX(1)
-    node.scaleY(1)
-
-    rotation = validDeg(Math.trunc(rotation))
-    func(event, { x: Math.abs(sx), y: Math.abs(sy) }, rotation)
-  }
+export function onDragMoveGen(shape) {
+  return () => updateShape(shape.attrs.id)
 }
 
 export function isKindOfLine(kindNumber) {
@@ -41,7 +47,3 @@ export function isKindOfLine(kindNumber) {
 export function hasStroke(kindNumber) {
   return kindNumber !== shapeKinds.Text || kindNumber !== shapeKinds.Image
 }
-
-export const
-  DEFAULT_STROKE_WIDTH = 4,
-  DEFAULT_STROKE_COLOR = 'black'

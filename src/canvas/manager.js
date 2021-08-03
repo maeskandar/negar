@@ -45,7 +45,6 @@ window.addEventListener('canvas', e => {
     else if (type === "update") {
     }
     else if (type === "delete") {
-        mainLayer.draw()
     }
     else
         throw new Error(`undefined canvas event '${type}'`)
@@ -82,7 +81,15 @@ export function updateShape(shape, newAttrs) {
 
     triggerCanvas('update', shape)
 }
-export function removeShape(shapeObject) {
-    delete shapes[shapeObject.attrs.id]
-    triggerCanvas('delete', shapeObject)
+export function removeShape(shape) {
+    shape.destroy()
+    mainLayer.draw()
+    delete shapes[shape.attrs.id]
+    triggerCanvas('delete', shape)
+}
+
+export function ActivateTransformer(...shapes) {
+    transformer.show()
+    transformer.nodes(shapes)
+    transformer.moveToTop()
 }

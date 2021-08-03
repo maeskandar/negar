@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react"
-import Konva from "konva"
+import React from "react"
 import { SketchPicker } from "react-color"
 import randInt from 'random-int'
 
@@ -47,596 +46,623 @@ import { backgrounds, imagesData } from "./meta.json"
 import { ToolBarBtn } from "../UI/Toolbar"
 import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD } from "./defaults"
 
-import { initCanvas, board, shapes, transformer, addShape, mainLayer, updateShape } from "../canvas/manager"
+import { initCanvas, board, shapes, transformer, addShape, removeShape, updateShape, ActivateTransformer } from "../canvas/manager"
 
-let drawingTempData = []
-export default function HomePage() {
-  const
-    // canvas related
-    [color, setColor] = useState('#fff'),
-    [selectedShapeInfo, setSelectedShapeInfo] = useState({ id: null, shapeAttrs: null }),
+let
+  drawingTempData = [],
+  hasDrawn = false
+
+export default class HomePage extends React.Component {
+  state = {
+    color: '#fff',
+    selectedShapeInfo: { id: null, shapeAttrs: null },
+
     // app functionality related
-    [appState, setAppState] = React.useState(new Set()),
-    [selectedTool, setSelectedTool] = React.useState(APP_TOOLS.NOTHING),
-    [backgroundimage, setBackgroundimageDirect] = useState({ url: null, imageObj: null, }),
-    [backgroundModalShow, setBackgroundModalShow] = useState(false),
-    [imageModalShow, setImageModalShow] = useState(false)
-
-
-  // functions -----------------------------------------
-  const
-    includeToAppStates = (val) =>
-      setAppState(addToSet(appState, val))
-
-    , excludeFromAppState = (val) =>
-      setAppState(removeInSet(appState, val))
-
-    , isInJamBoardMode = () =>
-      appState.has(APP_STATES.DRAWING) &&
-      (selectedTool === APP_TOOLS.PENCIL || selectedTool === APP_TOOLS.ERASER)
-
-    , isColorPicking = () =>
-      selectedTool === APP_TOOLS.FG_COLOR_PICKER || selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
-
-    , deleteShape = (shapeId) => {
-      // let index = shapes.findIndex(it => it.id === shapeId)
-
-      // if (index !== -1)
-      //   setShapes(removeInArray(shapes, index))
-    },
-    addRectangle = (x, y) => {
-      // addToShapes(true, newRectangle(x, y))
-      addShape(newRectangle(x, y))
-    },
-    addCircle = (x, y) => {
-      // addToShapes(true, newCircle(x, y))
-    },
-    drawArrow = () => {
-      // addToShapes(true, newArrow())
-    },
-    ImageSetterHandler = (e) => {
-      // addToShapes(true, newImage(e))
-    },
-    drawText = (t = 'تایپ کن') => {
-      // addToShapes(true, newTextNode(t))
-    },
-
-    StartLineDrawingMode = () => {
-      includeToAppStates(APP_STATES.DRAWING)
-      setSelectedTool(APP_TOOLS.LINE)
-    },
-    startJamBoard = () => {
-      includeToAppStates(APP_STATES.DRAWING)
-      setSelectedTool(APP_TOOLS.PENCIL)
-      setSelectedId(null)
-    },
-    saveAsImage = () => {
-      let dataURL = board.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
-      downloadURI(dataURL, 'stage.png')
-    },
-    setBackgroundimage = (url) => {
-      setBackgroundimageDirect({ url, imageObj: null })
-
-      let imageObj = new Image()
-      imageObj.src = url
-      imageObj.onload = () =>
-        setBackgroundimageDirect({ url, imageObj })
-    },
-    cancelOperation = () => {
-      if (appState.has(APP_STATES.DRAWING)) {
-        cleanArray(drawingTempData)
-        // setTempShapes([])
-      }
-
-      setAppState(new Set())
-      setSelectedTool(APP_TOOLS.NOTHING)
-    },
-    doneOperation = () => {
-      if (appState.has(APP_STATES.DRAWING)) {
-
-        // stick lines if they have Intersection, else create new line
-        // if (isInJamBoardMode() && tempShapes.length !== 0) {
-        //   let
-        //     resultLines = [],
-        //     tempPoints = []
-
-
-        //   function stickToLast(...newPoints) {
-        //     tempPoints.push(...newPoints)
-        //   }
-        //   function closeLastLine() {
-        //     // resultLines.push(newCustomLine(tempPoints))
-        //   }
-        //   function addNewLine(...points) {
-        //     tempPoints = points
-        //   }
-
-        //   tempPoints = tempShapes[0].points
-
-        //   for (let i = 1; i < tempShapes.length - 1; i++) {
-        //     let
-        //       lcp = tempShapes[i].points, // current line points
-        //       lnp = tempShapes[i + 1].points  // next line points
-
-        //     // if end points of this line are equal to start points of next line
-        //     if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
-        //       stickToLast(...lnp.slice(2))
-        //     }
-        //     else {
-        //       closeLastLine()
-        //       addNewLine(...lnp)
-        //     }
-        //   }
-        //   closeLastLine()
-
-        //   addToShapes(false, ...resultLines)
-        // }
-
-      }
-      cancelOperation()
-    },
-
-    // canvas events -------------------------
-
-    setSelectedId = (shapeId) => {
-      if (shapeId === null && selectedShapeInfo.id !== null) {
-        transformer.nodes([])
-        transformer.hide()
-        updateShape(shapes[selectedShapeInfo.id], { draggable: false })
-        
-        setSelectedShapeInfo({
-          id: null,
-          shapeAttrs: null,
-        })
-      }
-      else if (shapeId !== null) {
-        let shape = shapes[shapeId]
-
-        updateShape(shape, { draggable: true })
-        transformer.show()
-        transformer.nodes([shape])
-        transformer.moveToTop()
-
-        // TODO the next step is https://konvajs.org/docs/select_and_transform/Transform_Events.html
-
-        setSelectedShapeInfo({
-          id: shapeId,
-          shapeAttrs: shape.attrs,
-        })
-      }
-    },
-    onShapeChanged = (changedAttrs) => {
-      if (selectedShapeInfo.id !== null) {
-        updateShape(shapes[selectedShapeInfo.id], changedAttrs)
-        setSelectedShapeInfo({ ...selectedShapeInfo })
-      }
-    },
-    onShapeSelected = (shapeId) => {
-      setSelectedId(shapeId)
-    },
-    handleClick = (ev) => {
-      if ('id' in ev.target.attrs) { // if a shape selected
-        let id = ev.target.attrs.id
-        onShapeSelected(id)
-      }
-      else { // FIXME it's not working for now - maybe i should set szie for layaer
-        setSelectedId(null)
-        cancelOperation()
-      }
-    },
-    handleMouseDown = (e) => {
-      if (!appState.has(APP_STATES.DRAGING))
-        includeToAppStates(APP_STATES.DRAGING)
-
-      if (appState.has(APP_STATES.DRAWING)) {
-        const pos = e.target.getStage().getPointerPosition()
-        drawingTempData = [pos.x, pos.y]
-      }
-    },
-    handleMouseMove = (e) => {
-      if (setHasParamsAnd(appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
-        var mp = board.getPointerPosition()
-        mp = [mp.x, mp.y]
-
-
-        if (selectedTool === APP_TOOLS.PENCIL) {
-          // setTempShapes(
-          //   addToArray(tempShapes,
-          //     newSimpleLine(drawingTempData.concat(mp))))
-          drawingTempData = mp
-        }
-        else if (selectedTool === APP_TOOLS.ERASER) {
-          let acc = []
-          // for (const l of tempShapes) {
-          //   let
-          //     sp = [l.points[0], l.points[1]],
-          //     ep = [l.points[2], l.points[3]]
-
-          //   if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
-          //     acc.push(l)
-          //   }
-          // }
-          // setTempShapes(acc)
-        }
-      }
-    },
-    handleMouseUp = (e) => {
-      if (selectedTool === APP_TOOLS.LINE) {
-        let pos = e.target.getStage().getPointerPosition()
-        // addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
-      }
-
-      excludeFromAppState(appState, APP_STATES.DRAGING)
-    }
-
-  // register events -----
-  useEffect(() => {
-    const
-      handleWindowKeyboard = (ev) => {
-        if (ev.code === "Delete") {
-          if (selectedShapeInfo.id) {
-            deleteShape(selectedShapeInfo.id)
-            setSelectedId(null)
-          }
-        }
-        else if (ev.code === "Escape") {
-          setSelectedId(null)
-        }
-      }
-
-    window.addEventListener('keydown', handleWindowKeyboard)
-    initCanvas({
-      onClick: handleClick,
-      onMouseDown: handleMouseDown,
-      onMouseMove: handleMouseMove,
-      onMouseUp: handleMouseUp
-    })
-  }, [])
-
-
-  // config default states ------
-  if (!backgroundimage.url) { // default state
-    setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
+    appState: new Set(),
+    selectedTool: APP_TOOLS.NOTHING,
+    backgroundimage: { url: null, imageObj: null, },
   }
 
-  // render -------=
-  return (
-    <div id="home-page">
+  constructor(props) {
+    super(props)
 
-      {backgroundModalShow && <MyVerticallyCenteredModal
-        title={"پس زمینه"}
-        images={backgrounds}
-        show={backgroundModalShow}
-        setimage={setBackgroundimage}
-        onHide={() => setBackgroundModalShow(false)}
-      />
-      }{imageModalShow && <MyVerticallyCenteredModal
-        title={"تصویر"}
-        images={imagesData}
-        show={imageModalShow}
-        setimage={(e) => ImageSetterHandler(e)}
-        onHide={() => setImageModalShow(false)}
-      />
+    this.isInJamBoardMode = this.isInJamBoardMode.bind(this)
+    this.isColorPicking = this.isColorPicking.bind(this)
+    this.addRectangle = this.addRectangle.bind(this)
+    this.addCircle = this.addCircle.bind(this)
+    this.drawArrow = this.drawArrow.bind(this)
+    this.ImageSetterHandler = this.ImageSetterHandler.bind(this)
+    this.drawText = this.drawText.bind(this)
+    this.StartLineDrawingMode = this.StartLineDrawingMode.bind(this)
+    this.startJamBoard = this.startJamBoard.bind(this)
+    this.saveAsImage = this.saveAsImage.bind(this)
+    this.setBackgroundimage = this.setBackgroundimage.bind(this)
+    this.cancelOperation = this.cancelOperation.bind(this)
+    this.doneOperation = this.doneOperation.bind(this)
+    this.setSelectedId = this.setSelectedId.bind(this)
+    this.onShapeChanged = this.onShapeChanged.bind(this)
+    this.handleClick = this.handleClick.bind(this)
+    this.handleMouseDown = this.handleMouseDown.bind(this)
+    this.handleMouseMove = this.handleMouseMove.bind(this)
+    this.handleMouseUp = this.handleMouseUp.bind(this)
+    this.deleteShape = this.deleteShape.bind(this)
+    this.includeToAppStates = this.includeToAppStates.bind(this)
+    this.excludeFromAppState = this.excludeFromAppState.bind(this)
+  }
+
+  // functions -----------------------------------------
+  includeToAppStates(val) {
+    this.setState({ appState: addToSet(this.state.appState, val) })
+  }
+  excludeFromAppState(val) {
+    this.setState({ appState: removeInSet(this.state.appState, val) })
+  }
+
+  isInJamBoardMode() {
+    return this.state.appState.has(APP_STATES.DRAWING) &&
+      (this.state.selectedTool === APP_TOOLS.PENCIL || this.state.selectedTool === APP_TOOLS.ERASER)
+  }
+  isColorPicking() {
+    return this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER || this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER
+  }
+
+  addRectangle(x, y) {
+    addShape(newRectangle(x, y))
+  }
+
+  addCircle(x, y) {
+    // addToShapes(true, newCircle(x, y))
+  }
+  drawArrow() {
+    // addToShapes(true, newArrow())
+  }
+  ImageSetterHandler(e) {
+    // addToShapes(true, newImage(e))
+  }
+  drawText(t = 'تایپ کن') {
+    // addToShapes(true, newTextNode(t))
+  }
+
+  StartLineDrawingMode() {
+    this.includeToAppStates(APP_STATES.DRAWING)
+    this.setState({ selectedTool: APP_TOOLS.LINE })
+  }
+  startJamBoard() {
+    this.includeToAppStates(APP_STATES.DRAWING)
+    this.setSelectedId(null)
+    this.setState({ selectedTool: APP_TOOLS.PENCIL })
+  }
+  saveAsImage() {
+    let dataURL = board.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
+    downloadURI(dataURL, 'stage.png')
+  }
+
+  setBackgroundimage(url) {
+    this.setState({ backgroundimage: { url, imageObj: null } })
+
+    let imageObj = new Image()
+    imageObj.src = url
+    imageObj.onload = () =>
+      this.setState({ backgroundimage: { url, imageObj } })
+  }
+  cancelOperation() {
+    if (this.state.appState.has(APP_STATES.DRAWING)) {
+      cleanArray(drawingTempData)
+      // setTempShapes([])
+    }
+
+    this.setState({
+      appState: new Set(),
+      selectedTool: APP_TOOLS.NOTHING
+    })
+  }
+  doneOperation() {
+    if (this.state.appState.has(APP_STATES.DRAWING)) {
+      // stick lines if they have Intersection, else create new line
+      // if (isInJamBoardMode() && tempShapes.length !== 0) {
+      //   let
+      //     resultLines = [],
+      //     tempPoints = []
+
+
+      //   function stickToLast(...newPoints) {
+      //     tempPoints.push(...newPoints)
+      //   }
+      //   function closeLastLine() {
+      //     // resultLines.push(newCustomLine(tempPoints))
+      //   }
+      //   function addNewLine(...points) {
+      //     tempPoints = points
+      //   }
+
+      //   tempPoints = tempShapes[0].points
+
+      //   for (let i = 1; i < tempShapes.length - 1; i++) {
+      //     let
+      //       lcp = tempShapes[i].points, // current line points
+      //       lnp = tempShapes[i + 1].points  // next line points
+
+      //     // if end points of this line are equal to start points of next line
+      //     if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
+      //       stickToLast(...lnp.slice(2))
+      //     }
+      //     else {
+      //       closeLastLine()
+      //       addNewLine(...lnp)
+      //     }
+      //   }
+      //   closeLastLine()
+
+      //   addToShapes(false, ...resultLines)
+      // }
+
+    }
+    this.cancelOperation()
+  }
+
+  // canvas events -------------------------
+
+  setSelectedId(shapeId) {
+    let lastSelectedId = this.state.selectedShapeInfo.id
+    if (shapeId === null && lastSelectedId !== null) {
+      let lastShape = shapes[this.state.selectedShapeInfo.id]
+
+      transformer.nodes([])
+      transformer.hide()
+      updateShape(lastShape, { draggable: false })
+
+
+      this.setState({
+        selectedShapeInfo: {
+          id: null,
+          shapeAttrs: null,
+        }
+      })
+    }
+    else if (shapeId !== null) {
+      let shape = shapes[shapeId]
+
+      if (lastSelectedId)
+        updateShape(shapes[lastSelectedId], { draggable: false })
+
+      ActivateTransformer(shape)
+      updateShape(shape, { draggable: true })
+
+      this.setState({
+        selectedShapeInfo: {
+          id: shapeId,
+          shapeAttrs: shape.attrs,
+        }
+      })
+    }
+  }
+  onShapeChanged(changedAttrs) {
+    if (this.state.selectedShapeInfo.id !== null) {
+      updateShape(shapes[this.state.selectedShapeInfo.id], changedAttrs)
+      this.setState({ selectedShapeInfo: { ...this.state.selectedShapeInfo } })
+    }
+  }
+  deleteShape() {
+    let shapeId = this.state.selectedShapeInfo.id
+    if (shapeId) {
+      this.setSelectedId(null)
+      removeShape(shapes[shapeId])
+    }
+  }
+
+  handleClick(ev) {
+    if ('id' in ev.target.attrs) { // if a shape selected
+      let id = ev.target.attrs.id
+      this.setSelectedId(id)
+    }
+    else { // FIXME it's not working for now - maybe i should set szie for layar
+      this.setSelectedId(null)
+      this.cancelOperation()
+    }
+  }
+  handleMouseDown(e) {
+    if (!this.state.appState.has(APP_STATES.DRAGING))
+      this.includeToAppStates(APP_STATES.DRAGING)
+
+    if (this.state.appState.has(APP_STATES.DRAWING)) {
+      const pos = e.target.getStage().getPointerPosition()
+      drawingTempData = [pos.x, pos.y]
+    }
+  }
+  handleMouseMove(e) {
+    if (setHasParamsAnd(this.state.appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
+      var mp = board.getPointerPosition()
+      mp = [mp.x, mp.y]
+
+
+      if (this.state.selectedTool === APP_TOOLS.PENCIL) {
+        // setTempShapes(
+        //   addToArray(tempShapes,
+        //     newSimpleLine(drawingTempData.concat(mp))))
+        drawingTempData = mp
       }
+      else if (this.state.selectedTool === APP_TOOLS.ERASER) {
+        let acc = []
+        // for (const l of tempShapes) {
+        //   let
+        //     sp = [l.points[0], l.points[1]],
+        //     ep = [l.points[2], l.points[3]]
 
-      <div id="tool-bar-wrapper"
-      >
-        <Paper
-          id="tool-bar"
-          elevation={3}>
-          {/* Default State */
-            !appState.has(APP_STATES.DRAWING) && <>
-              <ToolBarBtn
-                title="مستطیل"
-                onClick={() => addRectangle(randInt(100), randInt(100))}
-                iconEl={<RectangleIcon />}
+        //   if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
+        //     acc.push(l)
+        //   }
+        // }
+        // setTempShapes(acc)
+      }
+    }
+  }
+  handleMouseUp(e) {
+    if (this.state.selectedTool === APP_TOOLS.LINE) {
+      let pos = e.target.getStage().getPointerPosition()
+      // addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+    }
+
+    this.excludeFromAppState(APP_STATES.DRAGING)
+  }
+
+  // ----------------  register events -------------------------
+  componentDidMount() {
+    window.addEventListener('keydown', (ev) => {
+      if (ev.code === "Delete") this.deleteShape()
+      else if (ev.code === "Escape") this.setSelectedId(null)
+    })
+    initCanvas({
+      onClick: this.handleClick,
+      onMouseDown: this.handleMouseDown,
+      onMouseMove: this.handleMouseMove,
+      onMouseUp: this.handleMouseUp
+    })
+
+    this.setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
+  }
+
+  render() {
+    return (
+      <div id="home-page">
+
+        {this.state.backgroundModalShow && <MyVerticallyCenteredModal
+          title={"پس زمینه"}
+          images={backgrounds}
+          show={this.state.backgroundModalShow}
+          // setimage={setBackgroundimage}
+          onHide={() => this.setState({ backgroundModalShow: false })}
+        />
+        }{this.state.imageModalShow && <MyVerticallyCenteredModal
+          title={"تصویر"}
+          images={imagesData}
+          show={this.state.imageModalShow}
+          setimage={(e) => this.ImageSetterHandler(e)}
+          onHide={() => this.setImageModalShow(false)}
+        />
+        }
+
+        <div id="tool-bar-wrapper">
+          <Paper
+            id="tool-bar"
+            elevation={3}>
+            {/* Default State */
+              !this.state.appState.has(APP_STATES.DRAWING) && <>
+                <ToolBarBtn
+                  title="مستطیل"
+                  onClick={() => this.addRectangle(randInt(100), randInt(100))}
+                  iconEl={<RectangleIcon />}
+                />
+                <ToolBarBtn
+                  title="دایره"
+                  onClick={() => this.addCircle(randInt(100), randInt(100))}
+                  iconEl={<CircleIcon />}
+                />
+                <ToolBarBtn
+                  title="خط"
+                  onClick={this.StartLineDrawingMode}
+                  iconEl={<LineIcon />}
+                />
+                <ToolBarBtn
+                  title="متن"
+                  onClick={this.drawText}
+                  iconEl={<TextIcon />}
+                />
+                <ToolBarBtn
+                  title="تصویر"
+                  iconEl={<ImageIcon />}
+                  onClick={() => this.setState({ imageModalShow: true })} // FIXME what???
+                />
+                <ToolBarBtn
+                  title="فلش"
+                  iconEl={<ArrowIcon />}
+                  onClick={this.drawArrow}
+                />
+                <ToolBarBtn
+                  title="تخته"
+                  iconEl={<JamBoardIcon />}
+                  onClick={this.startJamBoard}
+                />
+                <ToolBarBtn
+                  title="ذخیره"
+                  iconEl={<SaveIcon />}
+                  onClick={this.saveAsImage}
+                />
+                <ToolBarBtn
+                  title="پس زمینه"
+                  iconEl={<BackgroundIcon />}
+                  onClick={() => this.setState({ backgroundModalShow: true })} // FIXME what???
+                />
+              </>
+            }
+            {/* JamBoard */
+              this.isInJamBoardMode() && <>
+                <ToolBarBtn
+                  title="مداد"
+                  iconEl={<PencilIcon />}
+                  onClick={() => this.setState({ selectedTool: APP_TOOLS.PENCIL })}
+                  disabled={this.state.selectedTool === APP_TOOLS.PENCIL}
+                />
+                <ToolBarBtn
+                  title="پاک کن"
+                  iconEl={<EraserIcon />}
+                  disabled={this.state.selectedTool === APP_TOOLS.ERASER}
+                  onClick={() => { this.setState({ selectedTool: APP_TOOLS.ERASER }) }}
+                />
+              </>
+            }
+            {/* Drawing State */
+              setHasParamsOr(this.state.appState, APP_STATES.DRAWING) && <>
+                <ToolBarBtn
+                  title="ثبت عملیات"
+                  iconEl={<DoneAll />}
+                  onClick={this.doneOperation}
+                />
+
+                <ToolBarBtn
+                  title="لغو عملیات"
+                  iconEl={<CancelIcon />}
+                  onClick={this.cancelOperation}
+                />
+              </>
+            }
+          </Paper>
+        </div>
+        {// something selected 
+          this.state.selectedShapeInfo.id !== null &&
+          <Paper id="status-bar" className="p-3" square>
+            <div className="mb-2">
+
+              <span> نوع شکل: </span>
+              <span>
+                {
+                  Object.keys(shapeKinds)
+                    .find(it => shapeKinds[it] === this.state.selectedShapeInfo.shapeAttrs.kind)
+                    .toLowerCase()
+                }
+              </span>
+            </div>
+
+            {('x' in this.state.selectedShapeInfo.shapeAttrs) &&
+              <TextField
+                type="number"
+                label="مختصات x"
+                value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.x)}
+                onChange={e => {
+                  this.onShapeChanged({ x: parseInt(e.target.value) })
+                }}
               />
-              <ToolBarBtn
-                title="دایره"
-                onClick={() => addCircle(randInt(100), randInt(100))}
-                iconEl={<CircleIcon />}
+            }
+            {('y' in this.state.selectedShapeInfo.shapeAttrs) &&
+              <TextField
+                type="number"
+                label="مختصات y"
+                value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.y)}
+                onChange={e => {
+                  this.onShapeChanged({ y: parseInt(e.target.value) })
+                }}
               />
-              <ToolBarBtn
-                title="خط"
-                onClick={StartLineDrawingMode}
-                iconEl={<LineIcon />}
+            }
+            {
+              <TextField
+                type="number"
+                label="عرض"
+                value={
+                  prettyFloatNumber
+                    (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
+                      this.state.selectedShapeInfo.shapeAttrs.points[2] :
+                      this.state.selectedShapeInfo.shapeAttrs.width)
+                }
+                onChange={e => {
+                  // if (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
+                  //   this.state.selectedShapeInfo.shapeAttrs.points = replaceInArray(this.state.selectedShapeInfo.shapeAttrs.points, 2, nv)
+
+                  // else
+                  //   this.state.selectedShapeInfo.shapeAttrs.width = nv
+
+                  this.onShapeChanged({ width: parseInt(e.target.value) })
+                }}
               />
-              <ToolBarBtn
-                title="متن"
-                onClick={() => drawText()}
-                iconEl={<TextIcon />}
+            }
+            {this.state.selectedShapeInfo.shapeAttrs.kind !== shapeKinds.Text &&
+              <TextField
+                type="number"
+                label="ارتفاع"
+                value={
+                  prettyFloatNumber
+                    (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
+                      this.state.selectedShapeInfo.shapeAttrs.points[3] :
+                      this.state.selectedShapeInfo.shapeAttrs.height)
+                }
+                onChange={e => {
+                  // let nv = parseInt(e.target.value)
+
+                  // if (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
+                  //   this.state.selectedShapeInfo.shapeAttrs.points = replaceInArray(this.state.selectedShapeInfo.shapeAttrs.points, 3, nv)
+
+                  // else
+                  //   this.state.selectedShapeInfo.shapeAttrs.height = nv
+
+                  this.onShapeChanged({ height: parseInt(e.target.value) })
+                }}
               />
-              <ToolBarBtn
-                title="تصویر"
-                iconEl={<ImageIcon />}
-                onClick={() => setImageModalShow(true)}
-              />
-              <ToolBarBtn
-                title="فلش"
-                iconEl={<ArrowIcon />}
-                onClick={drawArrow}
-              />
-              <ToolBarBtn
-                title="تخته"
-                iconEl={<JamBoardIcon />}
-                onClick={startJamBoard}
-              />
-              <ToolBarBtn
-                title="ذخیره"
-                iconEl={<SaveIcon />}
-                onClick={saveAsImage}
-              />
-              <ToolBarBtn
-                title="پس زمینه"
-                iconEl={<BackgroundIcon />}
-                onClick={() => setBackgroundModalShow(true)}
+            }
+            {('rotation' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              <Typography gutterBottom> چرخش </Typography>
+              <Slider
+                value={this.state.selectedShapeInfo.shapeAttrs.rotation}
+                onChange={(e, nv) => this.onShapeChanged({ rotation: nv })}
+                aria-labelledby="discrete-slider-small-steps"
+                step={1}
+                min={0}
+                max={360}
+                valueLabelDisplay="auto"
               />
             </>
-          }
-          {/* JamBoard */
-            isInJamBoardMode() && <>
-              <ToolBarBtn
-                title="مداد"
-                iconEl={<PencilIcon />}
-                onClick={() => setSelectedTool(APP_TOOLS.PENCIL)}
-                disabled={selectedTool === APP_TOOLS.PENCIL}
+            }
+            {('text' in this.state.selectedShapeInfo.shapeAttrs) &&
+              <TextField
+                label="متن"
+                rows={5}
+                multiline
+                value={this.state.selectedShapeInfo.shapeAttrs.text}
+                onChange={e => this.onShapeChanged({ text: e.target.value })}
               />
-              <ToolBarBtn
-                title="پاک کن"
-                iconEl={<EraserIcon />}
-                disabled={selectedTool === APP_TOOLS.ERASER}
-                onClick={() => { setSelectedTool(APP_TOOLS.ERASER) }}
-              />
-            </>
-          }
-          {/* Drawing State */
-            setHasParamsOr(appState, APP_STATES.DRAWING) && <>
-              <ToolBarBtn
-                title="ثبت عملیات"
-                iconEl={<DoneAll />}
-                onClick={doneOperation}
-              />
-
-              <ToolBarBtn
-                title="لغو عملیات"
-                iconEl={<CancelIcon />}
-                onClick={cancelOperation}
+            }
+            {('fontSize' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              <Typography gutterBottom> اندازه فونت </Typography>
+              <Slider
+                value={this.state.selectedShapeInfo.shapeAttrs.fontSize}
+                onChange={(e, nv) => this.onShapeChanged({ fontSize: nv })}
+                aria-labelledby="discrete-slider-small-steps"
+                step={0.5}
+                min={1}
+                max={150}
+                valueLabelDisplay="auto"
               />
             </>
-          }
-        </Paper>
-      </div>
-      {// something selected 
-        selectedShapeInfo.id !== null &&
-        <Paper id="status-bar" className="p-3" square>
-          <div className="mb-2">
+            }
+            {(this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text) && <>
+              <Typography gutterBottom> نوع فونت </Typography>
+              <Select
+                value={this.state.selectedShapeInfo.shapeAttrs.fontFamily}
+                onChange={e => this.onShapeChanged({ fontFamily: e.target.value })}
+              >
+                {FONT_NAMES.map(fname =>
+                  <MenuItem value={fname}>{fname} </MenuItem>)
+                }
+              </Select>
 
-            <span> نوع شکل: </span>
-            <span>
-              {
-                Object.keys(shapeKinds)
-                  .find(it => shapeKinds[it] === selectedShapeInfo.shapeAttrs.kind)
-                  .toLowerCase()
-              }
-            </span>
-          </div>
+              <Typography gutterBottom> ارتفاع خط </Typography>
+              <Slider
+                value={this.state.selectedShapeInfo.shapeAttrs.lineHeight}
+                onChange={(e, nv) => this.onShapeChanged({ lineHeight: nv })}
+                aria-labelledby="discrete-slider-small-steps"
+                step={0.1}
+                min={0.1}
+                max={8}
+                valueLabelDisplay="auto"
+              />
 
-          {('x' in selectedShapeInfo.shapeAttrs) &&
-            <TextField
-              type="number"
-              label="مختصات x"
-              value={prettyFloatNumber(selectedShapeInfo.shapeAttrs.x)}
-              onChange={e => {
-                onShapeChanged({ x: parseInt(e.target.value) })
-              }}
-            />
-          }
-          {('y' in selectedShapeInfo.shapeAttrs) &&
-            <TextField
-              type="number"
-              label="مختصات y"
-              value={prettyFloatNumber(selectedShapeInfo.shapeAttrs.y)}
-              onChange={e => {
-                onShapeChanged({ y: parseInt(e.target.value) })
-              }}
-            />
-          }
-          {
-            <TextField
-              type="number"
-              label="عرض"
-              value={
-                prettyFloatNumber
-                  (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
-                    selectedShapeInfo.shapeAttrs.points[2] :
-                    selectedShapeInfo.shapeAttrs.width)
-              }
-              onChange={e => {
-                // if (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
-                //   selectedShapeInfo.shapeAttrs.points = replaceInArray(selectedShapeInfo.shapeAttrs.points, 2, nv)
-
-                // else
-                //   selectedShapeInfo.shapeAttrs.width = nv
-
-                onShapeChanged({ width: parseInt(e.target.value) })
-              }}
-            />
-          }
-          {selectedShapeInfo.shapeAttrs.kind !== shapeKinds.Text &&
-            <TextField
-              type="number"
-              label="ارتفاع"
-              value={
-                prettyFloatNumber
-                  (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
-                    selectedShapeInfo.shapeAttrs.points[3] :
-                    selectedShapeInfo.shapeAttrs.height)
-              }
-              onChange={e => {
-                // let nv = parseInt(e.target.value)
-
-                // if (selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
-                //   selectedShapeInfo.shapeAttrs.points = replaceInArray(selectedShapeInfo.shapeAttrs.points, 3, nv)
-
-                // else
-                //   selectedShapeInfo.shapeAttrs.height = nv
-
-                onShapeChanged({ height: parseInt(e.target.value) })
-              }}
-            />
-          }
-          {('rotation' in selectedShapeInfo.shapeAttrs) && <>
-            <Typography gutterBottom> چرخش </Typography>
-            <Slider
-              value={selectedShapeInfo.shapeAttrs.rotation}
-              onChange={(e, nv) => onShapeChanged({ rotation: nv })}
-              aria-labelledby="discrete-slider-small-steps"
-              step={1}
-              min={0}
-              max={360}
-              valueLabelDisplay="auto"
-            />
-          </>
-          }
-          {('text' in selectedShapeInfo.shapeAttrs) &&
-            <TextField
-              label="متن"
-              rows={5}
-              multiline
-              value={selectedShapeInfo.shapeAttrs.text}
-              onChange={e => onShapeChanged({ text: e.target.value })}
-            />
-          }
-          {('fontSize' in selectedShapeInfo.shapeAttrs) && <>
-            <Typography gutterBottom> اندازه فونت </Typography>
-            <Slider
-              value={selectedShapeInfo.shapeAttrs.fontSize}
-              onChange={(e, nv) => onShapeChanged({ fontSize: nv })}
-              aria-labelledby="discrete-slider-small-steps"
-              step={0.5}
-              min={1}
-              max={150}
-              valueLabelDisplay="auto"
-            />
-          </>
-          }
-          {(selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text) && <>
-            <Typography gutterBottom> نوع فونت </Typography>
-            <Select
-              value={selectedShapeInfo.shapeAttrs.fontFamily}
-              onChange={e => onShapeChanged({ fontFamily: e.target.value })}
-            >
-              {FONT_NAMES.map(fname =>
-                <MenuItem value={fname}>{fname} </MenuItem>)
-              }
-            </Select>
-
-            <Typography gutterBottom> ارتفاع خط </Typography>
-            <Slider
-              value={selectedShapeInfo.shapeAttrs.lineHeight}
-              onChange={(e, nv) => onShapeChanged({ lineHeight: nv })}
-              aria-labelledby="discrete-slider-small-steps"
-              step={0.1}
-              min={0.1}
-              max={8}
-              valueLabelDisplay="auto"
-            />
-
-            <Typography gutterBottom> چینش </Typography>
-            <Select
-              value={selectedShapeInfo.shapeAttrs.align}
-              onChange={e => onShapeChanged({ align: e.target.value })}
-            >
-              {['left', 'right', 'center'].map(v =>
-                <MenuItem value={v}>{v} </MenuItem>)
-              }
-            </Select>
-          </>
-          }
-          {('strokeWidth' in selectedShapeInfo.shapeAttrs) && <>
-            <Typography gutterBottom> اندازه خط </Typography>
-            <Slider
-              value={selectedShapeInfo.shapeAttrs.strokeWidth}
-              onChange={(e, nv) => onShapeChanged({ strokeWidth: nv })}
-              aria-labelledby="discrete-slider-small-steps"
-              step={selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text ? 0.1 : 0.5}
-              min={isKindOfLine(selectedShapeInfo.shapeAttrs.kind) ? 1 : 0}
-              max={20}
-              valueLabelDisplay="auto"
-            />
-          </>
-          }
-          {/* color picking */}
-          {hasStroke(selectedShapeInfo.shapeAttrs.kind) &&
-            <>
-              {
-                !isKindOfLine(selectedShapeInfo.shapeAttrs.kind) &&
+              <Typography gutterBottom> چینش </Typography>
+              <Select
+                value={this.state.selectedShapeInfo.shapeAttrs.align}
+                onChange={e => this.onShapeChanged({ align: e.target.value })}
+              >
+                {['left', 'right', 'center'].map(v =>
+                  <MenuItem value={v}>{v} </MenuItem>)
+                }
+              </Select>
+            </>
+            }
+            {('strokeWidth' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              <Typography gutterBottom> اندازه خط </Typography>
+              <Slider
+                value={this.state.selectedShapeInfo.shapeAttrs.strokeWidth}
+                onChange={(e, nv) => this.onShapeChanged({ strokeWidth: nv })}
+                aria-labelledby="discrete-slider-small-steps"
+                step={this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text ? 0.1 : 0.5}
+                min={isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) ? 1 : 0}
+                max={20}
+                valueLabelDisplay="auto"
+              />
+            </>
+            }
+            {/* color picking */}
+            {hasStroke(this.state.selectedShapeInfo.shapeAttrs.kind) &&
+              <>
+                {
+                  !isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) &&
+                  <div>
+                    <span> رنگ داخل: </span>
+                    <ColorPreview
+                      onClick={() => {
+                        if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
+                          this.setState({ selectedTool: APP_TOOLS.NOTHING })
+                        else {
+                          this.setState({
+                            selectedTool: APP_TOOLS.FG_COLOR_PICKER,
+                            color: this.state.selectedShapeInfo.shapeAttrs.fill
+                          })
+                        }
+                      }}
+                      hexColor={this.state.selectedShapeInfo.shapeAttrs.fill} />
+                  </div>
+                }
                 <div>
-                  <span> رنگ داخل: </span>
+                  <span> رنگ خط: </span>
                   <ColorPreview
                     onClick={() => {
-                      if (selectedTool === APP_TOOLS.FG_COLOR_PICKER)
-                        setSelectedTool(APP_TOOLS.NOTHING)
+                      if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
+                        this.setState({ selectedTool: APP_TOOLS.NOTHING })
                       else {
-                        setSelectedTool(APP_TOOLS.FG_COLOR_PICKER)
-                        setColor(selectedShapeInfo.shapeAttrs.fill)
+                        this.setState({
+                          selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
+                          color: this.state.selectedShapeInfo.shapeAttrs.stroke
+                        })
                       }
                     }}
-                    hexColor={selectedShapeInfo.shapeAttrs.fill} />
+                    hexColor={this.state.selectedShapeInfo.shapeAttrs.stroke} />
                 </div>
-              }
-              <div>
-                <span> رنگ خط: </span>
-                <ColorPreview
-                  onClick={() => {
-                    if (selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
-                      setSelectedTool(APP_TOOLS.NOTHING)
-                    else {
-                      setSelectedTool(APP_TOOLS.STROKE_COLOR_PICKER)
-                      setColor(selectedShapeInfo.shapeAttrs.stroke)
-                    }
-                  }}
-                  hexColor={selectedShapeInfo.shapeAttrs.stroke} />
-              </div>
-              {
-                isColorPicking() &&
-                <div id="color-picker-wrapper">
-                  <SketchPicker
-                    disableAlpha
-                    color={color}
-                    onChange={(color) => setColor(color['hex'])}
-                    onChangeComplete={(color) => {
-                      let key = selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
-                      onShapeChanged({ [key]: color['hex'] })
-                    }}
-                  />
-                </div>
-              }
+                {
+                  this.isColorPicking() &&
+                  <div id="color-picker-wrapper">
+                    <SketchPicker
+                      disableAlpha
+                      color={this.state.color}
+                      onChange={(color) => this.setState({ color: color['hex'] })}
+                      onChangeComplete={(color) => {
+                        let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
+                        this.onShapeChanged({ [key]: color['hex'] })
+                      }}
+                    />
+                  </div>
+                }
+              </>
+            }
+            {('opacity' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              <Typography gutterBottom> شفافیت </Typography>
+              <Slider
+                value={this.state.selectedShapeInfo.shapeAttrs.opacity}
+                onChange={(e, nv) => { this.onShapeChanged({ opacity: nv }) }}
+                aria-labelledby="discrete-slider-small-steps"
+                step={0.01}
+                min={0.05}
+                max={1}
+                valueLabelDisplay="auto"
+              />
             </>
-          }
-          {('opacity' in selectedShapeInfo.shapeAttrs) && <>
-            <Typography gutterBottom> شفافیت </Typography>
-            <Slider
-              value={selectedShapeInfo.shapeAttrs.opacity}
-              onChange={(e, nv) => { onShapeChanged({ opacity: nv }) }}
-              aria-labelledby="discrete-slider-small-steps"
-              step={0.01}
-              min={0.05}
-              max={1}
-              valueLabelDisplay="auto"
-            />
-          </>
-          }
-          <button className="btn btn-danger mt-3" onClick={() => setSelectedId(null)}>
-            خروج
-          </button>
-        </Paper>
-      }
-      {
-        selectedShapeInfo.id === null && <CustomSearchbar
-          onAyaSelect={t => drawText(t)} />
-      }
-      <div id="container" className="w-100 h-100"></div>
-    </div>
-  )
+            }
+            <button className="btn btn-danger mt-3" onClick={() => this.setSelectedId(null)}>
+              خروج
+            </button>
+          </Paper>
+        }
+        {
+          this.state.selectedShapeInfo.id === null && <CustomSearchbar
+            onAyaSelect={t => this.drawText(t)} />
+        }
+        <div id="container" className="w-100 h-100"></div>
+      </div>
+    )
+  }
 }

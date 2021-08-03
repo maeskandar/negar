@@ -1,7 +1,7 @@
 import Konva from "konva"
 import v1 from 'uuid/dist/v1'
 
-import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
+import { resetTransformGen, onDragMoveGen, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
 
 export function newRectangle() {
   let shape = new Konva.Rect({
@@ -22,31 +22,7 @@ export function newRectangle() {
     draggable: false, // TODO add default abstract shape and spread it in every object [ on top ]
   })
 
+  shape.on('transformend', resetTransformGen(shape))
+  shape.on('dragmove', onDragMoveGen(shape))
   return shape
 }
-
-// function Rectangle({ shapeProps, isSelected, onSelect, onChange }) {
-//   return (
-//     <>
-//       <Rect
-//         {...shapeProps}
-
-//         offsetX={shapeProps.width / 2}
-//         offsetY={shapeProps.height / 2}
-//         draggable={isSelected}
-
-//         onClick={onSelect}
-//         onDragEnd={onDragEndCommon(shapeProps, onChange)}
-//         onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
-//           onChange({
-//             ...shapeProps,
-//             rotation: rotation,
-//             width: shapeProps.width * scale.x,
-//             height: shapeProps.height * scale.y,
-//           })
-//         })}
-//       />
-//       {isSelected && <Transformer ref={trRef} />}
-//     </>
-//   )
-// }
