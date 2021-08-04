@@ -1,69 +1,19 @@
-import React from "react"
-import { Image, Transformer } from "react-konva"
-import useImage from "use-image"
-import v1 from 'uuid/dist/v1'
+import Konva from "konva"
 
-import { resetTransform, onDragEndCommon, shapeKinds } from './'
+import { shapeKinds } from './'
+import { addCommonEvents, fillableProps, commonShapeProps, basicCoordinate, basicSize } from './abstract'
 
-
-export function newImage(content) {
-  return {
-    id: v1(),
+export function newImage(content) { // FIXME image load
+  let shape = new Konva.Image({
     kind: shapeKinds.Image,
-
-    x: 100,
-    y: 100,
-    width: 300,
-    height: 300,
-    rotation: 0,
-
     content,
-    opacity: 1,
-  }
-}
+    ...commonShapeProps(),
 
-export function MyImage({ shapeProps, isSelected, onSelect, onChange, imageUrl }) {
-  const
-    shapeRef = React.useRef(),
-    trRef = React.useRef(),
-    [image] = useImage(imageUrl)
+    ...basicCoordinate(),
+    ...basicSize(),
+    ...fillableProps(),
+  })
 
-  React.useEffect(() => {
-    if (isSelected) { // we need to attach transformer manually
-      trRef.current.setNode(shapeRef.current)
-      trRef.current.getLayer().batchDraw()
-    }
-  }, [isSelected])
-
-  // set for the first time
-  if (shapeProps.width == null && image) {
-    shapeProps.width = image.width
-    shapeProps.height = image.height
-  }
-
-  return (
-    <>
-      <Image
-        ref={shapeRef}
-        image={image}
-        {...shapeProps}
-
-        offsetX={shapeProps.width / 2}
-        offsetY={shapeProps.height / 2}
-        draggable={isSelected}
-
-        onClick={onSelect}
-        onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
-          onChange({
-            ...shapeProps,
-            rotation,
-            width: shapeProps.width * scale.x,
-            height: shapeProps.height * scale.y,
-          })
-        })}
-      />
-      {isSelected && <Transformer ref={trRef} />}
-    </>
-  )
+  addCommonEvents(shape)
+  return shape
 }

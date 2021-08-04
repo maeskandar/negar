@@ -4,10 +4,11 @@ const canvasWrapperID = "container"
 
 export var
     board = null,
-    mainLayer = null,
     bgLayer = null,
-    shapes = {},
-    transformer = null
+    mainLayer = null,
+    drawingLayer = null,
+    transformer = null,
+    shapes = {}
 
 
 export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
@@ -17,15 +18,16 @@ export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
         height: window.innerHeight
     })
 
-    mainLayer = new Konva.Layer()
     bgLayer = new Konva.Layer()
+    mainLayer = new Konva.Layer()
+    drawingLayer = new Konva.Layer()
 
     transformer = new Konva.Transformer()
     transformer.nodes([])
     transformer.hide()
 
     mainLayer.add(transformer)
-    board.add(bgLayer, mainLayer)
+    board.add(bgLayer, mainLayer, drawingLayer)
 
     board.on('click', onClick)
     board.on('mousedown', onMouseDown)
@@ -88,8 +90,13 @@ export function removeShape(shape) {
     triggerCanvas('delete', shape)
 }
 
-export function ActivateTransformer(...shapes) {
+export function activateTransformer(...shapes) {
     transformer.show()
     transformer.nodes(shapes)
     transformer.moveToTop()
+}
+
+export function disableTransformer(){
+    transformer.nodes([])
+    transformer.hide()   
 }

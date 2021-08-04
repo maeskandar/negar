@@ -1,16 +1,16 @@
 import React from "react"
 import { SketchPicker } from "react-color"
-import randInt from 'random-int'
+import randInt from 'random-int' // TODO we can remove it in future
 
 import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
 import { newRectangle } from "../canvas/Rectangle"
-// import { MyCircle as Circle, newCircle } from "../canvas/Circle"
-// import { MyImage, newImage } from "../canvas/Images"
-// import { TextNode, newTextNode } from "../canvas/TextNode"
-// import { newArrow, Arrow } from "../canvas/Arrow"
-// import { newSimpleLine, SimpleLine } from "../canvas/SimpleLine"
-// import { StraghtLine, newStraghtLine } from "../canvas/StraightLine"
-// import { CustomLine, newCustomLine } from "../canvas/CustomLine"
+import { newCircle } from "../canvas/Circle"
+import { newImage } from "../canvas/Images"
+import { newTextNode } from "../canvas/TextNode"
+import { newArrow } from "../canvas/Arrow"
+import { newSimpleLine } from "../canvas/SimpleLine"
+import { newStraghtLine } from "../canvas/StraightLine"
+import { newCustomLine } from "../canvas/CustomLine"
 
 import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
@@ -46,7 +46,11 @@ import { backgrounds, imagesData } from "./meta.json"
 import { ToolBarBtn } from "../UI/Toolbar"
 import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD } from "./defaults"
 
-import { initCanvas, board, shapes, transformer, addShape, removeShape, updateShape, ActivateTransformer } from "../canvas/manager"
+import {
+  initCanvas, addShape, updateShape, removeShape,
+  board, shapes,
+  activateTransformer, disableTransformer,
+} from "../canvas/manager"
 
 let drawingTempData = []
 
@@ -87,6 +91,7 @@ export default class HomePage extends React.Component {
     this.deleteShape = this.deleteShape.bind(this)
     this.includeToAppStates = this.includeToAppStates.bind(this)
     this.excludeFromAppState = this.excludeFromAppState.bind(this)
+    this.keyboardEvents = this.keyboardEvents.bind(this)
   }
 
   // advanced state checker
@@ -114,16 +119,16 @@ export default class HomePage extends React.Component {
     addShape(newRectangle(x, y))
   }
   addCircle(x, y) {
-    // addToShapes(true, newCircle(x, y))
+    addShape(newCircle(x, y))
   }
   addArrow() {
-    // addToShapes(true, newArrow())
+    addShape(newArrow())
   }
   addImage(e) {
-    // addToShapes(true, newImage(e))
+    addShape(newImage(e))
   }
   addText(text = 'تایپ کن') {
-    // addToShapes(true, newTextNode(text))
+    addShape(newTextNode(text))
   }
 
   handleCanvasClick(ev) {
@@ -187,10 +192,8 @@ export default class HomePage extends React.Component {
     if (shapeId === null && lastSelectedId !== null) {
       let lastShape = shapes[this.state.selectedShapeInfo.id]
 
-      transformer.nodes([])
-      transformer.hide()
+      disableTransformer()
       updateShape(lastShape, { draggable: false })
-
 
       this.setState({
         selectedShapeInfo: {
@@ -205,7 +208,7 @@ export default class HomePage extends React.Component {
       if (lastSelectedId)
         updateShape(shapes[lastSelectedId], { draggable: false })
 
-      ActivateTransformer(shape)
+      activateTransformer(shape)
       updateShape(shape, { draggable: true })
 
       this.setState({
@@ -306,14 +309,14 @@ export default class HomePage extends React.Component {
     }
     this.cancelOperation()
   }
+  keyboardEvents(ev) {
+    if (ev.code === "Delete") this.deleteShape()
+    else if (ev.code === "Escape") this.setSelectedId(null)
+  }
 
   // register native events 
   componentDidMount() {
-    // TODO use external dependency to manager keyboard events
-    window.addEventListener('keydown', (ev) => {
-      if (ev.code === "Delete") this.deleteShape()
-      else if (ev.code === "Escape") this.setSelectedId(null)
-    })
+    window.addEventListener('keydown', this.keyboardEvents) // TODO use external dependency to manager keyboard events
 
     initCanvas({
       onClick: this.handleCanvasClick,
@@ -324,11 +327,9 @@ export default class HomePage extends React.Component {
 
     this.setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
   }
-
   componentWillUnmount() {
-    // TODO unregister events
+    window.removeEventListener('keydown', this.keyboardEvents)
   }
-
   render() {
     return (
       <div id="home-page">
@@ -435,6 +436,7 @@ export default class HomePage extends React.Component {
             }
           </Paper>
         </div>
+
         {// something selected 
           this.isSomethingSelected() &&
           <Paper id="status-bar" className="p-3" square>

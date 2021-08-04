@@ -1,9 +1,9 @@
 import Konva from "konva"
-import React, { useEffect } from "react"
-import { Line, Transformer } from "react-konva"
-import v1 from 'uuid/dist/v1'
 
-import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from './'
+import { shapeKinds, DEFAULT_STROKE_WIDTH } from './'
+import { updateShape } from './manager'
+import { commonShapeProps } from './abstract'
+
 import { apply2DScale } from '../utils/array'
 
 export function newStraghtLine(points) {
@@ -11,8 +11,8 @@ export function newStraghtLine(points) {
     deltax = points[2] - points[0],
     deltay = points[3] - points[1]
 
-  return {
-    id: v1(),
+  let shape = {
+    ...commonShapeProps(),
     kind: shapeKinds.StraghtLine,
 
     x: points[0] + deltax / 2,
@@ -21,47 +21,25 @@ export function newStraghtLine(points) {
     rotation: 0,
 
     opacity: 1,
-    stroke: Konva.Util.getRandomColor(),
 
-    strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
+    stroke: Konva.Util.getRandomColor(),
+    strokeWidth: DEFAULT_STROKE_WIDTH,
   }
-}
 
-export function StraghtLine({ shapeProps, isSelected, onSelect, onChange }) {
-  const
-    shapeRef = React.useRef(),
-    trRef = React.useRef()
+  shape.on('transform', () => {
+    let
+      sx = shape.scaleX(),
+      sy = shape.scaleY()
 
-  useEffect(() => {
-    if (isSelected) {
-      trRef.current.setNode(shapeRef.current)
-      trRef.current.getLayer().batchDraw()
-    }
-  }, [isSelected])
+    shape.scaleX(1)
+    shape.scaleY(1)
 
-  return (
-    <>
-      <Line
-        ref={shapeRef}
-        {...shapeProps}
+    shape.attrs.points = apply2DScale(shape.attrs.points, sx, sy)
+    updateShape(shape.attrs.id)
+  })
 
-        offsetX={shapeProps.points[2] / 2}
-        offsetY={shapeProps.points[3] / 2}
-        draggable={isSelected}
-
-        onClick={onSelect}
-        onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
-          onChange({
-            ...shapeProps,
-            rotation,
-            points: apply2DScale(shapeProps.points, scale.x, scale.y),
-          })
-        })}
-      />
-      {isSelected && <Transformer ref={trRef} />}
-    </>
-  )
+  // TODO shape.on("dragmove") 
+  return shape
 }

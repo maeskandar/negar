@@ -1,9 +1,7 @@
 import Konva from "konva"
-import React, { useEffect, useRef } from "react"
-import { Line, Transformer } from "react-konva"
-import v1 from 'uuid/dist/v1'
 
-import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from './'
+import { shapeKinds } from './'
+import { commonShapeProps, closedShapeProps, basicCoordinate, basicSize } from "./abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../utils/array'
 import { minMaxDistance } from '../utils/math'
@@ -22,67 +20,33 @@ const
   ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
   ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
-export function newArrow(x = 50, y = 50) {
-  return {
-    id: v1(),
+export function newArrow() {
+  let shape = new Konva.Line({
+    ...commonShapeProps(),
     kind: shapeKinds.CustomShape,
 
-    x, y,
-    points: ORIGIN_POINTS,
-    width: ORIGIN_WIDTH,   // cutsom porperty
-    height: ORIGIN_HEIGHT, // cutsom porperty
-    rotation: 0,
-
-    fill: Konva.Util.getRandomColor(),
-    opacity: 1,
-    stroke: DEFAULT_STROKE_COLOR,
+    ...basicCoordinate(),
+    ...basicSize(ORIGIN_WIDTH, ORIGIN_HEIGHT), // custom property
     
-    strokeWidth: DEFAULT_STROKE_WIDTH,
+    ...closedShapeProps(),
+    
+    points: ORIGIN_POINTS,
     lineCap: 'round',
     lineJoin: 'round',
     closed: true,
-  }
-}
-
-export function Arrow({ shapeProps, isSelected, onSelect, onChange }) {
-  const
-    shapeRef = useRef(),
-    trRef = useRef()
-
-  useEffect(() => {
-    if (isSelected) {
-      trRef.current.setNode(shapeRef.current)
-      trRef.current.getLayer().batchDraw()
-    }
-  }, [isSelected])
-
-  shapeProps.points = apply2DScale(ORIGIN_POINTS,
-    shapeProps.width / ORIGIN_WIDTH,
-    shapeProps.height / ORIGIN_HEIGHT)
-
-
-  return (
-    <>
-      <Line
-        ref={shapeRef}
-        {...shapeProps}
-
-        offsetX={shapeProps.width / 2}
-        offsetY={shapeProps.height / 2}
-        draggable={isSelected}
-
-        onClick={onSelect}
-        onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
-          onChange({
-            ...shapeProps,
-            rotation,
-            width: shapeProps.width * scale.x,
-            height: shapeProps.height * scale.y,
-          })
-        })}
-      />
-      {isSelected && <Transformer ref={trRef} />}
-    </>
-  )
+  })
+ 
+  // TODO custom events + valid deg
+  // shapeProps.points = apply2DScale(ORIGIN_POINTS,
+  //   shapeProps.width / ORIGIN_WIDTH,
+  //   shapeProps.height / ORIGIN_HEIGHT)
+  
+  //   onChange({
+  //     ...shapeProps,
+  //     rotation,
+  //     width: shapeProps.width * scale.x,
+  //     height: shapeProps.height * scale.y,
+  //   })
+  
+  return shape
 }

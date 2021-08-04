@@ -3,6 +3,7 @@ export const
     DRAGING: 0,
     DRAWING: 1,
   },
+  
   APP_TOOLS = {
     NOTHING: 0,
     LINE: 1,
@@ -14,6 +15,7 @@ export const
     FG_COLOR_PICKER: 7,
     STROKE_COLOR_PICKER: 8,
   },
+
   ERASER_RADIUS = 10, // px
   PIXEL_RATIO_DOWNLAOD = 1,
   FONT_NAMES = [
