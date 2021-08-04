@@ -1,4 +1,6 @@
-import { validDeg } from "../utils/math"
+export const
+  DEFAULT_STROKE_WIDTH = 4,
+  DEFAULT_STROKE_COLOR = 'black'
 
 export const shapeKinds = {
   StraghtLine: 0,
@@ -10,30 +12,6 @@ export const shapeKinds = {
   Text: 6,
 }
 
-export function onDragEndCommon(shapeProps, onChange) {
-  return (e) => onChange({
-    ...shapeProps,
-    x: e.target.x(),
-    y: e.target.y(),
-  })
-}
-
-export function resetTransform(shapeRef, func) {
-  return (event) => {
-    let
-      node = shapeRef.current,
-      sx = node.scaleX(),
-      sy = node.scaleY(),
-      rotation = node.getAbsoluteRotation()
-
-    node.scaleX(1)
-    node.scaleY(1)
-
-    rotation = validDeg(Math.trunc(rotation))
-    func(event, { x: Math.abs(sx), y: Math.abs(sy) }, rotation)
-  }
-}
-
 export function isKindOfLine(kindNumber) {
   return kindNumber === shapeKinds.StraghtLine || kindNumber === shapeKinds.CustomLine
 }
@@ -42,6 +20,5 @@ export function hasStroke(kindNumber) {
   return kindNumber !== shapeKinds.Text || kindNumber !== shapeKinds.Image
 }
 
-export const
-  DEFAULT_STROKE_WIDTH = 4,
-  DEFAULT_STROKE_COLOR = 'black'
+
+// TODO import/exprot all shapes here

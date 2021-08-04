@@ -1,64 +1,27 @@
-import { useRef, useEffect } from "react"
-import { Text, Transformer } from "react-konva"
-import v1 from 'uuid/dist/v1'
-
-import { shapeKinds, onDragEndCommon, resetTransform } from "."
+import Konva from 'konva'
+import { shapeKinds } from './'
+import { addCommonEvents, closedShapeProps, commonShapeProps, basicCoordinate, basicSize } from './abstract'
 
 export function newTextNode(text) {
-  return {
-    id: v1(),
+  console.log(text)
+
+  let shape = new Konva.Text({
     kind: shapeKinds.Text,
-    text: text,
+    ...commonShapeProps(),
 
-    x: 200,
-    y: 200,
-    width: 200,
-
-    fill: "#000",
-    stroke: "#000", // we can add text shadom for textarea
-    opacity: 1,
-    rotation: 0,
-
+    ...basicCoordinate(200,200),
+    ...basicSize(200, undefined),
+    
+    ...closedShapeProps(),
     strokeWidth: 0,
+    
+    text: text,
     fontSize: 30,
     fontFamily: "Shabnam",
     lineHeight: 1,
     align: 'right',
-  }
-}
+  })
 
-export function TextNode({ shapeProps, isSelected, onSelect, onChange}) {
-  const
-    shapeRef = useRef(),
-    trRef = useRef()
-
-  useEffect(() => {
-    if (isSelected) {
-      trRef.current.setNode(shapeRef.current)
-      trRef.current.getLayer().batchDraw()
-    }
-  }, [trRef, isSelected])
-  
-  return (
-    <>
-      <Text
-        ref={shapeRef}
-        {...shapeProps}
-
-        // offsetX={rect.width / 2}
-        draggable={isSelected}
-
-        onClick={onSelect}
-        onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
-          onChange({
-            ...shapeProps,
-            rotation,
-            width: shapeProps.width * scale.x,
-          })
-        })} />
-
-      { isSelected && <Transformer ref={trRef} />}
-    </>
-  )
+  addCommonEvents(shape)
+  return shape
 }

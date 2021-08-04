@@ -1,23 +1,19 @@
 import Konva from "konva"
-import v1 from 'uuid/dist/v1'
-import { Line } from "react-konva"
-
 
 import { shapeKinds, DEFAULT_STROKE_WIDTH } from './'
+import { commonShapeProps } from './abstract'
 
 export function newSimpleLine(points) {
-  return {
-    id: v1(),
+  let shape = new Konva.Line({
     kind: shapeKinds.StraghtLine,
-
+    ...commonShapeProps(),
+    
     points,
-    strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
-    
     stroke: Konva.Util.getRandomColor(),
-  }
-}
-export function SimpleLine({shapeProps}) {
-  return <Line {...shapeProps} />
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+  })
+
+  return shape
 }

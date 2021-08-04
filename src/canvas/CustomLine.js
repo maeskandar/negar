@@ -1,11 +1,9 @@
 import Konva from "konva"
-import React, { useEffect } from "react"
-import { Line, Transformer } from "react-konva"
-import v1 from 'uuid/dist/v1'
 
-import { resetTransform, onDragEndCommon, shapeKinds, DEFAULT_STROKE_WIDTH } from './'
+import { shapeKinds, DEFAULT_STROKE_WIDTH } from './'
+import { commonShapeProps, addCommonEvents } from './abstract'
 
-import { minMaxDistance } from "../utils/math"
+import { minMaxDistance, validDeg } from "../utils/math"
 import { oddIndexes, evenIndexes, apply2DScale } from "../utils/array"
 
 
@@ -17,66 +15,62 @@ export function newCustomLine(points) {
     originWidth = minMaxDistance(evenIndexes(originPoints)),
     originHeight = minMaxDistance(oddIndexes(originPoints))
 
-  return {
-    id: v1(),
+  let shape = new Konva.Line({
     kind: shapeKinds.CustomLine,
+    ...commonShapeProps(),
 
     originPoints, originWidth, originHeight, // keep the original values to apply tranformation correctly
-    x: points[0] + originWidth / 2,  // to fill offset
-    y: points[1] + originHeight / 2, // to fill offset
     points: originPoints,
+    x: points[0],
+    y: points[1],
+
+    // TODO offset later
+    // x: points[0] + originWidth / 2,  // to fill offset
+    // y: points[1] + originHeight / 2, // to fill offset
 
     width: originWidth,
     height: originHeight,
     rotation: 0,
-    
+
     stroke: Konva.Util.getRandomColor(),
+    strokeWidth: DEFAULT_STROKE_WIDTH,
     opacity: 1,
 
-    strokeWidth: DEFAULT_STROKE_WIDTH,
     lineCap: 'round',
     lineJoin: 'round',
-  }
-}
+  })
 
-export function CustomLine({ shapeProps, isSelected, onSelect, onChange }) {
-  const
-    shapeRef = React.useRef(),
-    trRef = React.useRef()
+  // TODO we can add little bit more abstraction by the way
+  addCommonEvents(shape, () => {
+    let
+      sx = shape.scaleX(),
+      sy = shape.scaleY()
 
-  useEffect(() => {
-    if (isSelected) {
-      trRef.current.setNode(shapeRef.current)
-      trRef.current.getLayer().batchDraw()
+    shape.scaleX(1)
+    shape.scaleY(1)
+
+    shape.attrs.width *= sx
+    shape.attrs.height *= sy
+
+    let newPoints = apply2DScale(shape.attrs.originPoints,
+      shape.attrs.width / shape.attrs.originWidth,
+      shape.attrs.height / shape.attrs.originHeight)
+
+    shape.points(newPoints)
+    shape.attrs.rotation = validDeg(shape.rotation())
+  })
+
+
+  shape.setters = {
+    width: (w) => {
+      let newp = apply2DScale(shape.attrs.originPoints, w / shape.attrs.originWidth, 1)
+      shape.points(newp)
+    },
+    height: (h) => {
+      let newp = apply2DScale(shape.attrs.originPoints, 1, h / shape.attrs.originHeight)
+      shape.points(newp)
     }
-  }, [isSelected])
+  }
 
-  shapeProps.points = apply2DScale(shapeProps.originPoints,
-    shapeProps.width / shapeProps.originWidth,
-    shapeProps.height / shapeProps.originHeight)
-
-  return (
-    <>
-      <Line
-        ref={shapeRef}
-        {...shapeProps}
-
-        offsetX={shapeProps.width / 2}
-        offsetY={shapeProps.height / 2}
-        draggable={isSelected}
-
-        onClick={onSelect}
-        onDragEnd={onDragEndCommon(shapeProps, onChange)}
-        onTransformEnd={resetTransform(shapeRef, (ev, scale, rotation) => {
-          onChange({
-            ...shapeProps,
-            rotation,
-            width: shapeProps.width * scale.x,
-            height: shapeProps.height * scale.y,
-          })
-        })}
-      />
-      {isSelected && <Transformer ref={trRef} />}
-    </>
-  )
+  return shape
 }
