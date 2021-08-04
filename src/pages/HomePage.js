@@ -16,7 +16,7 @@ import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
 import { ColorPreview } from "../UI/ColorPreview"
 import CustomSearchbar from "../UI/CustomSearchbar"
 
-import { removeInArray, replaceInArray, cleanArray, addToArray, arraysEqual } from "../utils/array"
+import { cleanArray, arraysEqual } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
 import { pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
@@ -48,8 +48,9 @@ import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD 
 
 import {
   initCanvas, addShape, updateShape, removeShape,
-  board, shapes,
-  activateTransformer, disableTransformer,
+  addTempShape, resetTempPage,
+  board, shapes, tempShapes,
+  setBackgroundImage, activateTransformer, disableTransformer,
 } from "../canvas/manager"
 
 let drawingTempData = []
@@ -62,7 +63,7 @@ export default class HomePage extends React.Component {
     // app functionality related
     appState: new Set(),
     selectedTool: APP_TOOLS.NOTHING,
-    backgroundimage: { url: null, imageObj: null, },
+    bgImageUrl: null,
   }
 
   constructor(props) {
@@ -76,10 +77,9 @@ export default class HomePage extends React.Component {
     this.addArrow = this.addArrow.bind(this)
     this.addImage = this.addImage.bind(this)
     this.addText = this.addText.bind(this)
-    this.StartLineDrawingMode = this.StartLineDrawingMode.bind(this)
+    this.startLineDrawingMode = this.startLineDrawingMode.bind(this)
     this.startJamBoard = this.startJamBoard.bind(this)
     this.saveAsImage = this.saveAsImage.bind(this)
-    this.setBackgroundimage = this.setBackgroundimage.bind(this)
     this.cancelOperation = this.cancelOperation.bind(this)
     this.doneOperation = this.doneOperation.bind(this)
     this.setSelectedId = this.setSelectedId.bind(this)
@@ -136,7 +136,7 @@ export default class HomePage extends React.Component {
       let id = ev.target.attrs.id
       this.setSelectedId(id)
     }
-    else { // FIXME it's not working for now - maybe i should set szie for layar
+    else if (!this.isInJamBoardMode() && this.state.selectedTool === APP_TOOLS.NOTHING) {
       this.setSelectedId(null)
       this.cancelOperation()
     }
@@ -157,30 +157,29 @@ export default class HomePage extends React.Component {
 
 
       if (this.state.selectedTool === APP_TOOLS.PENCIL) {
-        // setTempShapes(
-        //   addToArray(tempShapes,
-        //     newSimpleLine(drawingTempData.concat(mp))))
+        let newLine = newSimpleLine(drawingTempData.concat(mp))
+        addTempShape(newLine)
         drawingTempData = mp
       }
       else if (this.state.selectedTool === APP_TOOLS.ERASER) {
         let acc = []
-        // for (const l of tempShapes) {
-        //   let
-        //     sp = [l.points[0], l.points[1]],
-        //     ep = [l.points[2], l.points[3]]
+        for (const l of tempShapes) {
+          let
+            sp = [l.attrs.points[0], l.attrs.points[1]],
+            ep = [l.attrs.points[2], l.attrs.points[3]]
 
-        //   if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
-        //     acc.push(l)
-        //   }
-        // }
-        // setTempShapes(acc)
+          if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
+            acc.push(l)
+          }
+        }
+        resetTempPage(acc)
       }
     }
   }
   handleCanvasMouseUp(e) {
     if (this.state.selectedTool === APP_TOOLS.LINE) {
       let pos = e.target.getStage().getPointerPosition()
-      // addToShapes(false, newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+      addShape(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
     }
 
     this.excludeFromAppState(APP_STATES.DRAGING)
@@ -232,9 +231,10 @@ export default class HomePage extends React.Component {
       removeShape(shapes[shapeId])
     }
   }
-  StartLineDrawingMode() {
+  startLineDrawingMode() {
     this.includeToAppStates(APP_STATES.DRAWING)
-    this.setState({ selectedTool: APP_TOOLS.LINE })
+    this.setState({ selectedTool: APP_TOOLS.LINE }, () => {
+    })
   }
   startJamBoard() {
     this.includeToAppStates(APP_STATES.DRAWING)
@@ -245,20 +245,10 @@ export default class HomePage extends React.Component {
     let dataURL = board.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
     downloadURI(dataURL, 'stage.png')
   }
-  setBackgroundimage(url) {
-    this.setState({ backgroundimage: { url, imageObj: null } })
-
-    let imageObj = new Image()
-    imageObj.src = url
-    imageObj.onload = () =>
-      this.setState({ backgroundimage: { url, imageObj } })
-
-    // FIXME set to bgLayer
-  }
   cancelOperation() {
     if (this.state.appState.has(APP_STATES.DRAWING)) {
       cleanArray(drawingTempData)
-      // setTempShapes([])
+      resetTempPage()
     }
 
     this.setState({
@@ -269,42 +259,42 @@ export default class HomePage extends React.Component {
   doneOperation() {
     if (this.state.appState.has(APP_STATES.DRAWING)) {
       // stick lines if they have Intersection, else create new line
-      // if (isInJamBoardMode() && tempShapes.length !== 0) {
-      //   let
-      //     resultLines = [],
-      //     tempPoints = []
+      if (this.isInJamBoardMode() && tempShapes.length !== 0) {
+        let
+          resultLines = [],
+          tempPoints = []
 
+        function stickToLast(...newPoints) {
+          tempPoints.push(...newPoints)
+        }
+        function closeLastLine() {
+          resultLines.push(newCustomLine(tempPoints))
+        }
+        function addNewLine(...points) {
+          tempPoints = points
+        }
 
-      //   function stickToLast(...newPoints) {
-      //     tempPoints.push(...newPoints)
-      //   }
-      //   function closeLastLine() {
-      //     // resultLines.push(newCustomLine(tempPoints))
-      //   }
-      //   function addNewLine(...points) {
-      //     tempPoints = points
-      //   }
+        tempPoints = tempShapes[0].attrs.points
 
-      //   tempPoints = tempShapes[0].points
+        for (let i = 1; i < tempShapes.length - 1; i++) {
+          let
+            lcp = tempShapes[i].attrs.points, // current line points
+            lnp = tempShapes[i + 1].attrs.points  // next line points
 
-      //   for (let i = 1; i < tempShapes.length - 1; i++) {
-      //     let
-      //       lcp = tempShapes[i].points, // current line points
-      //       lnp = tempShapes[i + 1].points  // next line points
+          // if end points of this line are equal to start points of next line
+          if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
+            stickToLast(...lnp.slice(2))
+          }
+          else {
+            closeLastLine()
+            addNewLine(...lnp)
+          }
+        }
+        closeLastLine()
 
-      //     // if end points of this line are equal to start points of next line
-      //     if (arraysEqual(lcp.slice(2), lnp.slice(0, 2))) {
-      //       stickToLast(...lnp.slice(2))
-      //     }
-      //     else {
-      //       closeLastLine()
-      //       addNewLine(...lnp)
-      //     }
-      //   }
-      //   closeLastLine()
-
-      //   addToShapes(false, ...resultLines)
-      // }
+        for (let line of resultLines)
+          addShape(line)
+      }
 
     }
     this.cancelOperation()
@@ -325,7 +315,7 @@ export default class HomePage extends React.Component {
       onMouseUp: this.handleCanvasMouseUp
     })
 
-    this.setBackgroundimage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
+    setBackgroundImage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
   }
   componentWillUnmount() {
     window.removeEventListener('keydown', this.keyboardEvents)
@@ -338,7 +328,7 @@ export default class HomePage extends React.Component {
           title={"پس زمینه"}
           images={backgrounds}
           show={this.state.backgroundModalShow}
-          setimage={this.setBackgroundimage}
+          setimage={setBackgroundImage}
           onHide={() => this.setState({ backgroundModalShow: false })}
         />
         }{this.state.imageModalShow && <MyVerticallyCenteredModal
@@ -368,12 +358,12 @@ export default class HomePage extends React.Component {
                 />
                 <ToolBarBtn
                   title="خط"
-                  onClick={this.StartLineDrawingMode}
+                  onClick={this.startLineDrawingMode}
                   iconEl={<LineIcon />}
                 />
                 <ToolBarBtn
                   title="متن"
-                  onClick={this.addText}
+                  onClick={() => this.addText()}
                   iconEl={<TextIcon />}
                 />
                 <ToolBarBtn

@@ -10,9 +10,12 @@ export function newCircle() {
     ...commonShapeProps(),
 
     ...basicCoordinate(),
-    ...basicSize(),
+    ...basicSize(100, 100),
     ...closedShapeProps(),
   })
+
+  shape.attrs.width = 100
+  shape.attrs.height = 100
 
   addCommonEvents(shape)
   return shape

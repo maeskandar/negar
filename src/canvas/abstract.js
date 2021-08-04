@@ -6,8 +6,14 @@ import { updateShape } from "./manager"
 import { validDeg } from "../utils/math"
 
 
-export function resetTransformGen(shape) {
-  return () => {
+export function resetTransformGen(shape, custom) {
+  if (custom) {
+    return () => {
+      custom()
+      updateShape(shape.attrs.id)
+    }
+  }
+  else return () => {
     let
       sx = shape.scaleX(),
       sy = shape.scaleY(),
@@ -31,8 +37,8 @@ export function onDragMoveGen(shape) {
   return () => updateShape(shape.attrs.id)
 }
 
-export function addCommonEvents(shape) {
-  shape.on('transformend', resetTransformGen(shape))
+export function addCommonEvents(shape, transformendCustomProc) {
+  shape.on('transformend', resetTransformGen(shape, transformendCustomProc))
   shape.on('dragmove', onDragMoveGen(shape))
 }
 
@@ -57,7 +63,7 @@ export function strokeProps() {
   }
 }
 
-export function closedShapeProps(){
+export function closedShapeProps() {
   return {
     ...fillableProps(),
     ...strokeProps(),
@@ -71,7 +77,7 @@ export function basicSize(w = 100, h = 100) {
   }
 }
 
-export function basicCoordinate(x = 10, y = 10, rotation = 0) {
+export function basicCoordinate(x = 0, y = 0, rotation = 0) {
   return {
     rotation,
     x, y,

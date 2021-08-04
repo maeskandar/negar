@@ -1,4 +1,5 @@
 import Konva from "konva"
+import { newImage } from "./Images"
 
 const canvasWrapperID = "container"
 
@@ -8,9 +9,11 @@ export var
     mainLayer = null,
     drawingLayer = null,
     transformer = null,
-    shapes = {}
+    shapes = {},
+    tempShapes = []
 
 
+// primary functions
 export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
     board = new Konva.Stage({
         container: canvasWrapperID,
@@ -70,7 +73,9 @@ export function updateShape(shape, newAttrs) {
     for (let prop in newAttrs) {
         let val = newAttrs[prop]
 
-        if (prop === 'width')
+        if ('setters' in shape && prop in shape.setters)
+            shape.setters[prop](val)
+        else if (prop === 'width')
             shape.size({ width: val, height: shape.attrs.height })
         else if (prop === 'height')
             shape.size({ width: shape.attrs.width, height: val })
@@ -83,11 +88,44 @@ export function updateShape(shape, newAttrs) {
 
     triggerCanvas('update', shape)
 }
+
 export function removeShape(shape) {
     shape.destroy()
     mainLayer.draw()
-    delete shapes[shape.attrs.id]
     triggerCanvas('delete', shape)
+    delete shapes[shape.attrs.id]
+}
+
+// other functions
+
+export function addTempShape(shape) {
+    tempShapes.push(shape)
+    drawingLayer.add(shape)
+}
+export function removeTempShape(shape) {
+    let i = tempShapes.findIndex(it => it === shape)
+    tempShapes.splice(i, 1)
+    shape.destroy()
+    drawingLayer.draw()
+}
+export function resetTempPage(shapeList = []) {
+    drawingLayer.destroyChildren()
+    tempShapes = shapeList
+
+    if (tempShapes.length) {
+        for (let shape of tempShapes)
+            drawingLayer.add(shape)
+
+        drawingLayer.draw()
+    }
+}
+
+export function setBackgroundImage(src) {
+    let shape = newImage(src, bgLayer.width(), bgLayer.height())
+    shape.listening(false) // disvale events
+    bgLayer.destroyChildren()
+    bgLayer.add(shape)
+    bgLayer.draw()
 }
 
 export function activateTransformer(...shapes) {
@@ -95,8 +133,7 @@ export function activateTransformer(...shapes) {
     transformer.nodes(shapes)
     transformer.moveToTop()
 }
-
-export function disableTransformer(){
+export function disableTransformer() {
     transformer.nodes([])
-    transformer.hide()   
+    transformer.hide()
 }

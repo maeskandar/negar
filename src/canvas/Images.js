@@ -1,18 +1,30 @@
 import Konva from "konva"
 
 import { shapeKinds } from './'
-import { addCommonEvents, fillableProps, commonShapeProps, basicCoordinate, basicSize } from './abstract'
+import { addCommonEvents, commonShapeProps, basicCoordinate, basicSize } from './abstract'
 
-export function newImage(content) { // FIXME image load
+export function newImage(src, w, h) {
+  var imageObj = new Image()
+  imageObj.onload = () => {
+    shape.width(w || imageObj.naturalWidth)
+    shape.height(h || imageObj.naturalHeight)
+  }
+  imageObj.onerror = () => {
+    shape.fill('#aa3333')
+  }
+  
   let shape = new Konva.Image({
     kind: shapeKinds.Image,
-    content,
     ...commonShapeProps(),
+
+    image: imageObj,
 
     ...basicCoordinate(),
     ...basicSize(),
-    ...fillableProps(),
+    opacity: 1,
   })
+
+  imageObj.src = src
 
   addCommonEvents(shape)
   return shape
