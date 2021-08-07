@@ -16,6 +16,12 @@ export const
     STROKE_COLOR_PICKER: 8,
   },
 
+  TABS = {
+    VISUAL: 0,
+    INFO: 1,
+    META: 2,
+  },
+
   ERASER_RADIUS = 10, // px
   PIXEL_RATIO_DOWNLAOD = 1,
   FONT_NAMES = [

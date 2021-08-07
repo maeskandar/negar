@@ -39,6 +39,8 @@
     z-index         : 1;
     overflow-y      : scroll;
     overflow-x      : hidden;
+
+    max-width: 320px;
 }
 
 .konvajs-content {

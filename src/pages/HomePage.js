@@ -1,28 +1,21 @@
 import React from "react"
-import { SketchPicker } from "react-color"
+
+// utilities
 import randInt from 'random-int' // TODO we can remove it in future
-
-import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
-import { newRectangle } from "../canvas/Rectangle"
-import { newCircle } from "../canvas/Circle"
-import { newImage } from "../canvas/Images"
-import { newTextNode } from "../canvas/TextNode"
-import { newArrow } from "../canvas/Arrow"
-import { newSimpleLine } from "../canvas/SimpleLine"
-import { newStraghtLine } from "../canvas/StraightLine"
-import { newCustomLine } from "../canvas/CustomLine"
-
-import { MyVerticallyCenteredModal } from "../UI/MyVerticallyCenteredModal"
-import { ColorPreview } from "../UI/ColorPreview"
-import CustomSearchbar from "../UI/CustomSearchbar"
-
-import { cleanArray, arraysEqual } from "../utils/array"
+import { cleanArray, arraysEqual, replaceInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
 import { pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
+
+// data
+import { imagesData } from "./meta.json"
+import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD, TABS } from "./defaults"
+
+// ui 
 import {
   Paper, TextField, Slider, Typography,
   Select, MenuItem,
+  Tab, Tabs, AppBar
 } from "@material-ui/core"
 
 import {
@@ -39,19 +32,40 @@ import {
   Backspace as EraserIcon,
   TextFields as TextIcon,
   DoneAll,
+  FilterHdr as MointainIcon,
+  Flag,
 } from '@material-ui/icons'
-
+import { SketchPicker } from "react-color"
+import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
 import './home.css'
-import { backgrounds, imagesData } from "./meta.json"
-import { ToolBarBtn } from "../UI/Toolbar"
-import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD } from "./defaults"
+
+// canvas import 
+import {
+  newArrow, newCircle, newImage, newRectangle,
+  newStraghtLine, newCustomLine, newSimpleLine, newTextNode
+} from "../canvas/shapes"
+
+import { newFlag, newMountain } from "../canvas/stages"
+
+import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
 
 import {
   initCanvas, addShape, updateShape, removeShape,
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
-  setBackgroundImage, activateTransformer, disableTransformer,
+  setBackgroundColor, activateTransformer, disableTransformer,
 } from "../canvas/manager"
+
+
+function TabPanel(props) {
+  let { children, value, index } = props
+
+  return (
+    <div hidden={value !== index}>
+      {value === index && children}
+    </div>
+  )
+}
 
 let drawingTempData = []
 
@@ -63,7 +77,8 @@ export default class HomePage extends React.Component {
     // app functionality related
     appState: new Set(),
     selectedTool: APP_TOOLS.NOTHING,
-    bgImageUrl: null,
+    selectedTab: TABS.VISUAL,
+    imageModalShow: false,
   }
 
   constructor(props) {
@@ -72,6 +87,8 @@ export default class HomePage extends React.Component {
     this.isInJamBoardMode = this.isInJamBoardMode.bind(this)
     this.isColorPicking = this.isColorPicking.bind(this)
     this.isSomethingSelected = this.isSomethingSelected.bind(this)
+    this.addMountain = this.addMountain.bind(this)
+    this.addFlag = this.addFlag.bind(this)
     this.addRectangle = this.addRectangle.bind(this)
     this.addCircle = this.addCircle.bind(this)
     this.addArrow = this.addArrow.bind(this)
@@ -115,6 +132,12 @@ export default class HomePage extends React.Component {
   }
 
   // related to the canvas
+  addMountain() {
+    addShape(newMountain())
+  }
+  addFlag() {
+    addShape(newFlag())
+  }
   addRectangle(x, y) {
     addShape(newRectangle(x, y))
   }
@@ -315,7 +338,7 @@ export default class HomePage extends React.Component {
       onMouseUp: this.handleCanvasMouseUp
     })
 
-    setBackgroundImage('/images/pexels-eberhard-grossgasteiger-1064162.jpg')
+    setBackgroundColor('#eeeeee')
   }
   componentWillUnmount() {
     window.removeEventListener('keydown', this.keyboardEvents)
@@ -324,14 +347,7 @@ export default class HomePage extends React.Component {
     return (
       <div id="home-page">
 
-        {this.state.backgroundModalShow && <MyVerticallyCenteredModal
-          title={"پس زمینه"}
-          images={backgrounds}
-          show={this.state.backgroundModalShow}
-          setimage={setBackgroundImage}
-          onHide={() => this.setState({ backgroundModalShow: false })}
-        />
-        }{this.state.imageModalShow && <MyVerticallyCenteredModal
+        {this.state.imageModalShow && <MyVerticallyCenteredModal
           title={"تصویر"}
           images={imagesData}
           show={this.state.imageModalShow}
@@ -346,6 +362,16 @@ export default class HomePage extends React.Component {
             elevation={3}>
             {/* Default State */
               !this.state.appState.has(APP_STATES.DRAWING) && <>
+                <ToolBarBtn
+                  title="mountain"
+                  onClick={this.addMountain}
+                  iconEl={<MointainIcon />}
+                />
+                <ToolBarBtn
+                  title="flag"
+                  onClick={this.addFlag}
+                  iconEl={<Flag />}
+                />
                 <ToolBarBtn
                   title="مستطیل"
                   onClick={() => this.addRectangle(randInt(100), randInt(100))}
@@ -386,11 +412,6 @@ export default class HomePage extends React.Component {
                   iconEl={<SaveIcon />}
                   onClick={this.saveAsImage}
                 />
-                <ToolBarBtn
-                  title="پس زمینه"
-                  iconEl={<BackgroundIcon />}
-                  onClick={() => this.setState({ backgroundModalShow: true })}
-                />
               </>
             }
             {/* JamBoard */
@@ -427,234 +448,266 @@ export default class HomePage extends React.Component {
           </Paper>
         </div>
 
-        {// something selected 
-          this.isSomethingSelected() &&
+        {this.isSomethingSelected() &&
           <Paper id="status-bar" className="p-3" square>
-            <div className="mb-2">
-
-              <span> نوع شکل: </span>
-              <span>
-                {
-                  Object.keys(shapeKinds)
+            <AppBar position="relative">
+              <Tabs value={this.state.selectedTab} onChange={(e, v) =>
+                this.setState({ selectedTab: v })
+              }>
+                <Tab label="Visual" value={0} />
+                <Tab label="Info" value={1} />
+                <Tab label="Meta" value={2} />
+              </Tabs>
+            </AppBar>
+            <TabPanel value={this.state.selectedTab} index={TABS.VISUAL}>
+              <div className="mb-2">
+                <span> نوع شکل: </span>
+                <span>
+                  {Object.keys(shapeKinds)
                     .find(it => shapeKinds[it] === this.state.selectedShapeInfo.shapeAttrs.kind)
                     .toLowerCase()
-                }
-              </span>
-            </div>
+                  }
+                </span>
+              </div>
 
-            {('x' in this.state.selectedShapeInfo.shapeAttrs) &&
-              <TextField
-                type="number"
-                label="مختصات x"
-                value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.x)}
-                onChange={e => {
-                  this.onShapeChanged({ x: parseInt(e.target.value) })
-                }}
-              />
-            }
-            {('y' in this.state.selectedShapeInfo.shapeAttrs) &&
-              <TextField
-                type="number"
-                label="مختصات y"
-                value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.y)}
-                onChange={e => {
-                  this.onShapeChanged({ y: parseInt(e.target.value) })
-                }}
-              />
-            }
-            {
-              <TextField
-                type="number"
-                label="عرض"
-                value={
-                  prettyFloatNumber
-                    (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
-                      this.state.selectedShapeInfo.shapeAttrs.points[2] :
-                      this.state.selectedShapeInfo.shapeAttrs.width)
-                }
-                onChange={e => {
-                  // if (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
-                  //   this.state.selectedShapeInfo.shapeAttrs.points = replaceInArray(this.state.selectedShapeInfo.shapeAttrs.points, 2, nv)
+              {('x' in this.state.selectedShapeInfo.shapeAttrs) &&
+                <TextField
+                  type="number"
+                  label="مختصات x"
+                  value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.x)}
+                  onChange={e => {
+                    this.onShapeChanged({ x: parseInt(e.target.value) })
+                  }}
+                />
+              }
+              {('y' in this.state.selectedShapeInfo.shapeAttrs) &&
+                <TextField
+                  type="number"
+                  label="مختصات y"
+                  value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.y)}
+                  onChange={e => {
+                    this.onShapeChanged({ y: parseInt(e.target.value) })
+                  }}
+                />
+              }
+              {
+                <TextField
+                  type="number"
+                  label="عرض"
+                  value={
+                    prettyFloatNumber
+                      (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
+                        this.state.selectedShapeInfo.shapeAttrs.points[2] :
+                        this.state.selectedShapeInfo.shapeAttrs.width)
+                  }
+                  onChange={e => {
+                    this.onShapeChanged({ width: parseInt(e.target.value) })
+                  }}
+                />
+              }
+              {this.state.selectedShapeInfo.shapeAttrs.kind !== shapeKinds.Text &&
+                <TextField
+                  type="number"
+                  label="ارتفاع"
+                  value={
+                    prettyFloatNumber
+                      (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
+                        this.state.selectedShapeInfo.shapeAttrs.points[3] :
+                        this.state.selectedShapeInfo.shapeAttrs.height)
+                  }
+                  onChange={e => {
+                    this.onShapeChanged({ height: parseInt(e.target.value) })
+                  }}
+                />
+              }
+              {('rotation' in this.state.selectedShapeInfo.shapeAttrs) && <>
+                <Typography gutterBottom> چرخش </Typography>
+                <Slider
+                  value={this.state.selectedShapeInfo.shapeAttrs.rotation}
+                  onChange={(e, nv) => this.onShapeChanged({ rotation: nv })}
+                  aria-labelledby="discrete-slider-small-steps"
+                  step={1}
+                  min={0}
+                  max={360}
+                  valueLabelDisplay="auto"
+                />
+              </>
+              }
+              {('text' in this.state.selectedShapeInfo.shapeAttrs) &&
+                <TextField
+                  label="متن"
+                  rows={5}
+                  multiline
+                  value={this.state.selectedShapeInfo.shapeAttrs.text}
+                  onChange={e => this.onShapeChanged({ text: e.target.value })}
+                />
+              }
+              {('fontSize' in this.state.selectedShapeInfo.shapeAttrs) && <>
+                <Typography gutterBottom> اندازه فونت </Typography>
+                <Slider
+                  value={this.state.selectedShapeInfo.shapeAttrs.fontSize}
+                  onChange={(e, nv) => this.onShapeChanged({ fontSize: nv })}
+                  aria-labelledby="discrete-slider-small-steps"
+                  step={0.5}
+                  min={1}
+                  max={150}
+                  valueLabelDisplay="auto"
+                />
+              </>
+              }
+              {(this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text) && <>
+                <Typography gutterBottom> نوع فونت </Typography>
+                <Select
+                  value={this.state.selectedShapeInfo.shapeAttrs.fontFamily}
+                  onChange={e => this.onShapeChanged({ fontFamily: e.target.value })}
+                >
+                  {FONT_NAMES.map(fname =>
+                    <MenuItem value={fname}>{fname} </MenuItem>)
+                  }
+                </Select>
 
-                  // else
-                  //   this.state.selectedShapeInfo.shapeAttrs.width = nv
+                <Typography gutterBottom> ارتفاع خط </Typography>
+                <Slider
+                  value={this.state.selectedShapeInfo.shapeAttrs.lineHeight}
+                  onChange={(e, nv) => this.onShapeChanged({ lineHeight: nv })}
+                  aria-labelledby="discrete-slider-small-steps"
+                  step={0.1}
+                  min={0.1}
+                  max={8}
+                  valueLabelDisplay="auto"
+                />
 
-                  this.onShapeChanged({ width: parseInt(e.target.value) })
-                }}
-              />
-            }
-            {this.state.selectedShapeInfo.shapeAttrs.kind !== shapeKinds.Text &&
-              <TextField
-                type="number"
-                label="ارتفاع"
-                value={
-                  prettyFloatNumber
-                    (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
-                      this.state.selectedShapeInfo.shapeAttrs.points[3] :
-                      this.state.selectedShapeInfo.shapeAttrs.height)
-                }
-                onChange={e => {
-                  // let nv = parseInt(e.target.value)
-
-                  // if (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine)
-                  //   this.state.selectedShapeInfo.shapeAttrs.points = replaceInArray(this.state.selectedShapeInfo.shapeAttrs.points, 3, nv)
-
-                  // else
-                  //   this.state.selectedShapeInfo.shapeAttrs.height = nv
-
-                  this.onShapeChanged({ height: parseInt(e.target.value) })
-                }}
-              />
-            }
-            {('rotation' in this.state.selectedShapeInfo.shapeAttrs) && <>
-              <Typography gutterBottom> چرخش </Typography>
-              <Slider
-                value={this.state.selectedShapeInfo.shapeAttrs.rotation}
-                onChange={(e, nv) => this.onShapeChanged({ rotation: nv })}
-                aria-labelledby="discrete-slider-small-steps"
-                step={1}
-                min={0}
-                max={360}
-                valueLabelDisplay="auto"
-              />
-            </>
-            }
-            {('text' in this.state.selectedShapeInfo.shapeAttrs) &&
-              <TextField
-                label="متن"
-                rows={5}
-                multiline
-                value={this.state.selectedShapeInfo.shapeAttrs.text}
-                onChange={e => this.onShapeChanged({ text: e.target.value })}
-              />
-            }
-            {('fontSize' in this.state.selectedShapeInfo.shapeAttrs) && <>
-              <Typography gutterBottom> اندازه فونت </Typography>
-              <Slider
-                value={this.state.selectedShapeInfo.shapeAttrs.fontSize}
-                onChange={(e, nv) => this.onShapeChanged({ fontSize: nv })}
-                aria-labelledby="discrete-slider-small-steps"
-                step={0.5}
-                min={1}
-                max={150}
-                valueLabelDisplay="auto"
-              />
-            </>
-            }
-            {(this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text) && <>
-              <Typography gutterBottom> نوع فونت </Typography>
-              <Select
-                value={this.state.selectedShapeInfo.shapeAttrs.fontFamily}
-                onChange={e => this.onShapeChanged({ fontFamily: e.target.value })}
-              >
-                {FONT_NAMES.map(fname =>
-                  <MenuItem value={fname}>{fname} </MenuItem>)
-                }
-              </Select>
-
-              <Typography gutterBottom> ارتفاع خط </Typography>
-              <Slider
-                value={this.state.selectedShapeInfo.shapeAttrs.lineHeight}
-                onChange={(e, nv) => this.onShapeChanged({ lineHeight: nv })}
-                aria-labelledby="discrete-slider-small-steps"
-                step={0.1}
-                min={0.1}
-                max={8}
-                valueLabelDisplay="auto"
-              />
-
-              <Typography gutterBottom> چینش </Typography>
-              <Select
-                value={this.state.selectedShapeInfo.shapeAttrs.align}
-                onChange={e => this.onShapeChanged({ align: e.target.value })}
-              >
-                {['left', 'right', 'center'].map(v =>
-                  <MenuItem value={v}>{v} </MenuItem>)
-                }
-              </Select>
-            </>
-            }
-            {('strokeWidth' in this.state.selectedShapeInfo.shapeAttrs) && <>
-              <Typography gutterBottom> اندازه خط </Typography>
-              <Slider
-                value={this.state.selectedShapeInfo.shapeAttrs.strokeWidth}
-                onChange={(e, nv) => this.onShapeChanged({ strokeWidth: nv })}
-                aria-labelledby="discrete-slider-small-steps"
-                step={this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text ? 0.1 : 0.5}
-                min={isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) ? 1 : 0}
-                max={20}
-                valueLabelDisplay="auto"
-              />
-            </>
-            }
-            {/* color picking */}
-            {hasStroke(this.state.selectedShapeInfo.shapeAttrs.kind) &&
-              <>
-                {
-                  !isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) &&
+                <Typography gutterBottom> چینش </Typography>
+                <Select
+                  value={this.state.selectedShapeInfo.shapeAttrs.align}
+                  onChange={e => this.onShapeChanged({ align: e.target.value })}
+                >
+                  {['left', 'right', 'center'].map(v =>
+                    <MenuItem value={v}>{v} </MenuItem>)
+                  }
+                </Select>
+              </>
+              }
+              {('strokeWidth' in this.state.selectedShapeInfo.shapeAttrs) && <>
+                <Typography gutterBottom> اندازه خط </Typography>
+                <Slider
+                  value={this.state.selectedShapeInfo.shapeAttrs.strokeWidth}
+                  onChange={(e, nv) => this.onShapeChanged({ strokeWidth: nv })}
+                  aria-labelledby="discrete-slider-small-steps"
+                  step={this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text ? 0.1 : 0.5}
+                  min={isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) ? 1 : 0}
+                  max={20}
+                  valueLabelDisplay="auto"
+                />
+              </>
+              }
+              {/* color picking */}
+              {hasStroke(this.state.selectedShapeInfo.shapeAttrs.kind) &&
+                <>
+                  {
+                    !isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) &&
+                    <div>
+                      <span> رنگ داخل: </span>
+                      <ColorPreview
+                        onClick={() => {
+                          if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
+                            this.setState({ selectedTool: APP_TOOLS.NOTHING })
+                          else {
+                            this.setState({
+                              selectedTool: APP_TOOLS.FG_COLOR_PICKER,
+                              color: this.state.selectedShapeInfo.shapeAttrs.fill
+                            })
+                          }
+                        }}
+                        hexColor={this.state.selectedShapeInfo.shapeAttrs.fill} />
+                    </div>
+                  }
                   <div>
-                    <span> رنگ داخل: </span>
+                    <span> رنگ خط: </span>
                     <ColorPreview
                       onClick={() => {
-                        if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
+                        if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
                           this.setState({ selectedTool: APP_TOOLS.NOTHING })
                         else {
                           this.setState({
-                            selectedTool: APP_TOOLS.FG_COLOR_PICKER,
-                            color: this.state.selectedShapeInfo.shapeAttrs.fill
+                            selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
+                            color: this.state.selectedShapeInfo.shapeAttrs.stroke
                           })
                         }
                       }}
-                      hexColor={this.state.selectedShapeInfo.shapeAttrs.fill} />
+                      hexColor={this.state.selectedShapeInfo.shapeAttrs.stroke} />
                   </div>
-                }
-                <div>
-                  <span> رنگ خط: </span>
-                  <ColorPreview
-                    onClick={() => {
-                      if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
-                        this.setState({ selectedTool: APP_TOOLS.NOTHING })
-                      else {
-                        this.setState({
-                          selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
-                          color: this.state.selectedShapeInfo.shapeAttrs.stroke
-                        })
-                      }
-                    }}
-                    hexColor={this.state.selectedShapeInfo.shapeAttrs.stroke} />
-                </div>
-                {
-                  this.isColorPicking() &&
-                  <div id="color-picker-wrapper">
-                    <SketchPicker
-                      disableAlpha
-                      color={this.state.color}
-                      onChange={(color) => this.setState({ color: color['hex'] })}
-                      onChangeComplete={(color) => {
-                        let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
-                        this.onShapeChanged({ [key]: color['hex'] })
-                      }}
-                    />
-                  </div>
-                }
+                  {
+                    this.isColorPicking() &&
+                    <div id="color-picker-wrapper">
+                      <SketchPicker
+                        disableAlpha
+                        color={this.state.color}
+                        onChange={(color) => this.setState({ color: color['hex'] })}
+                        onChangeComplete={(color) => {
+                          let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
+                          this.onShapeChanged({ [key]: color['hex'] })
+                        }}
+                      />
+                    </div>
+                  }
+                </>
+              }
+              {('opacity' in this.state.selectedShapeInfo.shapeAttrs) && <>
+                <Typography gutterBottom> شفافیت </Typography>
+                <Slider
+                  value={this.state.selectedShapeInfo.shapeAttrs.opacity}
+                  onChange={(e, nv) => { this.onShapeChanged({ opacity: nv }) }}
+                  aria-labelledby="discrete-slider-small-steps"
+                  step={0.01}
+                  min={0.05}
+                  max={1}
+                  valueLabelDisplay="auto"
+                />
               </>
-            }
-            {('opacity' in this.state.selectedShapeInfo.shapeAttrs) && <>
-              <Typography gutterBottom> شفافیت </Typography>
-              <Slider
-                value={this.state.selectedShapeInfo.shapeAttrs.opacity}
-                onChange={(e, nv) => { this.onShapeChanged({ opacity: nv }) }}
-                aria-labelledby="discrete-slider-small-steps"
-                step={0.01}
-                min={0.05}
-                max={1}
-                valueLabelDisplay="auto"
-              />
-            </>
-            }
-            <button className="btn btn-danger mt-3" onClick={() => this.setSelectedId(null)}>
-              خروج
-            </button>
+              }
+              {('hypes' in this.state.selectedShapeInfo.shapeAttrs) && <>
+                {this.state.selectedShapeInfo.shapeAttrs.hypes.map((v, i) => <>
+                  <TextField
+                    type="number"
+                    label={'x' + i}
+                    value={this.state.selectedShapeInfo.shapeAttrs.hypes[i][0]}
+                    onChange={e => {
+                      let newval = parseInt(e.target.value)
+                      let hypes = this.state.selectedShapeInfo.shapeAttrs.hypes
+                      this.onShapeChanged({ hypes: replaceInArray(hypes, i, [newval, hypes[i][1]]) })
+                    }}
+                  />
+                  <TextField
+                    type="number"
+                    label={'y' + i}
+                    value={this.state.selectedShapeInfo.shapeAttrs.hypes[i][1]}
+                    onChange={e => {
+                      let newval = parseInt(e.target.value)
+                      let hypes = this.state.selectedShapeInfo.shapeAttrs.hypes
+                      this.onShapeChanged({ hypes: replaceInArray(hypes, i, [hypes[i][0], newval]) })
+                    }}
+                  />
+                </>
+                )}
+
+                <button className="btn btn-danger mt-3" onClick={() => {
+                  this.onShapeChanged({ addHype: null })
+                }}>
+                  add point
+                </button>
+              </>
+              }
+              <button className="btn btn-danger mt-3" onClick={() => this.setSelectedId(null)}>
+                خروج
+              </button>
+            </TabPanel>
+            <TabPanel value={this.state.selectedTab} index={TABS.INFO}>
+              Item Two
+            </TabPanel>
+            <TabPanel value={this.state.selectedTab} index={TABS.META}>
+              Item Three
+            </TabPanel>
           </Paper>
         }
         {
@@ -662,7 +715,7 @@ export default class HomePage extends React.Component {
             onAyaSelect={t => this.addText(t)} />
         }
         <div id="container" className="w-100 h-100"></div>
-      </div>
+      </div >
     )
   }
 }

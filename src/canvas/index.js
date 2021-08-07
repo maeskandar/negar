@@ -10,6 +10,7 @@ export const shapeKinds = {
   CustomShape: 4,
   Image: 5,
   Text: 6,
+  Mountain: 7,
 }
 
 export function isKindOfLine(kindNumber) {

@@ -1,5 +1,5 @@
 import Konva from "konva"
-import { newImage } from "./Images"
+import { newRectangle } from "./shapes"
 
 const canvasWrapperID = "container"
 
@@ -120,8 +120,8 @@ export function resetTempPage(shapeList = []) {
     }
 }
 
-export function setBackgroundImage(src) {
-    let shape = newImage(src, bgLayer.width(), bgLayer.height())
+export function setBackgroundColor(color) {
+    let shape = newRectangle({width: board.width(), height: board.height(), fill: color, strokeWidth: 0})
     shape.listening(false) // disvale events
     bgLayer.destroyChildren()
     bgLayer.add(shape)

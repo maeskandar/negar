@@ -93,7 +93,7 @@ const useStyle = makeStyles(theme => ({
   }
 }))
 
-const CustomSearchbar = ({ onAyaSelect }) => {
+export const CustomSearchbar = ({ onAyaSelect }) => {
   // var history = useHistory()
   // const [index, setIndex] = useState(null)
   const [value, setValue] = useState("")
@@ -284,5 +284,3 @@ const CustomSearchbar = ({ onAyaSelect }) => {
     </div>
   )
 }
-
-export default CustomSearchbar

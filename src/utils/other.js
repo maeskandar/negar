@@ -6,4 +6,3 @@ export function downloadURI(uri, name) {
   link.click()
   document.body.removeChild(link)
 }
-
