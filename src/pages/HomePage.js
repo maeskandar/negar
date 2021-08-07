@@ -2,7 +2,7 @@ import React from "react"
 
 // utilities
 import randInt from 'random-int' // TODO we can remove it in future
-import { cleanArray, arraysEqual, replaceInArray } from "../utils/array"
+import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
 import { pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
@@ -15,7 +15,7 @@ import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD,
 import {
   Paper, TextField, Slider, Typography,
   Select, MenuItem,
-  Tab, Tabs, AppBar
+  Tab, Tabs, AppBar, IconButton
 } from "@material-ui/core"
 
 import {
@@ -31,9 +31,11 @@ import {
   Create as PencilIcon,
   Backspace as EraserIcon,
   TextFields as TextIcon,
-  DoneAll,
+  DoneAll as DoneIcon,
   FilterHdr as MointainIcon,
-  Flag,
+  Flag as FlagIcon,
+  Info as InfoIcon,
+  ExitToApp as EnterIcon
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
 import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
@@ -71,14 +73,17 @@ let drawingTempData = []
 
 export default class HomePage extends React.Component {
   state = {
-    color: '#fff',
-    selectedShapeInfo: { id: null, shapeAttrs: null },
+    route: [],
 
-    // app functionality related
     appState: new Set(),
     selectedTool: APP_TOOLS.NOTHING,
     selectedTab: TABS.VISUAL,
+
     imageModalShow: false,
+    showStateModal: false,
+
+    selectedShapeInfo: { id: null, shapeAttrs: null },
+    color: '#fff',
   }
 
   constructor(props) {
@@ -156,9 +161,12 @@ export default class HomePage extends React.Component {
 
   handleCanvasClick(ev) {
     if ('id' in ev.target.attrs) { // if a shape selected
-      let id = ev.target.attrs.id
-      this.setSelectedId(id)
+      this.setSelectedId(ev.target.attrs.id)
     }
+    else if ("attrs" in ev.target && ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
+      this.setSelectedId(ev.target.parent.attrs.id)
+    }
+
     else if (!this.isInJamBoardMode() && this.state.selectedTool === APP_TOOLS.NOTHING) {
       this.setSelectedId(null)
       this.cancelOperation()
@@ -211,7 +219,11 @@ export default class HomePage extends React.Component {
   // app functionalities
   setSelectedId(shapeId) {
     let lastSelectedId = this.state.selectedShapeInfo.id
-    if (shapeId === null && lastSelectedId !== null) {
+
+    if (lastSelectedId === shapeId)
+      return
+
+    else if (shapeId === null && lastSelectedId !== null) {
       let lastShape = shapes[this.state.selectedShapeInfo.id]
 
       disableTransformer()
@@ -221,7 +233,9 @@ export default class HomePage extends React.Component {
         selectedShapeInfo: {
           id: null,
           shapeAttrs: null,
-        }
+        },
+        route: removeInArray(this.state.route, this.state.route.length - 1),
+        showStateModal: false,
       })
     }
     else if (shapeId !== null) {
@@ -237,7 +251,9 @@ export default class HomePage extends React.Component {
         selectedShapeInfo: {
           id: shapeId,
           shapeAttrs: shape.attrs,
-        }
+        },
+        route: removeInArray(this.state.route, this.state.route.length - 1).concat(shapeId),
+        showStateModal: true
       })
     }
   }
@@ -344,6 +360,8 @@ export default class HomePage extends React.Component {
     window.removeEventListener('keydown', this.keyboardEvents)
   }
   render() {
+    let ssa = this.state.selectedShapeInfo.shapeAttrs
+
     return (
       <div id="home-page">
 
@@ -353,8 +371,24 @@ export default class HomePage extends React.Component {
           show={this.state.imageModalShow}
           setimage={(e) => this.addImage(e)}
           onHide={() => this.setState({ imageModalShow: false })}
-        />
-        }
+        />}
+
+        {this.state.showStateModal &&
+          <div className="state-modal">
+            <div className="state-modal" style={{
+              top: ssa.y - 62,
+              left: ssa.x
+            }}>
+              <IconButton color="primary">
+                <EnterIcon />
+              </IconButton>
+            </div>
+          </div>}
+
+        <div className="router">
+          {this.state.route.map(r =>
+            <div className="route" key={r}> {r} </div>)}
+        </div>
 
         <div id="tool-bar-wrapper">
           <Paper
@@ -370,7 +404,7 @@ export default class HomePage extends React.Component {
                 <ToolBarBtn
                   title="flag"
                   onClick={this.addFlag}
-                  iconEl={<Flag />}
+                  iconEl={<FlagIcon />}
                 />
                 <ToolBarBtn
                   title="مستطیل"
@@ -434,10 +468,9 @@ export default class HomePage extends React.Component {
               setHasParamsOr(this.state.appState, APP_STATES.DRAWING) && <>
                 <ToolBarBtn
                   title="ثبت عملیات"
-                  iconEl={<DoneAll />}
+                  iconEl={<DoneIcon />}
                   onClick={this.doneOperation}
                 />
-
                 <ToolBarBtn
                   title="لغو عملیات"
                   iconEl={<CancelIcon />}

@@ -26,7 +26,7 @@ const
 export function newArrow() {
   let shape = new Konva.Line({
     ...commonShapeProps(),
-    kind: shapeKinds.CustomShape,
+    kind: shapeKinds.Arrow,
 
     ...basicCoordinate(),
     ...basicSize(ORIGIN_WIDTH, ORIGIN_HEIGHT), // custom property

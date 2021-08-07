@@ -257,7 +257,7 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
   return (
     <div className="app-container fixed-top w-100 disable-pe-not-children"
       style={{ textAlign: 'center' }}>
-      <div className="p-2 disable-pe-not-children">
+      <div className="p-2 disable-pe-not-children d-flex">
         <input id="searchbar1" type="text" value={value}
           onChange={e => {
 

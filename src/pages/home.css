@@ -43,6 +43,35 @@
     max-width: 320px;
 }
 
+.router{
+    display: block;
+    position: fixed;
+    top: 30px;
+    left: 24px;
+    z-index: 2;
+}
+
+.router .route{
+    display: inline-block;
+    float: left;
+    background-color: #424242;
+    color: #fafafa;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 16px;
+    margin: 4px;
+}
+
+.state-modal{
+    display: inline-block;
+    position: fixed;
+    background: #fafafa;
+    border-radius: 16px;
+    z-index: 4;
+    padding: 0 12px;
+}
+
 .konvajs-content {
     margin: auto;
 }
