@@ -5,6 +5,8 @@ import { Divider, Grid, Typography } from '@material-ui/core'
 import { makeStyles } from "@material-ui/styles"
 
 import { getRecommendedSearch, getResultSearch } from '../api/api_search'
+import "./../common.css"
+
 
 const useStyle = makeStyles(theme => ({
   ulDiv: {
@@ -253,9 +255,9 @@ const CustomSearchbar = ({ onAyaSelect }) => {
 
 
   return (
-    <div className="app-container fixed-top w-100 pe-none"
+    <div className="app-container fixed-top w-100 disable-pe-not-children"
       style={{ textAlign: 'center' }}>
-      <div className="p-2 pe-none">
+      <div className="p-2 disable-pe-not-children">
         <input id="searchbar1" type="text" value={value}
           onChange={e => {
 
@@ -268,15 +270,15 @@ const CustomSearchbar = ({ onAyaSelect }) => {
             }
           }}
           placeholder={"جست و جوی سریع.."}
-          className={classes.inputClass + " pe-all"}
+          className={classes.inputClass}
           onMouseOver={HoverSearchHandler}
           onMouseLeave={LeaveSearchHandler}
         />
       </div>
-      <div className="recommed-container pe-all">
+      <div className="recommed-container">
         <Recommend recom={recommends} />
       </div>
-      <div className="result-container pe-all">
+      <div className="result-container">
         <Result results={results} />
       </div>
     </div>

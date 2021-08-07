@@ -1,9 +1,7 @@
-/* TODO add a class that itself is 'pe' and all of their children are 'pa' */
-
-.pe-none {
-  pointer-events: none;
+.disable-pe-not-children *{
+  pointer-events: all;
 }
 
-.pe-all {
-  pointer-events: all;
+.disable-pe-not-children{
+  pointer-events: none;
 }
