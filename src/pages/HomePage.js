@@ -36,7 +36,8 @@ import {
   Info as InfoIcon,
   ExitToApp as EnterIcon,
   Close as CloseIcon,
-  ArrowBackIos as BackIcon
+  ArrowBackIos as BackIcon,
+  DraftsTwoTone
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
 import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
@@ -217,6 +218,7 @@ export default class HomePage extends React.Component {
         width: 16,
         height: 16,
       })
+      triggerShapeEvent(drawingTempShape, 'drawStart')
       drawingLayer.add(drawingTempShape)
     }
   }
