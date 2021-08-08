@@ -4,7 +4,7 @@ import React from "react"
 import randInt from 'random-int' // TODO we can remove it in future
 import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
-import { pointsDistance, prettyFloatNumber } from "../utils/math"
+import { protectedMin, pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
 
 // data
@@ -26,7 +26,6 @@ import {
   InsertPhoto as ImageIcon,
   Gesture as JamBoardIcon,
   Save as SaveIcon,
-  Wallpaper as BackgroundIcon,
   Close as CancelIcon,
   Create as PencilIcon,
   Backspace as EraserIcon,
@@ -36,6 +35,7 @@ import {
   Flag as FlagIcon,
   Info as InfoIcon,
   ExitToApp as EnterIcon,
+  Close as CloseIcon,
   ArrowBackIos as BackIcon
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
@@ -56,7 +56,7 @@ import {
   initCanvas, addShape, updateShape, removeShape,
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
-  setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, mainLayer, disableDrawingLayer, prepareDrawingLayer,
+  setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, mainLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
 } from "../canvas/manager"
 
 
@@ -146,11 +146,11 @@ export default class HomePage extends React.Component {
 
   // related to the canvas
   startDrawingShape(fn) {
+    this.setSelectedId(null)
     this.setState({
       appState: addToSet(this.state.appState, APP_STATES.DRAWING),
-      selectedTool: APP_TOOLS.SHAPE_DRAWING
+      selectedTool: APP_TOOLS.SHAPE_DRAWING,
     })
-
     drawingTempFunction = fn
     prepareDrawingLayer()
   }
@@ -214,8 +214,8 @@ export default class HomePage extends React.Component {
       drawingTempShape = drawingTempFunction({
         x: drawingTempData[0],
         y: drawingTempData[1],
-        width: 10,
-        height: 10,
+        width: 16,
+        height: 16,
       })
       drawingLayer.add(drawingTempShape)
     }
@@ -245,9 +245,13 @@ export default class HomePage extends React.Component {
         resetTempPage(acc)
       }
       else if (st === APP_TOOLS.SHAPE_DRAWING) {
+        let
+          dx = protectedMin(mp[0] - drawingTempData[0], 16),
+          dy = protectedMin(mp[1] - drawingTempData[1], 16)
+
         updateShape(drawingTempShape, {
-          width: mp[0] - drawingTempData[0],
-          height: mp[1] - drawingTempData[1]
+          width: dx,
+          height: dy
         })
         drawingLayer.draw()
       }
@@ -387,7 +391,7 @@ export default class HomePage extends React.Component {
           addShape(line)
       }
       else if (this.state.selectedTool == APP_TOOLS.SHAPE_DRAWING) {
-        // drawingTempShape.remove()
+        triggerShapeEvent(drawingTempShape, 'drawEnd')
         addShape(drawingTempShape)
         drawingTempShape = null
       }
@@ -445,6 +449,12 @@ export default class HomePage extends React.Component {
             }}>
               <IconButton color="primary" onClick={() => this.enterStage(ssa.id)}>
                 <EnterIcon />
+              </IconButton>
+              <IconButton color="primary">
+                <InfoIcon />
+              </IconButton>
+              <IconButton color="primary" onClick={() => this.setState({ showStateModal: false })}>
+                <CloseIcon />
               </IconButton>
             </div>
           </div>}

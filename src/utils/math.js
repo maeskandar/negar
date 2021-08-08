@@ -24,6 +24,15 @@ export function prettyFloatNumber(num) {
   return num // TODO
 }
 
-export function NanToNumber(n) {
-  return n === NaN ? 0 : n
+export function protectedMin(n, min) {
+  if (isNaN(n)) return min
+  return Math.max(n, min)
+}
+
+export function protectedMinSigned(n, min) {
+  if (isNaN(n)) return min
+  
+  return Math.abs(n) < min ?
+    Math.sign(n) * min :
+    n
 }

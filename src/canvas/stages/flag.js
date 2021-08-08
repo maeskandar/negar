@@ -69,14 +69,14 @@ export function newFlag(options = { x: 0, y: 0, width: 200, height: 200, rotatio
       ...options
     })
 
-  group.shapes = {
+  group.parts = {
     'flag': flag,
     'base': base
   }
 
   function scaleGroup(sx, sy) {
     for (let childName of ['flag', 'base'])
-      group.shapes[childName].points(apply2DScale(group.shapes[childName].points(), sx, sy))
+      group.parts[childName].points(apply2DScale(group.parts[childName].points(), sx, sy))
   }
 
   addCommonEvents(group, () => {

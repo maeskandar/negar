@@ -1,3 +1,5 @@
+import { protectedMinSigned } from "./math"
+
 export function replaceInArray(array, index, element) {
   let arrc = array.slice()
   arrc[index] = element
@@ -30,5 +32,10 @@ export const
   oddIndexes = (arr) => arr.filter((_, i) => i % 2 === 1),
   evenIndexes = (arr) => arr.filter((_, i) => i % 2 === 0),
 
-  apply2DScale = (arr, scaleX, scaleY) =>
-    arr.map((p, i) => p * (i % 2 === 0 ? scaleX : scaleY))
+  apply2DScale = (arr, sx, sy) => {
+    return arr.map((p, i) => p * (i % 2 === 0 ? sx : sy))
+  },
+
+  apply2DScaleProtected = (arr, sx, sy, minArr) => {
+    return arr.map((p, i) => protectedMinSigned(p * (i % 2 === 0 ? sx : sy), minArr[i]))
+  }

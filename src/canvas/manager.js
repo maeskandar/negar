@@ -10,8 +10,8 @@ export var
     drawingLayer = null,
     transformer = null,
     shapes = {},
-    tempShapes = []
-
+    tempShapes = [],
+    bgShape = null
 
 // primary functions
 export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
@@ -65,6 +65,11 @@ function triggerCanvas(eventType, shapeObject) {
     window.dispatchEvent(e)
 }
 
+export function triggerShapeEvent(shape, event, ...data) {
+    if (shape.events && event in shape.events)
+        shape.events[event](...data)
+}
+
 export function addShape(shapeObject) {
     shapes[shapeObject.attrs.id] = shapeObject
     triggerCanvas('create', shapeObject)
@@ -97,7 +102,6 @@ export function removeShape(shape) {
 }
 
 // other functions
-let bgShape = null
 export function prepareDrawingLayer() {
     bgShape = newRectangle({
         width: board.width(),
@@ -115,7 +119,7 @@ export function disableDrawingLayer() {
     for (let shape of drawingLayer.children)
         shape.remove()
 
-    if (bgShape) 
+    if (bgShape)
         bgShape.destroy()
 }
 
