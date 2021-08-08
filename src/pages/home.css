@@ -43,11 +43,22 @@
     max-width: 320px;
 }
 
+.back-btn{
+    display: inline-block;
+    position: fixed;
+    top: 24px;
+    left: 14px;
+    background: #fafafa;
+    border-radius: 50%;
+    z-index: 4;
+}
+
+
 .router{
     display: block;
     position: fixed;
-    top: 30px;
-    left: 24px;
+    top: 21px;
+    left: 43px;
     z-index: 2;
 }
 

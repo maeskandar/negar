@@ -29,6 +29,6 @@ export function arraysEqual(arr1, arr2) {
 export const
   oddIndexes = (arr) => arr.filter((_, i) => i % 2 === 1),
   evenIndexes = (arr) => arr.filter((_, i) => i % 2 === 0),
-  
+
   apply2DScale = (arr, scaleX, scaleY) =>
     arr.map((p, i) => p * (i % 2 === 0 ? scaleX : scaleY))

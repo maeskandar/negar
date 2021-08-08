@@ -17,6 +17,13 @@ export function validDeg(deg) {
   return (deg < 0) ? 360 + deg : deg
 }
 
-export const
-  minMaxDistance = (arr) => Math.max(...arr) - Math.min(...arr),
-  prettyFloatNumber = (num) => num // TODO 
+export function minMaxDistance(arr) {
+  return Math.max(...arr) - Math.min(...arr)
+}
+export function prettyFloatNumber(num) {
+  return num // TODO
+}
+
+export function NanToNumber(n) {
+  return n === NaN ? 0 : n
+}

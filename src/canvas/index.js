@@ -23,6 +23,6 @@ export function hasStroke(kindNumber) {
 export function isShape(kindNumber) {
   return kindNumber < 7
 }
-export function isState(kindNumber) {
+export function isStage(kindNumber) {
   return kindNumber >= 7
 }

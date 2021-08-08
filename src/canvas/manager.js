@@ -69,12 +69,12 @@ export function addShape(shapeObject) {
     shapes[shapeObject.attrs.id] = shapeObject
     triggerCanvas('create', shapeObject)
 }
-export function updateShape(shape, newAttrs) {
+export function updateShape(shape, newAttrs, mode) {
     for (let prop in newAttrs) {
         let val = newAttrs[prop]
 
         if ('setters' in shape && prop in shape.setters)
-            shape.setters[prop](val)
+            shape.setters[prop](val, mode)
         else if (prop === 'width')
             shape.size({ width: val, height: shape.attrs.height })
         else if (prop === 'height')
@@ -97,6 +97,27 @@ export function removeShape(shape) {
 }
 
 // other functions
+let bgShape = null
+export function prepareDrawingLayer() {
+    bgShape = newRectangle({
+        width: board.width(),
+        height: board.height(),
+        listening: false,
+        fill: "#111",
+        strokeWidth: 0,
+        opacity: 0.7
+    })
+
+    drawingLayer.add(bgShape)
+}
+
+export function disableDrawingLayer() {
+    for (let shape of drawingLayer.children)
+        shape.remove()
+
+    if (bgShape) 
+        bgShape.destroy()
+}
 
 export function addTempShape(shape) {
     tempShapes.push(shape)
@@ -121,7 +142,7 @@ export function resetTempPage(shapeList = []) {
 }
 
 export function setBackgroundColor(color) {
-    let shape = newRectangle({width: board.width(), height: board.height(), fill: color, strokeWidth: 0})
+    let shape = newRectangle({ width: board.width(), height: board.height(), fill: color, strokeWidth: 0 })
     shape.listening(false) // disvale events
     bgLayer.destroyChildren()
     bgLayer.add(shape)

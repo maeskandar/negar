@@ -35,7 +35,8 @@ import {
   FilterHdr as MointainIcon,
   Flag as FlagIcon,
   Info as InfoIcon,
-  ExitToApp as EnterIcon
+  ExitToApp as EnterIcon,
+  ArrowBackIos as BackIcon
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
 import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
@@ -49,13 +50,13 @@ import {
 
 import { newFlag, newMountain } from "../canvas/stages"
 
-import { shapeKinds, isKindOfLine, hasStroke } from "../canvas"
+import { shapeKinds, isKindOfLine, hasStroke, isStage } from "../canvas"
 
 import {
   initCanvas, addShape, updateShape, removeShape,
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
-  setBackgroundColor, activateTransformer, disableTransformer,
+  setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, mainLayer, disableDrawingLayer, prepareDrawingLayer,
 } from "../canvas/manager"
 
 
@@ -69,7 +70,11 @@ function TabPanel(props) {
   )
 }
 
-let drawingTempData = []
+let
+  drawingTempData = [],
+  drawingTempFunction = null,
+  drawingTempShape = null
+
 
 export default class HomePage extends React.Component {
   state = {
@@ -99,9 +104,12 @@ export default class HomePage extends React.Component {
     this.addArrow = this.addArrow.bind(this)
     this.addImage = this.addImage.bind(this)
     this.addText = this.addText.bind(this)
+    this.startDrawingShape = this.startDrawingShape.bind(this)
     this.startLineDrawingMode = this.startLineDrawingMode.bind(this)
     this.startJamBoard = this.startJamBoard.bind(this)
     this.saveAsImage = this.saveAsImage.bind(this)
+    this.enterStage = this.enterStage.bind(this)
+    this.backStage = this.backStage.bind(this)
     this.cancelOperation = this.cancelOperation.bind(this)
     this.doneOperation = this.doneOperation.bind(this)
     this.setSelectedId = this.setSelectedId.bind(this)
@@ -137,26 +145,47 @@ export default class HomePage extends React.Component {
   }
 
   // related to the canvas
+  startDrawingShape(fn) {
+    this.setState({
+      appState: addToSet(this.state.appState, APP_STATES.DRAWING),
+      selectedTool: APP_TOOLS.SHAPE_DRAWING
+    })
+
+    drawingTempFunction = fn
+    prepareDrawingLayer()
+  }
   addMountain() {
-    addShape(newMountain())
+    this.startDrawingShape(newMountain)
   }
   addFlag() {
-    addShape(newFlag())
+    this.startDrawingShape(newFlag)
   }
-  addRectangle(x, y) {
-    addShape(newRectangle(x, y))
+  addRectangle() {
+    this.startDrawingShape(newRectangle)
   }
-  addCircle(x, y) {
-    addShape(newCircle(x, y))
+  addCircle() {
+    this.startDrawingShape(newCircle)
   }
   addArrow() {
-    addShape(newArrow())
+    this.startDrawingShape(newArrow)
   }
   addImage(e) {
     addShape(newImage(e))
   }
   addText(text = 'تایپ کن') {
     addShape(newTextNode(text))
+  }
+
+  backStage() {
+    let route = this.state.route
+    if (route.length === 0) return
+    this.setState({ route: removeInArray(route, route.length - 1) })
+  }
+  enterStage(shapeId) {
+    this.setState({
+      route: this.state.route.concat(shapeId),
+      showStateModal: false
+    })
   }
 
   handleCanvasClick(ev) {
@@ -180,19 +209,29 @@ export default class HomePage extends React.Component {
       const pos = e.target.getStage().getPointerPosition()
       drawingTempData = [pos.x, pos.y]
     }
+
+    if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
+      drawingTempShape = drawingTempFunction({
+        x: drawingTempData[0],
+        y: drawingTempData[1],
+        width: 10,
+        height: 10,
+      })
+      drawingLayer.add(drawingTempShape)
+    }
   }
   handleCanvasMouseMove(e) {
     if (setHasParamsAnd(this.state.appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
       var mp = board.getPointerPosition()
       mp = [mp.x, mp.y]
 
-
-      if (this.state.selectedTool === APP_TOOLS.PENCIL) {
+      let st = this.state.selectedTool
+      if (st === APP_TOOLS.PENCIL) {
         let newLine = newSimpleLine(drawingTempData.concat(mp))
         addTempShape(newLine)
         drawingTempData = mp
       }
-      else if (this.state.selectedTool === APP_TOOLS.ERASER) {
+      else if (st === APP_TOOLS.ERASER) {
         let acc = []
         for (const l of tempShapes) {
           let
@@ -205,12 +244,23 @@ export default class HomePage extends React.Component {
         }
         resetTempPage(acc)
       }
+      else if (st === APP_TOOLS.SHAPE_DRAWING) {
+        updateShape(drawingTempShape, {
+          width: mp[0] - drawingTempData[0],
+          height: mp[1] - drawingTempData[1]
+        })
+        drawingLayer.draw()
+      }
     }
   }
   handleCanvasMouseUp(e) {
-    if (this.state.selectedTool === APP_TOOLS.LINE) {
+    let st = this.state.selectedTool
+    if (st === APP_TOOLS.LINE) {
       let pos = e.target.getStage().getPointerPosition()
       addShape(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+    }
+    else if (st === APP_TOOLS.SHAPE_DRAWING) {
+      this.doneOperation()
     }
 
     this.excludeFromAppState(APP_STATES.DRAGING)
@@ -234,7 +284,6 @@ export default class HomePage extends React.Component {
           id: null,
           shapeAttrs: null,
         },
-        route: removeInArray(this.state.route, this.state.route.length - 1),
         showStateModal: false,
       })
     }
@@ -252,8 +301,7 @@ export default class HomePage extends React.Component {
           id: shapeId,
           shapeAttrs: shape.attrs,
         },
-        route: removeInArray(this.state.route, this.state.route.length - 1).concat(shapeId),
-        showStateModal: true
+        showStateModal: isStage(shape.attrs.kind)
       })
     }
   }
@@ -274,11 +322,13 @@ export default class HomePage extends React.Component {
     this.includeToAppStates(APP_STATES.DRAWING)
     this.setState({ selectedTool: APP_TOOLS.LINE }, () => {
     })
+    // prepareDrawingLayer()
   }
   startJamBoard() {
     this.includeToAppStates(APP_STATES.DRAWING)
     this.setSelectedId(null)
     this.setState({ selectedTool: APP_TOOLS.PENCIL })
+    prepareDrawingLayer()
   }
   saveAsImage() {
     let dataURL = board.toDataURL({ pixelRatio: PIXEL_RATIO_DOWNLAOD })
@@ -294,6 +344,8 @@ export default class HomePage extends React.Component {
       appState: new Set(),
       selectedTool: APP_TOOLS.NOTHING
     })
+
+    disableDrawingLayer()
   }
   doneOperation() {
     if (this.state.appState.has(APP_STATES.DRAWING)) {
@@ -334,7 +386,11 @@ export default class HomePage extends React.Component {
         for (let line of resultLines)
           addShape(line)
       }
-
+      else if (this.state.selectedTool == APP_TOOLS.SHAPE_DRAWING) {
+        // drawingTempShape.remove()
+        addShape(drawingTempShape)
+        drawingTempShape = null
+      }
     }
     this.cancelOperation()
   }
@@ -360,7 +416,11 @@ export default class HomePage extends React.Component {
     window.removeEventListener('keydown', this.keyboardEvents)
   }
   render() {
-    let ssa = this.state.selectedShapeInfo.shapeAttrs
+    let
+      ssa = this.state.selectedShapeInfo.shapeAttrs,
+      ss = this.state.selectedShapeInfo.id ?
+        shapes[this.state.selectedShapeInfo.id] :
+        null
 
     return (
       <div id="home-page">
@@ -373,13 +433,17 @@ export default class HomePage extends React.Component {
           onHide={() => this.setState({ imageModalShow: false })}
         />}
 
+        <div className="back-btn" onClick={this.backStage}>
+          <IconButton size="small" color="#424242"> <BackIcon /> </IconButton>
+        </div>
+
         {this.state.showStateModal &&
           <div className="state-modal">
             <div className="state-modal" style={{
-              top: ssa.y - 62,
-              left: ssa.x
+              left: ss.absolutePosition().x,
+              top: ss.absolutePosition().y - 62,
             }}>
-              <IconButton color="primary">
+              <IconButton color="primary" onClick={() => this.enterStage(ssa.id)}>
                 <EnterIcon />
               </IconButton>
             </div>
@@ -408,7 +472,7 @@ export default class HomePage extends React.Component {
                 />
                 <ToolBarBtn
                   title="مستطیل"
-                  onClick={() => this.addRectangle(randInt(100), randInt(100))}
+                  onClick={() => this.addRectangle()}
                   iconEl={<RectangleIcon />}
                 />
                 <ToolBarBtn
@@ -743,7 +807,8 @@ export default class HomePage extends React.Component {
           </Paper>
         }
         {
-          !this.isSomethingSelected() && <CustomSearchbar
+          !this.isSomethingSelected() && this.state.selectedTool === APP_TOOLS.NOTHING &&
+          <CustomSearchbar
             onAyaSelect={t => this.addText(t)} />
         }
         <div id="container" className="w-100 h-100"></div>

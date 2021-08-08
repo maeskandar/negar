@@ -1,21 +1,30 @@
 import Konva from "konva"
 
 import { shapeKinds } from '../'
-import { addCommonEvents, closedShapeProps, everyShapeProps, basicShape } from '../abstract'
+import { addCommonEvents, closedShapeProps, everyShapeProps } from '../abstract'
 
 
-export function newCircle() {
-  // FIXME: x,y is the center coordinate, width & height doesn't work because circle has radian 
+export function newCircle(options = { x: 0, y: 0, width: 1000, height: 100, rotation: 0 }) {
   let shape = new Konva.Ellipse({
     kind: shapeKinds.Circle,
 
     ...everyShapeProps(),
-    ...basicShape(0, 0, 100, 100, 0),
     ...closedShapeProps(),
+
+    ...options,
+
+    radiusX: options.width / 2,
+    radiusY: options.height / 2,
   })
 
-  shape.attrs.width = 100
-  shape.attrs.height = 100
+  shape.setters = {
+    width: w => {
+      shape.radiusX(Math.abs(w) / 2)
+    },
+    height: h => {
+      shape.radiusY(Math.abs(h) / 2)
+    },
+  }
 
   addCommonEvents(shape)
   return shape

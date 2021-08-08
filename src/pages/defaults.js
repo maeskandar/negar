@@ -7,13 +7,11 @@ export const
   APP_TOOLS = {
     NOTHING: 0,
     LINE: 1,
-    RECTANGLE: 2,
-    CIRCLE: 3,
-    IMAGE: 4,
-    PENCIL: 5,
-    ERASER: 6,
-    FG_COLOR_PICKER: 7,
-    STROKE_COLOR_PICKER: 8,
+    PENCIL: 2,
+    ERASER: 3,
+    FG_COLOR_PICKER: 4,
+    STROKE_COLOR_PICKER: 5,
+    SHAPE_DRAWING: 6,
   },
 
   TABS = {

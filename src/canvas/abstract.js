@@ -9,7 +9,7 @@ import { validDeg } from "../utils/math"
 export function resetTransformGen(shape, custom) {
   if (custom) {
     return () => {
-      custom(transformer)
+      if (custom()) transformer.forceUpdate()
       updateShape(shape.attrs.id)
     }
   }

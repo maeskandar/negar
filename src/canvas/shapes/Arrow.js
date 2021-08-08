@@ -23,13 +23,17 @@ const
   ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
   ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
-export function newArrow() {
+export function newArrow(options = { x: 0, y: 0, width: 100, height: 100, rotation: 0 }) {
   let shape = new Konva.Line({
     kind: shapeKinds.Arrow,
+
     ...everyShapeProps(),
-    ...basicShape(0, 0, ORIGIN_WIDTH, ORIGIN_HEIGHT, 0), // custom property
     ...closedShapeProps(),
-    ...closedLine(ORIGIN_POINTS)
+    ...closedLine(apply2DScale(ORIGIN_POINTS,
+      options.width / ORIGIN_WIDTH,
+      options.height / ORIGIN_HEIGHT)),
+
+    ...options,
   })
 
   function applyScale(sx, sy) {
@@ -37,17 +41,12 @@ export function newArrow() {
   }
 
   addCommonEvents(shape, () => {
-    let
-      sx = shape.scaleX(),
-      sy = shape.scaleY()
+    applyScale(shape.scaleX(), shape.scaleY())
+    shape.attrs.width *= shape.scaleX()
+    shape.attrs.height *= shape.scaleY()
 
     shape.scaleX(1)
     shape.scaleY(1)
-
-    applyScale(sx, sy)
-
-    shape.attrs.width *= sx
-    shape.attrs.height *= sy
     shape.attrs.rotation = validDeg(shape.rotation())
   })
 
