@@ -1,7 +1,7 @@
 import Konva from "konva"
 
 import { shapeKinds, DEFAULT_STROKE_WIDTH } from '..'
-import { commonShapeProps, addCommonEvents } from '../abstract'
+import { everyShapeProps, addCommonEvents } from '../abstract'
 
 import { minMaxDistance, validDeg } from "../../utils/math"
 import { oddIndexes, evenIndexes, apply2DScale } from "../../utils/array"
@@ -29,7 +29,7 @@ function genPoints(hypes, w, h) {
 export function newMountain() {
   let shape = new Konva.Line({
     kind: shapeKinds.Mountain,
-    ...commonShapeProps(),
+    ...everyShapeProps(),
 
     hypes: DEFAULT_HYPES,
     points: genPoints(DEFAULT_HYPES, ORIGIN_WIDTH, ORIGIN_HEIGHT),

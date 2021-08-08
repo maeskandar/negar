@@ -3,12 +3,11 @@ import Konva from "konva"
 import { shapeKinds } from '..'
 import {
   addCommonEvents,
-  commonShapeProps, closedShapeProps, basicCoordinate, basicSize
+  everyShapeProps, basicShape, closedLine
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
 import { minMaxDistance, validDeg } from '../../utils/math'
-import { transformer } from "../manager"
 
 const
   BASE_ORIGIN_POINTS = [
@@ -36,39 +35,24 @@ export function newFlag() {
   let
     base = new Konva.Line({
       isMain: false,
-
-      ...basicSize(ORIGIN_BASE_WIDTH, ORIGIN_BASE_HEIGHT), // custom property
       fill: Konva.Util.getRandomColor(),
-
-      points: BASE_ORIGIN_POINTS,
-      lineCap: 'round',
-      lineJoin: 'round',
-      closed: true,
+      ...basicShape(0, 0, ORIGIN_BASE_WIDTH, ORIGIN_BASE_HEIGHT, 0),
+      ...closedLine(BASE_ORIGIN_POINTS),
     }),
 
     flag = new Konva.Line({
       isMain: false,
-      ...basicSize(ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT), // custom property
-
       fill: Konva.Util.getRandomColor(),
-      points: FLAG_ORIGIN_POINTS,
-      lineCap: 'round',
-      lineJoin: 'round',
-      closed: true,
+      ...basicShape(0, 0, ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT, 0), // custom property
+      ...closedLine(FLAG_ORIGIN_POINTS)
     }),
 
     group = new Konva.Group({
-      ...commonShapeProps(),
       kind: shapeKinds.Flag,
-      x: 0,
-      y: 0,
-      width: ORIGIN_FLAG_WIDTH + ORIGIN_BASE_WIDTH,
-      height: ORIGIN_BASE_HEIGHT,
-      rotation: 0,
-      opacity: 1,
-
       flagFill: flag.attrs.fill,
       baseFill: base.attrs.fill,
+      ...everyShapeProps(),
+      ...basicShape(0, 0, ORIGIN_FLAG_WIDTH + ORIGIN_BASE_WIDTH, ORIGIN_BASE_HEIGHT, 0),
     })
 
   group.shapes = {
@@ -76,36 +60,26 @@ export function newFlag() {
     'base': base
   }
 
-
   function scaleGroup(sx, sy) {
     group.shapes['flag'].points(apply2DScale(group.shapes['flag'].points(), sx, sy))
     group.shapes['base'].points(apply2DScale(group.shapes['base'].points(), sx, sy))
-    transformer.forceUpdate() // https://konvajs.org/docs/select_and_transform/Force_Update.html
   }
 
-  addCommonEvents(group, () => {
-    let
-      sx = group.scaleX(),
-      sy = group.scaleY()
+  addCommonEvents(group, (tr) => {
+    scaleGroup(group.scaleX(), group.scaleY())
+
+    group.attrs.width *= group.scaleX()
+    group.attrs.height *= group.scaleY()
 
     group.scaleX(1)
     group.scaleY(1)
-
-    scaleGroup(sx, sy)
-
-    group.attrs.width *= sx
-    group.attrs.height *= sy
-
     group.attrs.rotation = validDeg(group.rotation())
+    tr.forceUpdate() // https://konvajs.org/docs/select_and_transform/Force_Update.html
   })
 
   group.setters = {
-    width: (w) => {
-      scaleGroup(w / group.attrs.width, 1)
-    },
-    height: (h) => {
-      scaleGroup(1, h / group.attrs.height)
-    }
+    width: (w) => scaleGroup(w / group.attrs.width, 1),
+    height: (h) => scaleGroup(1, h / group.attrs.height),
   }
 
   group.add(flag, base)

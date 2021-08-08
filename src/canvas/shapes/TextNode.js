@@ -1,18 +1,10 @@
 import Konva from 'konva'
 import { shapeKinds } from '../'
-import { addCommonEvents, closedShapeProps, commonShapeProps, basicCoordinate, basicSize } from '../abstract'
+import { addCommonEvents, closedShapeProps, everyShapeProps, basicShape } from '../abstract'
 
 export function newTextNode(text) {
-  console.log(text)
-
   let shape = new Konva.Text({
     kind: shapeKinds.Text,
-    ...commonShapeProps(),
-
-    ...basicCoordinate(200,200),
-    ...basicSize(200, undefined),
-    
-    ...closedShapeProps(),
     strokeWidth: 0,
     
     text: text,
@@ -20,6 +12,10 @@ export function newTextNode(text) {
     fontFamily: "Shabnam",
     lineHeight: 1,
     align: 'right',
+
+    ...everyShapeProps(),
+    ...closedShapeProps(),
+    ...basicShape(200,200, 200, undefined, 0),
   })
 
   addCommonEvents(shape)

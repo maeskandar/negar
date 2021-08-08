@@ -497,27 +497,27 @@ export default class HomePage extends React.Component {
                 <span> نوع شکل: </span>
                 <span>
                   {Object.keys(shapeKinds)
-                    .find(it => shapeKinds[it] === this.state.selectedShapeInfo.shapeAttrs.kind)
+                    .find(it => shapeKinds[it] === ssa.kind)
                     .toLowerCase()
                   }
                 </span>
               </div>
 
-              {('x' in this.state.selectedShapeInfo.shapeAttrs) &&
+              {('x' in ssa) &&
                 <TextField
                   type="number"
                   label="مختصات x"
-                  value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.x)}
+                  value={prettyFloatNumber(ssa.x)}
                   onChange={e => {
                     this.onShapeChanged({ x: parseInt(e.target.value) })
                   }}
                 />
               }
-              {('y' in this.state.selectedShapeInfo.shapeAttrs) &&
+              {('y' in ssa) &&
                 <TextField
                   type="number"
                   label="مختصات y"
-                  value={prettyFloatNumber(this.state.selectedShapeInfo.shapeAttrs.y)}
+                  value={prettyFloatNumber(ssa.y)}
                   onChange={e => {
                     this.onShapeChanged({ y: parseInt(e.target.value) })
                   }}
@@ -529,34 +529,34 @@ export default class HomePage extends React.Component {
                   label="عرض"
                   value={
                     prettyFloatNumber
-                      (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
-                        this.state.selectedShapeInfo.shapeAttrs.points[2] :
-                        this.state.selectedShapeInfo.shapeAttrs.width)
+                      (ssa.kind === shapeKinds.StraghtLine ?
+                        ssa.points[2] :
+                        ssa.width)
                   }
                   onChange={e => {
                     this.onShapeChanged({ width: parseInt(e.target.value) })
                   }}
                 />
               }
-              {this.state.selectedShapeInfo.shapeAttrs.kind !== shapeKinds.Text &&
+              {ssa.kind !== shapeKinds.Text &&
                 <TextField
                   type="number"
                   label="ارتفاع"
                   value={
                     prettyFloatNumber
-                      (this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.StraghtLine ?
-                        this.state.selectedShapeInfo.shapeAttrs.points[3] :
-                        this.state.selectedShapeInfo.shapeAttrs.height)
+                      (ssa.kind === shapeKinds.StraghtLine ?
+                        ssa.points[3] :
+                        ssa.height)
                   }
                   onChange={e => {
                     this.onShapeChanged({ height: parseInt(e.target.value) })
                   }}
                 />
               }
-              {('rotation' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              {('rotation' in ssa) && <>
                 <Typography gutterBottom> چرخش </Typography>
                 <Slider
-                  value={this.state.selectedShapeInfo.shapeAttrs.rotation}
+                  value={ssa.rotation}
                   onChange={(e, nv) => this.onShapeChanged({ rotation: nv })}
                   aria-labelledby="discrete-slider-small-steps"
                   step={1}
@@ -566,19 +566,19 @@ export default class HomePage extends React.Component {
                 />
               </>
               }
-              {('text' in this.state.selectedShapeInfo.shapeAttrs) &&
+              {('text' in ssa) &&
                 <TextField
                   label="متن"
                   rows={5}
                   multiline
-                  value={this.state.selectedShapeInfo.shapeAttrs.text}
+                  value={ssa.text}
                   onChange={e => this.onShapeChanged({ text: e.target.value })}
                 />
               }
-              {('fontSize' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              {('fontSize' in ssa) && <>
                 <Typography gutterBottom> اندازه فونت </Typography>
                 <Slider
-                  value={this.state.selectedShapeInfo.shapeAttrs.fontSize}
+                  value={ssa.fontSize}
                   onChange={(e, nv) => this.onShapeChanged({ fontSize: nv })}
                   aria-labelledby="discrete-slider-small-steps"
                   step={0.5}
@@ -588,10 +588,10 @@ export default class HomePage extends React.Component {
                 />
               </>
               }
-              {(this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text) && <>
+              {(ssa.kind === shapeKinds.Text) && <>
                 <Typography gutterBottom> نوع فونت </Typography>
                 <Select
-                  value={this.state.selectedShapeInfo.shapeAttrs.fontFamily}
+                  value={ssa.fontFamily}
                   onChange={e => this.onShapeChanged({ fontFamily: e.target.value })}
                 >
                   {FONT_NAMES.map(fname =>
@@ -601,7 +601,7 @@ export default class HomePage extends React.Component {
 
                 <Typography gutterBottom> ارتفاع خط </Typography>
                 <Slider
-                  value={this.state.selectedShapeInfo.shapeAttrs.lineHeight}
+                  value={ssa.lineHeight}
                   onChange={(e, nv) => this.onShapeChanged({ lineHeight: nv })}
                   aria-labelledby="discrete-slider-small-steps"
                   step={0.1}
@@ -612,7 +612,7 @@ export default class HomePage extends React.Component {
 
                 <Typography gutterBottom> چینش </Typography>
                 <Select
-                  value={this.state.selectedShapeInfo.shapeAttrs.align}
+                  value={ssa.align}
                   onChange={e => this.onShapeChanged({ align: e.target.value })}
                 >
                   {['left', 'right', 'center'].map(v =>
@@ -621,75 +621,74 @@ export default class HomePage extends React.Component {
                 </Select>
               </>
               }
-              {('strokeWidth' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              {('strokeWidth' in ssa) && <>
                 <Typography gutterBottom> اندازه خط </Typography>
                 <Slider
-                  value={this.state.selectedShapeInfo.shapeAttrs.strokeWidth}
+                  value={ssa.strokeWidth}
                   onChange={(e, nv) => this.onShapeChanged({ strokeWidth: nv })}
                   aria-labelledby="discrete-slider-small-steps"
-                  step={this.state.selectedShapeInfo.shapeAttrs.kind === shapeKinds.Text ? 0.1 : 0.5}
-                  min={isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) ? 1 : 0}
+                  step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
+                  min={isKindOfLine(ssa.kind) ? 1 : 0}
                   max={20}
                   valueLabelDisplay="auto"
                 />
               </>
               }
               {/* color picking */}
-              {hasStroke(this.state.selectedShapeInfo.shapeAttrs.kind) &&
-                <>
-                  {
-                    !isKindOfLine(this.state.selectedShapeInfo.shapeAttrs.kind) &&
-                    <div>
-                      <span> رنگ داخل: </span>
-                      <ColorPreview
-                        onClick={() => {
-                          if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
-                            this.setState({ selectedTool: APP_TOOLS.NOTHING })
-                          else {
-                            this.setState({
-                              selectedTool: APP_TOOLS.FG_COLOR_PICKER,
-                              color: this.state.selectedShapeInfo.shapeAttrs.fill
-                            })
-                          }
-                        }}
-                        hexColor={this.state.selectedShapeInfo.shapeAttrs.fill} />
-                    </div>
-                  }
+              {hasStroke(ssa.kind) && <>
+                {
+                  !isKindOfLine(ssa.kind) &&
                   <div>
-                    <span> رنگ خط: </span>
+                    <span> رنگ داخل: </span>
                     <ColorPreview
                       onClick={() => {
-                        if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
+                        if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
                           this.setState({ selectedTool: APP_TOOLS.NOTHING })
                         else {
                           this.setState({
-                            selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
-                            color: this.state.selectedShapeInfo.shapeAttrs.stroke
+                            selectedTool: APP_TOOLS.FG_COLOR_PICKER,
+                            color: ssa.fill
                           })
                         }
                       }}
-                      hexColor={this.state.selectedShapeInfo.shapeAttrs.stroke} />
+                      hexColor={ssa.fill} />
                   </div>
-                  {
-                    this.isColorPicking() &&
-                    <div id="color-picker-wrapper">
-                      <SketchPicker
-                        disableAlpha
-                        color={this.state.color}
-                        onChange={(color) => this.setState({ color: color['hex'] })}
-                        onChangeComplete={(color) => {
-                          let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
-                          this.onShapeChanged({ [key]: color['hex'] })
-                        }}
-                      />
-                    </div>
-                  }
-                </>
+                }
+                <div>
+                  <span> رنگ خط: </span>
+                  <ColorPreview
+                    onClick={() => {
+                      if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
+                        this.setState({ selectedTool: APP_TOOLS.NOTHING })
+                      else {
+                        this.setState({
+                          selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
+                          color: ssa.stroke
+                        })
+                      }
+                    }}
+                    hexColor={ssa.stroke} />
+                </div>
+                {
+                  this.isColorPicking() &&
+                  <div id="color-picker-wrapper">
+                    <SketchPicker
+                      disableAlpha
+                      color={this.state.color}
+                      onChange={(color) => this.setState({ color: color['hex'] })}
+                      onChangeComplete={(color) => {
+                        let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
+                        this.onShapeChanged({ [key]: color['hex'] })
+                      }}
+                    />
+                  </div>
+                }
+              </>
               }
-              {('opacity' in this.state.selectedShapeInfo.shapeAttrs) && <>
+              {('opacity' in ssa) && <>
                 <Typography gutterBottom> شفافیت </Typography>
                 <Slider
-                  value={this.state.selectedShapeInfo.shapeAttrs.opacity}
+                  value={ssa.opacity}
                   onChange={(e, nv) => { this.onShapeChanged({ opacity: nv }) }}
                   aria-labelledby="discrete-slider-small-steps"
                   step={0.01}
@@ -699,25 +698,25 @@ export default class HomePage extends React.Component {
                 />
               </>
               }
-              {('hypes' in this.state.selectedShapeInfo.shapeAttrs) && <>
-                {this.state.selectedShapeInfo.shapeAttrs.hypes.map((v, i) => <>
+              {('hypes' in ssa) && <>
+                {ssa.hypes.map((v, i) => <>
                   <TextField
                     type="number"
                     label={'x' + i}
-                    value={this.state.selectedShapeInfo.shapeAttrs.hypes[i][0]}
+                    value={ssa.hypes[i][0]}
                     onChange={e => {
                       let newval = parseInt(e.target.value)
-                      let hypes = this.state.selectedShapeInfo.shapeAttrs.hypes
+                      let hypes = ssa.hypes
                       this.onShapeChanged({ hypes: replaceInArray(hypes, i, [newval, hypes[i][1]]) })
                     }}
                   />
                   <TextField
                     type="number"
                     label={'y' + i}
-                    value={this.state.selectedShapeInfo.shapeAttrs.hypes[i][1]}
+                    value={ssa.hypes[i][1]}
                     onChange={e => {
                       let newval = parseInt(e.target.value)
-                      let hypes = this.state.selectedShapeInfo.shapeAttrs.hypes
+                      let hypes = ssa.hypes
                       this.onShapeChanged({ hypes: replaceInArray(hypes, i, [hypes[i][0], newval]) })
                     }}
                   />

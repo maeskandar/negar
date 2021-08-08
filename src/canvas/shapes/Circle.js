@@ -1,16 +1,16 @@
 import Konva from "konva"
 
 import { shapeKinds } from '../'
-import { addCommonEvents, closedShapeProps, commonShapeProps, basicCoordinate, basicSize } from '../abstract'
+import { addCommonEvents, closedShapeProps, everyShapeProps, basicShape } from '../abstract'
 
 
 export function newCircle() {
+  // FIXME: x,y is the center coordinate, width & height doesn't work because circle has radian 
   let shape = new Konva.Ellipse({
     kind: shapeKinds.Circle,
-    ...commonShapeProps(),
 
-    ...basicCoordinate(),
-    ...basicSize(100, 100),
+    ...everyShapeProps(),
+    ...basicShape(0, 0, 100, 100, 0),
     ...closedShapeProps(),
   })
 

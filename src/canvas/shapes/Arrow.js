@@ -3,7 +3,7 @@ import Konva from "konva"
 import { shapeKinds } from '..'
 import {
   addCommonEvents,
-  commonShapeProps, closedShapeProps, basicCoordinate, basicSize
+  everyShapeProps, closedShapeProps, closedLine, basicShape
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
@@ -25,48 +25,35 @@ const
 
 export function newArrow() {
   let shape = new Konva.Line({
-    ...commonShapeProps(),
     kind: shapeKinds.Arrow,
-
-    ...basicCoordinate(),
-    ...basicSize(ORIGIN_WIDTH, ORIGIN_HEIGHT), // custom property
-
+    ...everyShapeProps(),
+    ...basicShape(0, 0, ORIGIN_WIDTH, ORIGIN_HEIGHT, 0), // custom property
     ...closedShapeProps(),
-
-    points: ORIGIN_POINTS,
-    lineCap: 'round',
-    lineJoin: 'round',
-    closed: true,
+    ...closedLine(ORIGIN_POINTS)
   })
+
+  function applyScale(sx, sy) {
+    shape.points(apply2DScale(shape.points(), sx, sy))
+  }
 
   addCommonEvents(shape, () => {
     let
       sx = shape.scaleX(),
       sy = shape.scaleY()
 
-      shape.scaleX(1)
-      shape.scaleY(1)
+    shape.scaleX(1)
+    shape.scaleY(1)
 
-      shape.attrs.width *= sx
-      shape.attrs.height *= sy
+    applyScale(sx, sy)
 
-    let newPoints = apply2DScale(ORIGIN_POINTS,
-      shape.attrs.width  / ORIGIN_WIDTH,
-      shape.attrs.height / ORIGIN_HEIGHT)
-
-    shape.points(newPoints)
+    shape.attrs.width *= sx
+    shape.attrs.height *= sy
     shape.attrs.rotation = validDeg(shape.rotation())
   })
 
   shape.setters = {
-    width: (w) => {
-      let newp = apply2DScale(shape.attrs.points, w/shape.attrs.width, 1)
-      shape.points(newp)
-    },
-    height: (h) => {
-      let newp = apply2DScale(shape.attrs.points, 1, h/shape.attrs.height)
-      shape.points(newp)
-    }
+    width: (w) => applyScale(w / shape.attrs.width, 1),
+    height: (h) => applyScale(1, h / shape.attrs.height),
   }
 
   return shape

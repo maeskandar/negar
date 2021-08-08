@@ -1,10 +1,11 @@
 import Konva from "konva"
 
 import { shapeKinds } from '../'
-import { addCommonEvents, commonShapeProps, basicCoordinate, basicSize } from '../abstract'
+import { addCommonEvents, everyShapeProps, basicShape } from '../abstract'
 
 export function newImage(src, w, h) {
   var imageObj = new Image()
+  imageObj.src = src
   imageObj.onload = () => {
     shape.width(w || imageObj.naturalWidth)
     shape.height(h || imageObj.naturalHeight)
@@ -15,16 +16,12 @@ export function newImage(src, w, h) {
   
   let shape = new Konva.Image({
     kind: shapeKinds.Image,
-    ...commonShapeProps(),
-
     image: imageObj,
-
-    ...basicCoordinate(),
-    ...basicSize(),
     opacity: 1,
+    
+    ...everyShapeProps(),
+    ...basicShape(),
   })
-
-  imageObj.src = src
 
   addCommonEvents(shape)
   return shape

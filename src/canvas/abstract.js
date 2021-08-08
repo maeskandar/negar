@@ -2,14 +2,14 @@ import Konva from "konva"
 import v1 from 'uuid/dist/v1'
 
 import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH } from "./"
-import { updateShape } from "./manager"
+import { updateShape, transformer } from "./manager"
 import { validDeg } from "../utils/math"
 
-
+// common shape events --------------------------
 export function resetTransformGen(shape, custom) {
   if (custom) {
     return () => {
-      custom()
+      custom(transformer)
       updateShape(shape.attrs.id)
     }
   }
@@ -32,54 +32,42 @@ export function resetTransformGen(shape, custom) {
     updateShape(shape.attrs.id)
   }
 }
-
 export function onDragMoveGen(shape) {
   return () => updateShape(shape.attrs.id)
 }
-
 export function addCommonEvents(shape, transformendCustomProc) {
   shape.on('transformend', resetTransformGen(shape, transformendCustomProc))
   shape.on('dragmove', onDragMoveGen(shape))
 }
 
-export function commonShapeProps() {
+// common shape props --------------------------
+export function everyShapeProps() {
   return {
     id: v1(),
     draggable: false
   }
 }
-
-export function fillableProps() {
+export function closedShapeProps() {
   return {
     opacity: 1,
     fill: Konva.Util.getRandomColor(),
-  }
-}
-
-export function strokeProps() {
-  return {
     stroke: DEFAULT_STROKE_COLOR,
     strokeWidth: DEFAULT_STROKE_WIDTH,
   }
 }
-
-export function closedShapeProps() {
+export function basicShape(x, y, w, h, rotation) {
   return {
-    ...fillableProps(),
-    ...strokeProps(),
-  }
-}
-
-export function basicSize(w = 100, h = 100) {
-  return {
-    width: w,
-    height: h
-  }
-}
-
-export function basicCoordinate(x = 0, y = 0, rotation = 0) {
-  return {
-    rotation,
     x, y,
+    width: w,
+    height: h,
+    rotation,
+  }
+}
+export function closedLine(points) {
+  return {
+    points,
+    lineCap: 'round',
+    lineJoin: 'round',
+    closed: true,
   }
 }
