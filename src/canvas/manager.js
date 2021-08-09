@@ -77,10 +77,15 @@ export function addShape(shapeObject) {
 export function updateShape(shape, newProps, trigger = false) {
     for (let prop in newProps) {
         let val = newProps[prop]
-        shape.setters[prop](val)
+
+        if (prop in shape.setters)
+            shape.setters[prop](val)
+        else
+            throw new Error(`setter '${prop}' for shape '${shape.props.kind}' is not defined`)
+
         shape.props[prop] = val
     }
-    
+
     if (trigger) triggerCanvas('update', shape)
 }
 
@@ -101,6 +106,7 @@ export function prepareDrawingLayer() {
         strokeWidth: 0,
         opacity: 0.7
     })
+    bgShape.listening(false)
 
     drawingLayer.add(bgShape)
 }
@@ -136,8 +142,13 @@ export function resetTempPage(shapeList = []) {
 }
 
 export function setBackgroundColor(color) {
-    let shape = newRectangle({ width: board.width(), height: board.height(), fill: color, strokeWidth: 0 })
-    shape.listening(false) // disvale events
+    let shape = newRectangle({
+        width: board.width(),
+        height: board.height(),
+        fill: color,
+        borderSize: 0
+    })
+    shape.listening(false)
     bgLayer.destroyChildren()
     bgLayer.add(shape)
     bgLayer.draw()

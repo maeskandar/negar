@@ -2,8 +2,8 @@ import Konva from "konva"
 
 import { shapeKinds } from '..'
 import {
-  addCommonEvents,
-  everyShapeProps, basicShape, closedLine
+  addCommonEvents, applyPropsToShape,
+  everyShapeProps, basicShape, closedLine, everyShapeAttrs
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
@@ -39,36 +39,48 @@ const
   BASE_WIDTH_RATIO = 1 - FLAG_WIDTH_RATIO,
   BASE_HEIGHT_RATIO = 1
 
-export function newFlag(options = { x: 0, y: 0, width: 200, height: 200, rotation: 0 }) {
+export function newFlag(options = {}) {
   let
+    props = {
+      ...everyShapeProps(),
+      kind: shapeKinds.Flag,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      rotation: 0,
+      flagFill: Konva.Util.getRandomColor(),
+      baseFill: Konva.Util.getRandomColor(),
+
+      ...options,
+    },
+
     base = new Konva.Line({
       isMain: false,
-      fill: Konva.Util.getRandomColor(),
+      fill: props.baseFill,
       ...closedLine(apply2DScale(BASE_ORIGIN_POINTS,
-        (options.width * BASE_WIDTH_RATIO) / ORIGIN_BASE_WIDTH,
-        (options.height * BASE_HEIGHT_RATIO) / ORIGIN_BASE_HEIGHT,
+        (props.width * BASE_WIDTH_RATIO) / ORIGIN_BASE_WIDTH,
+        (props.height * BASE_HEIGHT_RATIO) / ORIGIN_BASE_HEIGHT,
       )),
       ...basicShape(0, 0, ORIGIN_BASE_WIDTH, ORIGIN_BASE_HEIGHT, 0),
     }),
 
     flag = new Konva.Line({
       isMain: false,
-      fill: Konva.Util.getRandomColor(),
+      fill: props.flagFill,
       ...closedLine(apply2DScale(FLAG_ORIGIN_POINTS,
-        (options.width * FLAG_WIDTH_RATIO) / ORIGIN_FLAG_WIDTH,
-        (options.height * FLAG_HEIGHT_RATIO) / ORIGIN_FLAG_HEIGHT,
+        (props.width * FLAG_WIDTH_RATIO) / ORIGIN_FLAG_WIDTH,
+        (props.height * FLAG_HEIGHT_RATIO) / ORIGIN_FLAG_HEIGHT,
       )),
-      ...basicShape(0, 0, ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT, 0), // custom property
+      ...basicShape(0, 0, ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT, 0),
     }),
 
     group = new Konva.Group({
-      kind: shapeKinds.Flag,
-      flagFill: flag.attrs.fill,
-      baseFill: base.attrs.fill,
-      ...everyShapeProps(),
-      ...options
+      ...everyShapeAttrs(),
     })
 
+
+  group.props = props
   group.parts = {
     'flag': flag,
     'base': base
@@ -76,25 +88,31 @@ export function newFlag(options = { x: 0, y: 0, width: 200, height: 200, rotatio
 
   function scaleGroup(sx, sy) {
     for (let childName of ['flag', 'base'])
-      group.parts[childName].points(apply2DScale(group.parts[childName].points(), sx, sy))
+      group.parts[childName].points(
+        apply2DScale(group.parts[childName].points(), sx, sy))
+  }
+
+  group.setters = {
+    x: v => group.x(v),
+    y: v => group.y(v),
+    width: (w) => scaleGroup(w / group.props.width, 1),
+    height: (h) => scaleGroup(1, h / group.props.height),
+    rotation: r => group.rotation(r),
+    draggable: d => group.draggable(d),
   }
 
   addCommonEvents(group, () => {
     scaleGroup(group.scaleX(), group.scaleY())
 
-    group.attrs.width *= group.scaleX()
-    group.attrs.height *= group.scaleY()
+    group.props.width *= group.scaleX()
+    group.props.height *= group.scaleY()
 
     group.scaleX(1)
     group.scaleY(1)
-    group.attrs.rotation = validDeg(group.rotation())
+    group.props.rotation = validDeg(group.rotation())
     return true // rerender transformer
   })
-
-  group.setters = {
-    width: (w) => scaleGroup(w / group.attrs.width, 1),
-    height: (h) => scaleGroup(1, h / group.attrs.height),
-  }
+  applyPropsToShape(group.props, group.setters)
 
   group.add(flag, base)
   return group

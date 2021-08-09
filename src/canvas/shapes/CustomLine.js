@@ -1,7 +1,7 @@
 import Konva from "konva"
 
 import { shapeKinds, DEFAULT_STROKE_WIDTH } from '../'
-import { everyShapeProps, addCommonEvents, basicShape, closedLine } from '../abstract'
+import { everyShapeProps, addCommonEvents, basicShape, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters } from '../abstract'
 
 import { minMaxDistance, validDeg } from "../../utils/math"
 import { oddIndexes, evenIndexes, apply2DScale } from "../../utils/array"
@@ -12,42 +12,60 @@ export function newCustomLine(points) {
     originPoints = [0, 0,
       ...points.slice(2).map((p, i) => p - (i % 2 === 0 ? points[0] : points[1]))],
 
-    originWidth = minMaxDistance(evenIndexes(originPoints)),
-    originHeight = minMaxDistance(oddIndexes(originPoints))
+    shape = new Konva.Line({
+      ...everyShapeAttrs(),
+      points: originPoints,
+      lineCap: 'round',
+      lineJoin: 'round',
+    })
 
-  let shape = new Konva.Line({
-    kind: shapeKinds.CustomLine,
-    opacity: 1,
-    stroke: Konva.Util.getRandomColor(),
-    strokeWidth: DEFAULT_STROKE_WIDTH,
-    points: originPoints,
-    lineCap: 'round',
-    lineJoin: 'round',
-
+  shape.props = {
     ...everyShapeProps(),
-    ...basicShape(points[0], points[1], originWidth, originHeight, 0)
-  })
+    kind: shapeKinds.CustomLine,
+    
+    x: points[0],
+    y: points[1],
+    width:  minMaxDistance(evenIndexes(originPoints)),
+    height: minMaxDistance(oddIndexes(originPoints)),
+    rotation: 0,
+    borderColor: Konva.Util.getRandomColor(),
+    borderSize: DEFAULT_STROKE_WIDTH,
+    opacity: 1,
+  }
 
   function applyScale(sx, sy) {
     shape.points(apply2DScale(shape.points(), sx, sy))
   }
 
+  shape.setters = {
+    width: (w) => applyScale(w / shape.props.width, 1),
+    height: (h) => applyScale(1, h / shape.props.height),
+  }
+
+  applyDefaultSetters(shape, shape.setters, [
+    "x",
+    "y",
+    "fill",
+    "opacity",
+    "rotation",
+    ["borderColor", "stroke"],
+    ["borderSize", "strokeWidth"],
+    "points",
+    "draggable",
+  ])
+
   addCommonEvents(shape, () => {
     applyScale(shape.scaleX(), shape.scaleY())
 
-    shape.attrs.width *= shape.scaleX()
-    shape.attrs.height *= shape.scaleY()
+    shape.props.width *= shape.scaleX()
+    shape.props.height *= shape.scaleY()
+    shape.props.rotation = validDeg(shape.rotation())
 
     shape.scaleX(1)
     shape.scaleY(1)
-
-    shape.attrs.rotation = validDeg(shape.rotation())
   })
 
-  shape.setters = {
-    width: (w) => applyScale(w / shape.attrs.originWidth, 1),
-    height: (h) => applyScale(1, h / shape.attrs.originHeight),
-  }
+  applyPropsToShape(shape.props, shape.setters)
 
   return shape
 }

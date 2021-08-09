@@ -41,11 +41,19 @@ export function addCommonEvents(shape, transformendCustomFunc) {
   shape.on('dragend', onDragEndGen(shape))
 }
 
+export function applyDefaultSetters(shape, setters, defaultSetters) {
+  for (let ds of defaultSetters) {
+    if (Array.isArray(ds))
+      setters[ds[0]] = (...param) => shape[ds[1]](...param)
+    else
+      setters[ds] = (...param) => shape[ds](...param)
+  }
+}
+
 export function applyPropsToShape(props, setters) {
   for (let key in props) {
-    if (key in setters) {
+    if (key in setters)
       setters[key](props[key])
-    }
   }
 }
 

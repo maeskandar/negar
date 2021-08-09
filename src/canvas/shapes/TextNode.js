@@ -1,23 +1,44 @@
 import Konva from 'konva'
 import { shapeKinds } from '../'
-import { addCommonEvents, closedShapeProps, everyShapeProps, basicShape } from '../abstract'
+import { addCommonEvents, closedShapeProps, everyShapeProps, basicShape, applyPropsToShape, everyShapeAttrs, applyDefaultSetters } from '../abstract'
 
-export function newTextNode(text) {
-  let shape = new Konva.Text({
+export function newTextNode(options = {}) {
+  let shape = new Konva.Text({ ...everyShapeAttrs() })
+
+  shape.props = {
+    ...everyShapeProps(),
     kind: shapeKinds.Text,
-    strokeWidth: 0,
-    
-    text: text,
+
+    text: "salam",
     fontSize: 30,
     fontFamily: "Shabnam",
     lineHeight: 1,
     align: 'right',
 
-    ...everyShapeProps(),
-    ...closedShapeProps(),
-    ...basicShape(200,200, 200, undefined, 0),
-  })
+    ...basicShape(20, 20, 200, 100, 0),
+    fill: Konva.Util.getRandomColor(),
+
+    ...options,
+  }
+
+  shape.setters = {}
+  applyDefaultSetters(shape, shape.setters, [
+    "x",
+    "y",
+    "width",
+    "height",
+    "text",
+    "fontSize",
+    "fontFamily",
+    "lineHeight",
+    "align",
+    "fill",
+    "rotation",
+    "draggable"
+  ])
 
   addCommonEvents(shape)
+  applyPropsToShape(shape.props, shape.setters)
+
   return shape
 }

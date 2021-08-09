@@ -1,7 +1,7 @@
 import Konva from "konva"
 
-import { shapeKinds, DEFAULT_STROKE_WIDTH } from '..'
-import { everyShapeProps, addCommonEvents, closedLine, everyShapeAttrs } from '../abstract'
+import { shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from '..'
+import { everyShapeProps, addCommonEvents, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters } from '../abstract'
 
 import { validDeg } from "../../utils/math"
 import { apply2DScale } from "../../utils/array"
@@ -23,51 +23,41 @@ function genPoints(hypes, w, h) {
   return hypes.map(p => [p[0] / mxHypeWidth * w, (-p[1] / mxHypeHeight * h) + h]).flat()
 }
 
-export function newMountain(options = { x: 0, y: 0, width: 200, height: 200, rotation: 0}) {
+export function newMountain(options = {}) {
   let shape = new Konva.Line({
-    x: options.x,
-    y: options.y,
-
-    rotation: 0,
-    fill: "#171037",
-    stroke: "#46DCC3",
-    strokeWidth: DEFAULT_STROKE_WIDTH,
-
     ...closedLine(),
     ...everyShapeAttrs(),
   })
-
-
+  
+  
   shape.props = {
+    ...everyShapeProps(),
     kind: shapeKinds.Mountain,
     hypes: DEFAULT_HYPES,
     
-    x: shape.attrs.x,
-    y: shape.attrs.y,
-    width: options.width,
-    height: options.height,
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
     rotation: 0, 
     
-    fill: shape.attrs.fill,
-    borderColor: shape.attrs.stroke,
-    borderSize: shape.attrs.strokeWidth,
+    fill: Konva.Util.getRandomColor(),
+    borderColor: DEFAULT_STROKE_COLOR,
+    borderSize: DEFAULT_STROKE_WIDTH,
 
     ...options
   }
-
-  shape.points(genPoints(DEFAULT_HYPES, shape.props.width, shape.props.height))
 
   function applyScale(sx, sy) {
     shape.points(apply2DScale(shape.points(), sx, sy))
   }
 
-
   shape.setters = {
     width: (w) => {
-      applyScale(w / shape.attrs.width, 1)
+      applyScale(w / shape.props.width, 1)
     },
     height: (h) => {
-      applyScale(1, h / shape.attrs.height)
+      applyScale(1, h / shape.props.height)
     },
     hypes: (hs) => {
       shape.props.hypes = hs
@@ -79,8 +69,17 @@ export function newMountain(options = { x: 0, y: 0, width: 200, height: 200, rot
 
       shape.setters.hypes(shape.props.hypes.concat([p]))
     },
-    fill: shape.fill
   }
+
+  applyDefaultSetters(shape, shape.setters, [
+    "x",
+    "y",
+    "fill",
+    "rotation",
+    ["borderColor", "stroke"],
+    ["borderSize", "strokeWidth"],
+    "draggable",
+  ])
 
   addCommonEvents(shape, () => {
     applyScale(shape.scaleX(), shape.scaleY())
@@ -90,6 +89,8 @@ export function newMountain(options = { x: 0, y: 0, width: 200, height: 200, rot
     shape.scaleY(1)
     shape.props.rotation = validDeg(shape.rotation())
   })
+
+  applyPropsToShape(shape.props, shape.setters)
 
   return shape
 }

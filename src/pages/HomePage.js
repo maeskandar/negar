@@ -57,7 +57,7 @@ import {
   initCanvas, addShape, updateShape, removeShape,
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
-  setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, mainLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
+  setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
 } from "../canvas/manager"
 
 
@@ -174,7 +174,7 @@ export default class HomePage extends React.Component {
     addShape(newImage(e))
   }
   addText(text = 'تایپ کن') {
-    addShape(newTextNode(text))
+    addShape(newTextNode({ text }))
   }
 
   backStage() {
@@ -190,13 +190,11 @@ export default class HomePage extends React.Component {
   }
 
   handleCanvasClick(ev) {
-    if ('props' in ev.target) {
-      if ('id' in ev.target.props) { // if a shape selected
-        this.setSelectedId(ev.target.props.id)
-      }
-      else if ('props' in ev.target && ev.target.props["isMain"] === false) { // select parent node for advanced shapes like flag
-        this.setSelectedId(ev.target.parent.props.id)
-      }
+    if ('props' in ev.target && 'id' in ev.target.props) { // if a shape selected
+      this.setSelectedId(ev.target.props.id)
+    }
+    else if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
+      this.setSelectedId(ev.target.parent.props.id)
     }
     else if (!this.isInJamBoardMode() && this.state.selectedTool === APP_TOOLS.NOTHING) {
       this.setSelectedId(null)
@@ -263,7 +261,12 @@ export default class HomePage extends React.Component {
   handleCanvasMouseUp(e) {
     let st = this.state.selectedTool
     if (st === APP_TOOLS.LINE) {
-      let pos = e.target.getStage().getPointerPosition()
+      let
+        pos = e.target.getStage().getPointerPosition(),
+        dx = Math.abs(pos.x - drawingTempData[0]),
+        dy = Math.abs(pos.y - drawingTempData[1])
+
+      if (dx + dy < 32) return
       addShape(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
     }
     else if (st === APP_TOOLS.SHAPE_DRAWING) {
@@ -613,27 +616,17 @@ export default class HomePage extends React.Component {
                 <TextField
                   type="number"
                   label="عرض"
-                  value={
-                    prettyFloatNumber
-                      (ssa.kind === shapeKinds.StraghtLine ?
-                        ssa.points[2] :
-                        ssa.width)
-                  }
+                  value={ssa.width}
                   onChange={e => {
                     this.onShapeChanged({ width: parseInt(e.target.value) })
                   }}
                 />
               }
-              {ssa.kind !== shapeKinds.Text &&
+              {'height' in ssa &&
                 <TextField
                   type="number"
                   label="ارتفاع"
-                  value={
-                    prettyFloatNumber
-                      (ssa.kind === shapeKinds.StraghtLine ?
-                        ssa.points[3] :
-                        ssa.height)
-                  }
+                  value={ssa.height}
                   onChange={e => {
                     this.onShapeChanged({ height: parseInt(e.target.value) })
                   }}

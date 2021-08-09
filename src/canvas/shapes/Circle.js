@@ -3,7 +3,7 @@ import Konva from "konva"
 import { shapeKinds } from '../'
 import { validDeg } from "../../utils/math"
 import {
-  addCommonEvents, everyShapeAttrs, closedShapeProps, everyShapeProps, applyPropsToShape,
+  addCommonEvents, everyShapeAttrs, closedShapeProps, everyShapeProps, applyPropsToShape, applyDefaultSetters,
 } from '../abstract'
 import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH  } from "../"
 
@@ -21,7 +21,7 @@ export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotat
     y: 0,
     width: 100,
     height: 100,
-    fill: "#eee",
+    fill: Konva.Util.getRandomColor(),
     borderColor: DEFAULT_STROKE_COLOR,
     borderSize: DEFAULT_STROKE_WIDTH,
     opacity: 1,
@@ -59,16 +59,18 @@ export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotat
       if (isDrawing)
         shape.offsetY(-h / 2)
     },
-    x: v => shape.x(v),
-    y: v => shape.y(v),
-    fill: c => shape.fill(c),
-    rotation: v => shape.rotation(v),
-    draggable: d => shape.draggable(d),
-    opacity: o => shape.opacity(o),
-    borderColor: c => shape.stroke(c),
-    borderSize: s => shape.strokeWidth(s),
-    opacity: o => shape.opacity(o),
   }
+
+  applyDefaultSetters(shape, shape.setters, [
+    "x",
+    "y",
+    "fill",
+    "opacity",
+    "rotation",
+    "draggable",
+    ["borderColor", "stroke"],
+    ["borderSize", "strokeWidth"],
+  ])
 
   addCommonEvents(shape, () => {
     shape.setters.fixSize(

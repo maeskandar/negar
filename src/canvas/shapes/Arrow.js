@@ -1,9 +1,9 @@
 import Konva from "konva"
 
-import { shapeKinds } from '..'
+import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH, shapeKinds } from '..'
 import {
   addCommonEvents,
-  everyShapeProps, closedShapeProps, closedLine
+  everyShapeProps, closedShapeProps, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
@@ -23,37 +23,63 @@ const
   ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
   ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
-export function newArrow(options = { x: 0, y: 0, width: 100, height: 100, rotation: 0 }) {
-  let shape = new Konva.Line({
-    kind: shapeKinds.Arrow,
-
+export function newArrow(options = {}) {
+  let props = {
     ...everyShapeProps(),
-    ...closedShapeProps(),
+    kind: shapeKinds.Arrow,
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+    rotation: 0,
+    opacity: 1,
+    fill: Konva.Util.getRandomColor(),
+    borderSize: DEFAULT_STROKE_WIDTH,
+    borderColor: DEFAULT_STROKE_COLOR,
+
+    ...options
+  }
+
+  let shape = new Konva.Line({
+    ...everyShapeAttrs(),
     ...closedLine(apply2DScale(ORIGIN_POINTS,
       options.width / ORIGIN_WIDTH,
       options.height / ORIGIN_HEIGHT)),
-
-    ...options,
   })
+
+  shape.props = props
+
 
   function applyScale(sx, sy) {
     shape.points(apply2DScale(shape.points(), sx, sy))
   }
 
+  shape.setters = {
+    width: (w) => applyScale(w / shape.props.width, 1),
+    height: (h) => applyScale(1, h / shape.props.height),
+  }
+
+  applyDefaultSetters(shape, shape.setters, [
+    "x",
+    "y",
+    "fill",
+    "opacity",
+    "rotation",
+    ["borderColor", "stroke"],
+    ["borderSize", "strokeWidth"],
+    "draggable",
+  ])
+
   addCommonEvents(shape, () => {
     applyScale(shape.scaleX(), shape.scaleY())
-    shape.attrs.width *= shape.scaleX()
-    shape.attrs.height *= shape.scaleY()
+    shape.props.width *= shape.scaleX()
+    shape.props.height *= shape.scaleY()
 
     shape.scaleX(1)
     shape.scaleY(1)
-    shape.attrs.rotation = validDeg(shape.rotation())
+    shape.props.rotation = validDeg(shape.rotation())
   })
 
-  shape.setters = {
-    width: (w) => applyScale(w / shape.attrs.width, 1),
-    height: (h) => applyScale(1, h / shape.attrs.height),
-  }
-
+  applyPropsToShape(shape.props, shape.setters)
   return shape
 }
