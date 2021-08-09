@@ -6,44 +6,57 @@ import { updateShape, transformer } from "./manager"
 import { validDeg } from "../utils/math"
 
 // common shape events --------------------------
-export function resetTransformGen(shape, custom) {
-  if (custom) {
+export function resetTransformGen(shape, customFunc) {
+  if (customFunc) {
     return () => {
-      if (custom()) transformer.forceUpdate()
-      updateShape(shape.attrs.id)
+      if (customFunc()) transformer.forceUpdate()
+      updateShape(shape)
     }
   }
-  else return () => {
-    let
-      sx = shape.scaleX(),
-      sy = shape.scaleY(),
-      rotation = shape.getAbsoluteRotation()
+  else {
+    return () => {
+      let rotation = shape.getAbsoluteRotation()
 
-    shape.scaleX(1)
-    shape.scaleY(1)
+      updateShape(shape, {
+        width: shape.width() * shape.scaleX(),
+        height: shape.height() * shape.scaleY(),
+        rotation: validDeg(rotation),
+      })
 
-    let oldSize = shape.size()
-    shape.size({
-      width: oldSize.width * sx,
-      height: oldSize.height * sy
-    })
-    shape.attrs.rotation = validDeg(rotation)
-
-    updateShape(shape.attrs.id)
+      shape.scaleX(1)
+      shape.scaleY(1)
+    }
   }
 }
-export function onDragMoveGen(shape) {
-  return () => updateShape(shape.attrs.id)
+export function onDragEndGen(shape) {
+  return () => {
+    updateShape(shape, {
+      x: shape.x(),
+      y: shape.y(),
+    }, true)
+  }
 }
-export function addCommonEvents(shape, transformendCustomProc) {
-  shape.on('transformend', resetTransformGen(shape, transformendCustomProc))
-  shape.on('dragmove', onDragMoveGen(shape))
+export function addCommonEvents(shape, transformendCustomFunc) {
+  shape.on('transformend', resetTransformGen(shape, transformendCustomFunc))
+  shape.on('dragend', onDragEndGen(shape))
+}
+
+export function applyPropsToShape(props, setters) {
+  for (let key in props) {
+    if (key in setters) {
+      setters[key](props[key])
+    }
+  }
 }
 
 // common shape props --------------------------
 export function everyShapeProps() {
   return {
     id: v1(),
+  }
+}
+export function everyShapeAttrs() {
+  return {
     draggable: false
   }
 }

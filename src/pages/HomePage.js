@@ -88,7 +88,7 @@ export default class HomePage extends React.Component {
     imageModalShow: false,
     showStateModal: false,
 
-    selectedShapeInfo: { id: null, shapeAttrs: null },
+    selectedShapeInfo: { id: null, shapeProps: null },
     color: '#fff',
   }
 
@@ -190,13 +190,14 @@ export default class HomePage extends React.Component {
   }
 
   handleCanvasClick(ev) {
-    if ('id' in ev.target.attrs) { // if a shape selected
-      this.setSelectedId(ev.target.attrs.id)
+    if ('props' in ev.target) {
+      if ('id' in ev.target.props) { // if a shape selected
+        this.setSelectedId(ev.target.props.id)
+      }
+      else if ('props' in ev.target && ev.target.props["isMain"] === false) { // select parent node for advanced shapes like flag
+        this.setSelectedId(ev.target.parent.props.id)
+      }
     }
-    else if ("attrs" in ev.target && ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
-      this.setSelectedId(ev.target.parent.attrs.id)
-    }
-
     else if (!this.isInJamBoardMode() && this.state.selectedTool === APP_TOOLS.NOTHING) {
       this.setSelectedId(null)
       this.cancelOperation()
@@ -287,7 +288,7 @@ export default class HomePage extends React.Component {
       this.setState({
         selectedShapeInfo: {
           id: null,
-          shapeAttrs: null,
+          shapeProps: null,
         },
         showStateModal: false,
       })
@@ -304,9 +305,9 @@ export default class HomePage extends React.Component {
       this.setState({
         selectedShapeInfo: {
           id: shapeId,
-          shapeAttrs: shape.attrs,
+          shapeProps: shape.props,
         },
-        showStateModal: isStage(shape.attrs.kind)
+        showStateModal: isStage(shape.props.kind)
       })
     }
   }
@@ -407,22 +408,32 @@ export default class HomePage extends React.Component {
   // register native events 
   componentDidMount() {
     window.addEventListener('keydown', this.keyboardEvents) // TODO use external dependency to manager keyboard events
-
     initCanvas({
       onClick: this.handleCanvasClick,
       onMouseDown: this.handleCanvasMouseDown,
       onMouseMove: this.handleCanvasMouseMove,
       onMouseUp: this.handleCanvasMouseUp
     })
-
     setBackgroundColor('#eeeeee')
+    window.addEventListener('canvas', e => {
+      let type = e.detail.type
+
+      if (type === "create") {
+      }
+      else if (type === "update") {
+        this.setState({ selectedShapeInfo: { ...this.state.selectedShapeInfo } })
+      }
+      else if (type === "delete") {
+      }
+    })
+
   }
   componentWillUnmount() {
     window.removeEventListener('keydown', this.keyboardEvents)
   }
   render() {
     let
-      ssa = this.state.selectedShapeInfo.shapeAttrs,
+      ssa = this.state.selectedShapeInfo.shapeProps,
       ss = this.state.selectedShapeInfo.id ?
         shapes[this.state.selectedShapeInfo.id] :
         null
@@ -696,69 +707,65 @@ export default class HomePage extends React.Component {
                 </Select>
               </>
               }
-              {('strokeWidth' in ssa) && <>
-                <Typography gutterBottom> اندازه خط </Typography>
-                <Slider
-                  value={ssa.strokeWidth}
-                  onChange={(e, nv) => this.onShapeChanged({ strokeWidth: nv })}
-                  aria-labelledby="discrete-slider-small-steps"
-                  step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
-                  min={isKindOfLine(ssa.kind) ? 1 : 0}
-                  max={20}
-                  valueLabelDisplay="auto"
-                />
-              </>
-              }
-              {/* color picking */}
-              {hasStroke(ssa.kind) && <>
-                {
-                  !isKindOfLine(ssa.kind) &&
+              {
+                ('borderSize' in ssa) && <>
+                  <Typography gutterBottom> اندازه خط </Typography>
+                  <Slider
+                    value={ssa.borderSize}
+                    onChange={(e, nv) => this.onShapeChanged({ borderSize: nv })}
+                    // aria-labelledby="discrete-slider-small-steps"
+                    step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
+                    min={isKindOfLine(ssa.kind) ? 1 : 0}
+                    max={20}
+                    valueLabelDisplay="auto"
+                  />
                   <div>
-                    <span> رنگ داخل: </span>
+                    <span> رنگ خط: </span>
                     <ColorPreview
+                      hexColor={ssa.borderColor}
                       onClick={() => {
-                        if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
+                        if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
                           this.setState({ selectedTool: APP_TOOLS.NOTHING })
                         else {
                           this.setState({
-                            selectedTool: APP_TOOLS.FG_COLOR_PICKER,
-                            color: ssa.fill
+                            selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
+                            color: ssa.borderColor
                           })
                         }
                       }}
-                      hexColor={ssa.fill} />
+                    />
                   </div>
-                }
-                <div>
-                  <span> رنگ خط: </span>
+                </>
+              }
+              {
+                ('fill' in ssa) && <div>
+                  <span> رنگ داخل: </span>
                   <ColorPreview
                     onClick={() => {
-                      if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
+                      if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
                         this.setState({ selectedTool: APP_TOOLS.NOTHING })
                       else {
                         this.setState({
-                          selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
-                          color: ssa.stroke
+                          selectedTool: APP_TOOLS.FG_COLOR_PICKER,
+                          color: ssa.fill
                         })
                       }
                     }}
-                    hexColor={ssa.stroke} />
+                    hexColor={ssa.fill} />
+                </div>}
+              {
+                this.isColorPicking() &&
+                <div id="color-picker-wrapper">
+                  <SketchPicker
+                    disableAlpha
+                    color={this.state.color}
+                    onChange={(color) => this.setState({ color: color['hex'] })}
+                    onChangeComplete={(color) => {
+                      let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'borderColor' : 'fill'
+                      this.onShapeChanged({ [key]: color['hex'] })
+                    }}
+                  />
                 </div>
-                {
-                  this.isColorPicking() &&
-                  <div id="color-picker-wrapper">
-                    <SketchPicker
-                      disableAlpha
-                      color={this.state.color}
-                      onChange={(color) => this.setState({ color: color['hex'] })}
-                      onChangeComplete={(color) => {
-                        let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'stroke' : 'fill'
-                        this.onShapeChanged({ [key]: color['hex'] })
-                      }}
-                    />
-                  </div>
-                }
-              </>
               }
               {('opacity' in ssa) && <>
                 <Typography gutterBottom> شفافیت </Typography>

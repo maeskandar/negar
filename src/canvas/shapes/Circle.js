@@ -2,25 +2,33 @@ import Konva from "konva"
 
 import { shapeKinds } from '../'
 import { validDeg } from "../../utils/math"
-import { addCommonEvents, closedShapeProps, everyShapeProps } from '../abstract'
-import { mainLayer } from "../manager"
+import {
+  addCommonEvents, everyShapeAttrs, closedShapeProps, everyShapeProps, applyPropsToShape,
+} from '../abstract'
+import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH  } from "../"
 
 
 export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotation: 0 }) {
   let shape = new Konva.Ellipse({
-    kind: shapeKinds.Circle,
-
-    ...everyShapeProps(),
+    ...everyShapeAttrs(),
     ...closedShapeProps(),
-
-    ...options,
-
-    radiusX: options.width / 2,
-    radiusY: options.height / 2,
   })
 
-  let isDrawing = false
+  shape.props = {
+    ...everyShapeProps(),
+    kind: shapeKinds.Circle,
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+    fill: "#eee",
+    borderColor: DEFAULT_STROKE_COLOR,
+    borderSize: DEFAULT_STROKE_WIDTH,
+    opacity: 1,
+    ...options
+  }
 
+  let isDrawing = false
   shape.events = {
     drawStart: () => {
       isDrawing = true
@@ -34,11 +42,13 @@ export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotat
   }
 
   shape.setters = {
-    fixSize: () => {
-      shape.setters.width(shape.attrs.width)
-      shape.setters.height(shape.attrs.height)
-    },
+    fixSize: (w, h) => {
+      shape.props.width = w
+      shape.props.height = h
 
+      shape.setters.width(w)
+      shape.setters.height(h)
+    },
     width: w => {
       shape.radiusX(Math.abs(w) / 2)
       if (isDrawing)
@@ -49,18 +59,29 @@ export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotat
       if (isDrawing)
         shape.offsetY(-h / 2)
     },
+    x: v => shape.x(v),
+    y: v => shape.y(v),
+    fill: c => shape.fill(c),
+    rotation: v => shape.rotation(v),
+    draggable: d => shape.draggable(d),
+    opacity: o => shape.opacity(o),
+    borderColor: c => shape.stroke(c),
+    borderSize: s => shape.strokeWidth(s),
+    opacity: o => shape.opacity(o),
   }
 
   addCommonEvents(shape, () => {
-    shape.attrs.width *= shape.scaleX()
-    shape.attrs.height *= shape.scaleY()
-
-    shape.setters.fixSize()
+    shape.setters.fixSize(
+      shape.props.width * shape.scaleX(),
+      shape.props.height * shape.scaleY(),
+    )
 
     shape.scaleX(1)
     shape.scaleY(1)
-    shape.attrs.rotation =  validDeg(shape.rotation())
+    shape.props.rotation = validDeg(shape.rotation())
   })
+
+  applyPropsToShape(shape.props, shape.setters)
 
   return shape
 }

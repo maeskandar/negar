@@ -71,34 +71,24 @@ export function triggerShapeEvent(shape, event, ...data) {
 }
 
 export function addShape(shapeObject) {
-    shapes[shapeObject.attrs.id] = shapeObject
+    shapes[shapeObject.props.id] = shapeObject
     triggerCanvas('create', shapeObject)
 }
-export function updateShape(shape, newAttrs, mode) {
-    for (let prop in newAttrs) {
-        let val = newAttrs[prop]
-
-        if ('setters' in shape && prop in shape.setters)
-            shape.setters[prop](val, mode)
-        else if (prop === 'width')
-            shape.size({ width: val, height: shape.attrs.height })
-        else if (prop === 'height')
-            shape.size({ width: shape.attrs.width, height: val })
-        else
-            shape[prop](val)
-
-        shape.attrs[prop] = val
+export function updateShape(shape, newProps, trigger = false) {
+    for (let prop in newProps) {
+        let val = newProps[prop]
+        shape.setters[prop](val)
+        shape.props[prop] = val
     }
-
-
-    triggerCanvas('update', shape)
+    
+    if (trigger) triggerCanvas('update', shape)
 }
 
 export function removeShape(shape) {
     shape.destroy()
     mainLayer.draw()
     triggerCanvas('delete', shape)
-    delete shapes[shape.attrs.id]
+    delete shapes[shape.props.id]
 }
 
 // other functions
