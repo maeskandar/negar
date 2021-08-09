@@ -6,7 +6,7 @@ import {
   everyShapeProps, closedShapeProps, closedLine
 } from "../abstract"
 
-import { oddIndexes, evenIndexes, apply2DScale, apply2DScaleProtected } from '../../utils/array'
+import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
 import { minMaxDistance, validDeg } from '../../utils/math'
 
 const
@@ -21,8 +21,7 @@ const
   ].map(p => [p[0], p[1] + 50]).flat(), // to make coordiantes from (0, 0)
 
   ORIGIN_WIDTH = minMaxDistance(evenIndexes(ORIGIN_POINTS)),
-  ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS)),
-  MIN_ORIGTIN_POINTS = apply2DScale(ORIGIN_POINTS, 15 / ORIGIN_WIDTH, 30 / ORIGIN_HEIGHT)
+  ORIGIN_HEIGHT = minMaxDistance(oddIndexes(ORIGIN_POINTS))
 
 export function newArrow(options = { x: 0, y: 0, width: 100, height: 100, rotation: 0 }) {
   let shape = new Konva.Line({
@@ -38,7 +37,7 @@ export function newArrow(options = { x: 0, y: 0, width: 100, height: 100, rotati
   })
 
   function applyScale(sx, sy) {
-    shape.points(apply2DScaleProtected(shape.points(), sx, sy, MIN_ORIGTIN_POINTS))
+    shape.points(apply2DScale(shape.points(), sx, sy))
   }
 
   addCommonEvents(shape, () => {

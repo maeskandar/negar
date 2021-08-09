@@ -147,12 +147,12 @@ export default class HomePage extends React.Component {
 
   // related to the canvas
   startDrawingShape(fn) {
-    this.setSelectedId(null)
     this.setState({
       appState: addToSet(this.state.appState, APP_STATES.DRAWING),
       selectedTool: APP_TOOLS.SHAPE_DRAWING,
     })
     drawingTempFunction = fn
+    this.setSelectedId(null)
     prepareDrawingLayer()
   }
   addMountain() {
@@ -276,8 +276,7 @@ export default class HomePage extends React.Component {
   setSelectedId(shapeId) {
     let lastSelectedId = this.state.selectedShapeInfo.id
 
-    if (lastSelectedId === shapeId)
-      return
+    if (lastSelectedId === shapeId) return
 
     else if (shapeId === null && lastSelectedId !== null) {
       let lastShape = shapes[this.state.selectedShapeInfo.id]

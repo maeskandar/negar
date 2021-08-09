@@ -3,7 +3,7 @@ import Konva from "konva"
 import { shapeKinds, DEFAULT_STROKE_WIDTH } from '../'
 import { everyShapeProps, addCommonEvents, basicShape } from '../abstract'
 
-import {  apply2DScaleProtected } from '../../utils/array'
+import { apply2DScale } from '../../utils/array'
 
 export function newStraghtLine(points) {
   let
@@ -24,7 +24,7 @@ export function newStraghtLine(points) {
   })
 
   function applyScale(sx, sy) {
-    shape.points(apply2DScaleProtected(shape.points(), sx, sy))
+    shape.points(apply2DScale(shape.points(), sx, sy))
   }
 
   addCommonEvents(shape, () => {
