@@ -28,7 +28,10 @@ export function resetTransformGen(shape, customFunc) {
     }
   }
 }
-export function onDragEndGen(shape) {
+export function onDragEndGen(shape, fn) {
+  if (fn) 
+    return fn
+
   return () => {
     updateShape(shape, {
       x: shape.x(),
@@ -36,9 +39,9 @@ export function onDragEndGen(shape) {
     }, true)
   }
 }
-export function addCommonEvents(shape, transformendCustomFunc) {
-  shape.on('transformend', resetTransformGen(shape, transformendCustomFunc))
-  shape.on('dragend', onDragEndGen(shape))
+export function addCommonEvents(shape, ...customFns) {
+  shape.on('transformend', resetTransformGen(shape, customFns[0]))
+  shape.on('dragend', onDragEndGen(shape, customFns[1]))
 }
 
 export function applyDefaultSetters(shape, setters, defaultSetters) {
