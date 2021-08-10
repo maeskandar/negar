@@ -43,22 +43,18 @@ import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } 
 import './home.css'
 
 // canvas import 
+import { shapeKinds, isKindOfLine, isStage } from "../canvas"
 import {
   newArrow, newCircle, newImage, newRectangle,
   newStraghtLine, newCustomLine, newSimpleLine, newTextNode
 } from "../canvas/shapes"
-
-import { newFlag, newMountain } from "../canvas/stages"
-
-import { shapeKinds, isKindOfLine, isStage } from "../canvas"
-
+import { newFlag, newMountain, newStage } from "../canvas/stages"
 import {
   initCanvas, addShape, updateShape, removeShape,
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
   setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
 } from "../canvas/manager"
-import { newStage } from "../canvas/stages/empty"
 
 
 function TabPanel(props) {

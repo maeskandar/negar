@@ -1,4 +1,5 @@
 import { newMountain } from "./mountain"
 import { newFlag } from "./flag"
+import { newStage } from "./empty"
 
-export {newMountain, newFlag}
+export {newMountain, newFlag, newStage}
