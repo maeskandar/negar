@@ -18,11 +18,11 @@ export function resetTransformGen(shape, customFunc) {
       let rotation = shape.getAbsoluteRotation()
 
       updateShape(shape, {
-        width: shape.width() * shape.scaleX(),
-        height: shape.height() * shape.scaleY(),
+        width: shape.props.width * shape.scaleX(),
+        height: shape.props.height * shape.scaleY(),
         rotation: validDeg(rotation),
       })
-
+      
       shape.scaleX(1)
       shape.scaleY(1)
     }

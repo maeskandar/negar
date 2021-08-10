@@ -75,9 +75,7 @@ export function newFlag(options = {}) {
       ...basicShape(0, 0, ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT, 0),
     }),
 
-    group = new Konva.Group({
-      ...everyShapeAttrs(),
-    })
+    group = new Konva.Group({ ...everyShapeAttrs(), })
 
 
   group.props = props
@@ -110,6 +108,7 @@ export function newFlag(options = {}) {
     group.scaleX(1)
     group.scaleY(1)
     group.props.rotation = validDeg(group.rotation())
+
     return true // rerender transformer
   })
   applyPropsToShape(group.props, group.setters)

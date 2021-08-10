@@ -3,7 +3,7 @@ import Konva from "konva"
 import { DEFAULT_STROKE_WIDTH, shapeKinds } from '../'
 import { addCommonEvents, applyDefaultSetters, applyPropsToShape, closedShapeProps, everyShapeProps } from '../abstract'
 
-export function newRectangle(options = {}) {
+export function newRectangle(options = {}, isMain= true) {
   let props = { // defaults
     ...everyShapeProps(),
     kind: shapeKinds.Reactangle,
@@ -16,10 +16,13 @@ export function newRectangle(options = {}) {
     borderSize: DEFAULT_STROKE_WIDTH,
     opacity: 1,
 
+    dash: [],
+
     ...options,
   }
 
   let shape = new Konva.Rect({
+    isMain,
     ...everyShapeProps(),
     ...closedShapeProps(),
   })
@@ -32,6 +35,7 @@ export function newRectangle(options = {}) {
     "x",
     "y",
     "fill",
+    "dash",
     "opacity",
     "rotation",
     ["borderColor", "stroke"],

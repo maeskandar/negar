@@ -9,8 +9,9 @@ import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH } from "../"
 import { updateShape } from "../manager"
 
 
-export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotation: 0 }) {
+export function newCircle(options = { x: 0, y: 0, width: 100, height: 100, rotation: 0 }, isMain = true) {
   let shape = new Konva.Ellipse({
+    isMain,
     ...everyShapeAttrs(),
     ...closedShapeProps(),
   })

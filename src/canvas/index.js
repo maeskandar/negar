@@ -12,13 +12,11 @@ export const
     Text: 6,
     Mountain: 7,
     Flag: 8,
+    EmptyStage: 9,
   }
 
 export function isKindOfLine(kindNumber) {
   return kindNumber === shapeKinds.StraghtLine || kindNumber === shapeKinds.CustomLine
-}
-export function hasStroke(kindNumber) {
-  return kindNumber !== shapeKinds.Text || kindNumber !== shapeKinds.Image
 }
 export function isShape(kindNumber) {
   return kindNumber < 7

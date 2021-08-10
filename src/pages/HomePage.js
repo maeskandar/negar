@@ -1,7 +1,6 @@
 import React from "react"
 
 // utilities
-import randInt from 'random-int' // TODO we can remove it in future
 import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
 import { protectedMin, pointsDistance, prettyFloatNumber } from "../utils/math"
@@ -37,7 +36,7 @@ import {
   ExitToApp as EnterIcon,
   Close as CloseIcon,
   ArrowBackIos as BackIcon,
-  DraftsTwoTone
+  LibraryAdd as AddStageIcon
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
 import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
@@ -51,7 +50,7 @@ import {
 
 import { newFlag, newMountain } from "../canvas/stages"
 
-import { shapeKinds, isKindOfLine, hasStroke, isStage } from "../canvas"
+import { shapeKinds, isKindOfLine, isStage } from "../canvas"
 
 import {
   initCanvas, addShape, updateShape, removeShape,
@@ -59,6 +58,7 @@ import {
   board, shapes, tempShapes,
   setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
 } from "../canvas/manager"
+import { newStage } from "../canvas/stages/empty"
 
 
 function TabPanel(props) {
@@ -99,6 +99,7 @@ export default class HomePage extends React.Component {
     this.isColorPicking = this.isColorPicking.bind(this)
     this.isSomethingSelected = this.isSomethingSelected.bind(this)
     this.addMountain = this.addMountain.bind(this)
+    this.addEmptyStage = this.addEmptyStage.bind(this)
     this.addFlag = this.addFlag.bind(this)
     this.addRectangle = this.addRectangle.bind(this)
     this.addCircle = this.addCircle.bind(this)
@@ -158,6 +159,9 @@ export default class HomePage extends React.Component {
   addMountain() {
     this.startDrawingShape(newMountain)
   }
+  addEmptyStage() {
+    this.startDrawingShape(newStage)
+  }
   addFlag() {
     this.startDrawingShape(newFlag)
   }
@@ -190,11 +194,11 @@ export default class HomePage extends React.Component {
   }
 
   handleCanvasClick(ev) {
-    if ('props' in ev.target && 'id' in ev.target.props) { // if a shape selected
-      this.setSelectedId(ev.target.props.id)
-    }
-    else if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
+    if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
       this.setSelectedId(ev.target.parent.props.id)
+    }
+    else if ('props' in ev.target && 'id' in ev.target.props) { // if a shape selected
+      this.setSelectedId(ev.target.props.id)
     }
     else if (!this.isInJamBoardMode() && this.state.selectedTool === APP_TOOLS.NOTHING) {
       this.setSelectedId(null)
@@ -487,6 +491,11 @@ export default class HomePage extends React.Component {
               !this.state.appState.has(APP_STATES.DRAWING) && <>
                 <ToolBarBtn
                   title="mountain"
+                  onClick={this.addEmptyStage}
+                  iconEl={<AddStageIcon />}
+                />
+                <ToolBarBtn
+                  title="mountain"
                   onClick={this.addMountain}
                   iconEl={<MointainIcon />}
                 />
@@ -502,7 +511,7 @@ export default class HomePage extends React.Component {
                 />
                 <ToolBarBtn
                   title="دایره"
-                  onClick={() => this.addCircle(randInt(100), randInt(100))}
+                  onClick={() => this.addCircle()}
                   iconEl={<CircleIcon />}
                 />
                 <ToolBarBtn
@@ -700,36 +709,34 @@ export default class HomePage extends React.Component {
                 </Select>
               </>
               }
-              {
-                ('borderSize' in ssa) && <>
-                  <Typography gutterBottom> اندازه خط </Typography>
-                  <Slider
-                    value={ssa.borderSize}
-                    onChange={(e, nv) => this.onShapeChanged({ borderSize: nv })}
-                    // aria-labelledby="discrete-slider-small-steps"
-                    step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
-                    min={isKindOfLine(ssa.kind) ? 1 : 0}
-                    max={20}
-                    valueLabelDisplay="auto"
-                  />
-                  <div>
-                    <span> رنگ خط: </span>
-                    <ColorPreview
-                      hexColor={ssa.borderColor}
-                      onClick={() => {
-                        if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
-                          this.setState({ selectedTool: APP_TOOLS.NOTHING })
-                        else {
-                          this.setState({
-                            selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
-                            color: ssa.borderColor
-                          })
-                        }
-                      }}
-                    />
-                  </div>
-                </>
-              }
+              {'borderSize' in ssa && <>
+                <Typography gutterBottom> اندازه خط </Typography>
+                <Slider
+                  value={ssa.borderSize}
+                  onChange={(e, nv) => this.onShapeChanged({ borderSize: nv })}
+                  // aria-labelledby="discrete-slider-small-steps"
+                  step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
+                  min={isKindOfLine(ssa.kind) ? 1 : 0}
+                  max={20}
+                  valueLabelDisplay="auto"
+                />
+              </>}
+              {'borderColor' in ssa && <div>
+                <span>  رنگ خط </span>
+                <ColorPreview
+                  hexColor={ssa.borderColor}
+                  onClick={() => {
+                    if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
+                      this.setState({ selectedTool: APP_TOOLS.NOTHING })
+                    else {
+                      this.setState({
+                        selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
+                        color: ssa.borderColor
+                      })
+                    }
+                  }}
+                />
+              </div>}
               {
                 ('fill' in ssa) && <div>
                   <span> رنگ داخل: </span>
