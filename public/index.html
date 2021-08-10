@@ -30,55 +30,7 @@
 </head>
 
 <body>
-  <div id="root">
-    {/* konva canvas */}
-    <Stage
-      width={window.innerWidth}
-      height={window.innerHeight}
-      ref={stageEl}
-      onClick={handleClick}
-      onMouseDown={handleMouseDown}
-      onMousemove={handleMouseMove}
-      onMouseup={handleMouseUp}
-    >
-  
-      {/* background layer */}
-      <Layer>
-        <KImage
-          width={window.innerWidth}
-          height={window.innerHeight}
-          image={backgroundimage.imageObj}
-          name="bg-layer"
-        />
-      </Layer>
-  
-      {/* main layer */}
-      <Layer ref={mainLayer}>
-        {shapes.map((shape, i) => shapeRenderer(
-          shape,
-          shape.id === selectedShapeInfo.id,
-          () => onShapeSelected(shape.id),
-          (newAttrs) => onShapeChanged(i, newAttrs),
-        ))}
-      </Layer>
-  
-      {/* drawing preview layer */}
-      {isInJamBoardMode() &&
-        <Layer ref={drawingPreviewLayer}>
-          <Rect
-            width={window.innerWidth}
-            height={window.innerHeight}
-            fill="#fff"
-            opacity={0.5}
-          />
-          {tempShapes.map((shape, i) =>
-            <SimpleLine
-              key={shape.id}
-              shapeProps={{ ...shape }}
-            />)}
-        </Layer>}
-    </Stage> 
-  </div>
+  <div id="root"> </div>
 </body>
 
 </html>
