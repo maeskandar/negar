@@ -20,7 +20,7 @@ export const
     META: 2,
   },
 
-  ERASER_RADIUS = 10, // px
+  ERASER_RADIUS = 10, 
   PIXEL_RATIO_DOWNLAOD = 1,
   FONT_NAMES = [
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',

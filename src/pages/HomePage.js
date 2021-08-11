@@ -72,7 +72,6 @@ let
   drawingTempFunction = null,
   drawingTempShape = null
 
-
 export default class HomePage extends React.Component {
   state = {
     route: [],
