@@ -149,7 +149,7 @@ export default class HomePage extends React.Component {
   }
 
   // related to the canvas
-  addShape(newShape, nodes, trigger = true){
+  addShape(newShape, nodes, trigger = true) {
     addShapes(newShape, nodes, this.getFatherShapeId(), trigger)
   }
   startDrawingShape(fn) {
@@ -186,11 +186,6 @@ export default class HomePage extends React.Component {
     this.addShape(newTextNode({ text }))
   }
 
-  backStage() {
-    let route = this.state.route
-    if (route.length === 0) return
-    this.setState({ route: removeInArray(route, route.length - 1) })
-  }
   getFatherShapeId() {
     let r = this.state.route
     return (r.length === 0) ? 'root' : r[r.length - 1]
@@ -203,6 +198,12 @@ export default class HomePage extends React.Component {
       route: this.state.route.concat(shapeId),
       showStateModal: false
     })
+  }
+  backStage() {
+    let r = this.state.route
+    if (r.length === 0) return
+    renderCanvas(r, undefined, -1)
+    this.setState({ route: removeInArray(r, r.length - 1) })
   }
 
   onCanvasClick(ev) {

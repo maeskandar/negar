@@ -81,7 +81,6 @@ export function newMountain(options = {}) {
     ["borderSize", "strokeWidth"],
     "draggable",
   ])
-
   addCommonEvents(shape, () => {
     applyScale(shape.scaleX(), shape.scaleY())
     shape.props.width *= shape.scaleX()
@@ -90,7 +89,6 @@ export function newMountain(options = {}) {
     shape.scaleY(1)
     shape.props.rotation = validDeg(shape.rotation())
   })
-
   applyPropsToShape(shape.props, shape.setters)
 
   return newStage(options, [shape])

@@ -94,24 +94,33 @@ export function removeShape(shape) {
 export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
     if (relativeLevel === 0) { }
     else {
-        let
-            relativeRoot = (currentPath.length === 0) ?
-                shapes['root'] :
-                shapes[currentPath[currentPath.length - 1]],
+        if (relativeLevel > 0) {
+            let
+                relativeRoot = (currentPath.length === 0) ?
+                    shapes['root'] :
+                    shapes[currentPath[currentPath.length - 1]],
 
-            targetStage = shapes[shapeid]
+                targetStage = shapes[shapeid]
 
-        // mainLayer.clear(...relativeRoot.nodes)
+            for (let n of relativeRoot.nodes)
+                n.remove()
 
-        for (let n of relativeRoot.nodes)
-            n.remove()
+            mainLayer.add(targetStage)
 
-        mainLayer.add(targetStage)
+        }
+        else { // relativeLevel < 0
+            let
+                relativeRoot = currentPath.length === 1 ?
+                    shapes['root'] :
+                    shapes[currentPath.length - 2],
 
-        // for (let n of shapes[shapeid].nodes) {
-        //     // set properties
-        //     mainLayer.add(n)
-        // }
+                stage = shapes[currentPath[currentPath.length - 1]]
+
+            stage.remove()
+
+            for (let n of relativeRoot.nodes)
+                mainLayer.add(n)
+        }
     }
 }
 
