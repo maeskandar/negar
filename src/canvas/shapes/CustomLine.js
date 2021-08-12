@@ -1,16 +1,24 @@
 import Konva from "konva"
 
 import { shapeKinds, DEFAULT_STROKE_WIDTH } from '../'
-import { everyShapeProps, addCommonEvents, basicShape, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters } from '../abstract'
+import { everyShapeProps, addCommonEvents, everyShapeAttrs, applyPropsToShape, applyDefaultSetters } from '../abstract'
 
-import { minMaxDistance, validDeg } from "../../utils/math"
+import { validDeg } from "../../utils/math"
 import { oddIndexes, evenIndexes, apply2DScale } from "../../utils/array"
 
 
 export function newCustomLine(points) {
   let
-    originPoints = [0, 0,
-      ...points.slice(2).map((p, i) => p - (i % 2 === 0 ? points[0] : points[1]))],
+    eip = evenIndexes(points),
+    oip = oddIndexes(points),
+    mxx = Math.max(...eip),
+    mnx = Math.min(...eip),
+    mxy = Math.max(...oip),
+    mny = Math.min(...oip),
+    w = mxx - mnx,
+    h = mxy - mny,
+
+    originPoints = points.map((p, i) => p - (i % 2 === 0 ? mnx : mny)),
 
     shape = new Konva.Line({
       ...everyShapeAttrs(),
@@ -23,10 +31,10 @@ export function newCustomLine(points) {
     ...everyShapeProps(),
     kind: shapeKinds.CustomLine,
     
-    x: points[0],
-    y: points[1],
-    width:  minMaxDistance(evenIndexes(originPoints)),
-    height: minMaxDistance(oddIndexes(originPoints)),
+    x: mnx,
+    y: mny,
+    width:  w,
+    height: h,
     rotation: 0,
     borderColor: Konva.Util.getRandomColor(),
     borderSize: DEFAULT_STROKE_WIDTH,

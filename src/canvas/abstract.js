@@ -79,7 +79,7 @@ export function closedShapeProps() {
     strokeWidth: DEFAULT_STROKE_WIDTH,
   }
 }
-export function basicShape(x, y, w, h, rotation) {
+export function basicShape(x, y, w, h, rotation = 0) {
   return {
     x, y,
     width: w,

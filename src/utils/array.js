@@ -36,4 +36,5 @@ export const
     arr.map((p, i) => p * (i % 2 === 0 ? sx : sy)),
 
   apply2DScaleProtected = (arr, sx, sy, minArr) =>
-    arr.map((p, i) => protectedMinSigned(p * (i % 2 === 0 ? sx : sy), minArr[i])),
+    arr.map((p, i) => protectedMinSigned(p * (i % 2 === 0 ? sx : sy), minArr[i]))
+    
