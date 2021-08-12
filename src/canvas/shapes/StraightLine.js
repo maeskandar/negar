@@ -58,5 +58,5 @@ export function newStraghtLine(points, options = {}) {
     shape.scaleY(1)
   })
 
-  return shape
+return shape
 }

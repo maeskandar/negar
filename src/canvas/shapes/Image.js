@@ -46,5 +46,5 @@ export function newImage(src, options = {}) {
   applyPropsToShape(shape.props, shape.setters)
   addCommonEvents(shape)
 
-  return shape
+return shape
 }

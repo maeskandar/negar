@@ -15,5 +15,5 @@ export function newSimpleLine(points) {
     strokeWidth: DEFAULT_STROKE_WIDTH,
   })
 
-  return shape
+return shape
 }

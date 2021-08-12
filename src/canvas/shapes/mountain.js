@@ -5,6 +5,7 @@ import { everyShapeProps, addCommonEvents, closedLine, everyShapeAttrs, applyPro
 
 import { validDeg } from "../../utils/math"
 import { apply2DScale } from "../../utils/array"
+import { newStage } from "../stage"
 
 const
   DEFAULT_HYPES = [
@@ -29,14 +30,11 @@ export function newMountain(options = {}) {
     ...everyShapeAttrs(),
   })
   
-  
   shape.props = {
     ...everyShapeProps(),
     kind: shapeKinds.Mountain,
     hypes: DEFAULT_HYPES,
     
-    x: 0,
-    y: 0,
     width: 100,
     height: 100,
     rotation: 0, 
@@ -45,7 +43,10 @@ export function newMountain(options = {}) {
     borderColor: DEFAULT_STROKE_COLOR,
     borderSize: DEFAULT_STROKE_WIDTH,
 
-    ...options
+    ...options,
+
+    x: 0,
+    y: 0,
   }
 
   function applyScale(sx, sy) {
@@ -92,5 +93,5 @@ export function newMountain(options = {}) {
 
   applyPropsToShape(shape.props, shape.setters)
 
-  return shape
+  return newStage(options, [shape])
 }

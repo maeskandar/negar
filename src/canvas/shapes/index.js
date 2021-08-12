@@ -6,6 +6,8 @@ import { newArrow } from "./Arrow"
 import { newSimpleLine } from "./SimpleLine"
 import { newStraghtLine } from "./StraightLine"
 import { newCustomLine } from "./CustomLine"
+import { newFlag } from "./flag"
+import { newMountain } from "./mountain"
 
 export {
     newRectangle,
@@ -16,4 +18,6 @@ export {
     newSimpleLine,
     newStraghtLine,
     newCustomLine,
+    newFlag, 
+    newMountain,
 }

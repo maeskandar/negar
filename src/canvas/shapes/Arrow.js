@@ -3,7 +3,7 @@ import Konva from "konva"
 import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH, shapeKinds } from '..'
 import {
   addCommonEvents,
-  everyShapeProps, closedShapeProps, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters
+  everyShapeProps, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'

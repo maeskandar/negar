@@ -1,6 +1,6 @@
 import Konva from 'konva'
 import { shapeKinds } from '../'
-import { addCommonEvents, closedShapeProps, everyShapeProps, basicShape, applyPropsToShape, everyShapeAttrs, applyDefaultSetters } from '../abstract'
+import { addCommonEvents, everyShapeProps, basicShape, applyPropsToShape, everyShapeAttrs, applyDefaultSetters } from '../abstract'
 
 export function newTextNode(options = {}) {
   let shape = new Konva.Text({ ...everyShapeAttrs() })
@@ -40,5 +40,5 @@ export function newTextNode(options = {}) {
   addCommonEvents(shape)
   applyPropsToShape(shape.props, shape.setters)
 
-  return shape
+return shape
 }

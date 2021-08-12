@@ -9,6 +9,8 @@ import {
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
 import { minMaxDistance, validDeg } from '../../utils/math'
 
+import { newStage } from "../stage"
+
 const
   BASE_ORIGIN_POINTS = [
     [20, 0],
@@ -43,9 +45,7 @@ export function newFlag(options = {}) {
   let
     props = {
       ...everyShapeProps(),
-      kind: shapeKinds.Flag,
-      x: 0,
-      y: 0,
+      kind: `shapeKinds`.Flag,
       width: 100,
       height: 100,
       rotation: 0,
@@ -53,6 +53,8 @@ export function newFlag(options = {}) {
       baseFill: Konva.Util.getRandomColor(),
 
       ...options,
+      x: 0,
+      y: 0,
     },
 
     base = new Konva.Line({
@@ -75,8 +77,10 @@ export function newFlag(options = {}) {
       ...basicShape(0, 0, ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT, 0),
     }),
 
-    group = new Konva.Group({ ...everyShapeAttrs(), })
-
+    group = new Konva.Group({
+       ...everyShapeAttrs(), 
+      kind: shapeKinds.Flag
+      })
 
   group.props = props
   group.parts = {
@@ -114,5 +118,6 @@ export function newFlag(options = {}) {
   applyPropsToShape(group.props, group.setters)
 
   group.add(flag, base)
-  return group
+  // return group
+  return newStage(options, [group])
 }

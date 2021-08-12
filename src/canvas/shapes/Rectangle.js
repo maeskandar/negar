@@ -15,7 +15,6 @@ export function newRectangle(options = {}, isMain= true) {
     borderColor: "#424242",
     borderSize: DEFAULT_STROKE_WIDTH,
     opacity: 1,
-
     dash: [],
 
     ...options,
@@ -46,5 +45,5 @@ export function newRectangle(options = {}, isMain= true) {
   applyPropsToShape(shape.props, shape.setters)
   addCommonEvents(shape)
 
-  return shape
+return shape
 }

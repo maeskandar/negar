@@ -43,14 +43,15 @@ import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } 
 import './home.css'
 
 // canvas import 
-import { shapeKinds, isKindOfLine, isStage } from "../canvas"
+import { shapeKinds, isKindOfLine } from "../canvas"
 import {
   newArrow, newCircle, newImage, newRectangle,
-  newStraghtLine, newCustomLine, newSimpleLine, newTextNode
+  newStraghtLine, newCustomLine, newSimpleLine, newTextNode,
+  newFlag, newMountain,
 } from "../canvas/shapes"
-import { newFlag, newMountain, newStage } from "../canvas/stages"
+import { newStage } from "../canvas/stage"
 import {
-  initCanvas, addShape, updateShape, removeShape,
+  initCanvas, addShapes, updateShape, removeShape,
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
   setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
@@ -111,10 +112,12 @@ export default class HomePage extends React.Component {
     this.doneOperation = this.doneOperation.bind(this)
     this.setSelectedId = this.setSelectedId.bind(this)
     this.onShapeChanged = this.onShapeChanged.bind(this)
-    this.handleCanvasClick = this.handleCanvasClick.bind(this)
-    this.handleCanvasMouseDown = this.handleCanvasMouseDown.bind(this)
-    this.handleCanvasMouseMove = this.handleCanvasMouseMove.bind(this)
-    this.handleCanvasMouseUp = this.handleCanvasMouseUp.bind(this)
+
+    this.onCanvasClick = this.onCanvasClick.bind(this)
+    this.onCanvasMouseDown = this.onCanvasMouseDown.bind(this)
+    this.onCanvasMouseMove = this.onCanvasMouseMove.bind(this)
+    this.onCanvasMouseUp = this.onCanvasMouseUp.bind(this)
+
     this.deleteShape = this.deleteShape.bind(this)
     this.includeToAppStates = this.includeToAppStates.bind(this)
     this.excludeFromAppState = this.excludeFromAppState.bind(this)
@@ -170,10 +173,10 @@ export default class HomePage extends React.Component {
     this.startDrawingShape(newArrow)
   }
   addImage(e) {
-    addShape(newImage(e))
+    addShapes(newImage(e))
   }
   addText(text = 'تایپ کن') {
-    addShape(newTextNode({ text }))
+    addShapes(newTextNode({ text }))
   }
 
   backStage() {
@@ -188,7 +191,7 @@ export default class HomePage extends React.Component {
     })
   }
 
-  handleCanvasClick(ev) {
+  onCanvasClick(ev) {
     if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
       this.setSelectedId(ev.target.parent.props.id)
     }
@@ -200,7 +203,7 @@ export default class HomePage extends React.Component {
       this.cancelOperation()
     }
   }
-  handleCanvasMouseDown(e) {
+  onCanvasMouseDown(e) {
     if (!this.state.appState.has(APP_STATES.DRAGING))
       this.includeToAppStates(APP_STATES.DRAGING)
 
@@ -220,7 +223,7 @@ export default class HomePage extends React.Component {
       drawingLayer.add(drawingTempShape)
     }
   }
-  handleCanvasMouseMove(e) {
+  onCanvasMouseMove(e) {
     if (setHasParamsAnd(this.state.appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
       var mp = board.getPointerPosition()
       mp = [mp.x, mp.y]
@@ -257,7 +260,7 @@ export default class HomePage extends React.Component {
       }
     }
   }
-  handleCanvasMouseUp(e) {
+  onCanvasMouseUp(e) {
     let st = this.state.selectedTool
     if (st === APP_TOOLS.LINE) {
       let
@@ -266,7 +269,7 @@ export default class HomePage extends React.Component {
         dy = Math.abs(pos.y - drawingTempData[1])
 
       if (dx + dy < 32) return
-      addShape(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+      addShapes(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
     }
     else if (st === APP_TOOLS.SHAPE_DRAWING) {
       this.doneOperation()
@@ -309,7 +312,7 @@ export default class HomePage extends React.Component {
           id: shapeId,
           shapeProps: shape.props,
         },
-        showStateModal: isStage(shape.props.kind)
+        showStateModal: shape.props.kind === shapeKinds.Stage
       })
     }
   }
@@ -392,11 +395,15 @@ export default class HomePage extends React.Component {
         closeLastLine()
 
         for (let line of resultLines)
-          addShape(line)
+          addShapes(line)
       }
-      else if (this.state.selectedTool == APP_TOOLS.SHAPE_DRAWING) {
+      else if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
         triggerShapeEvent(drawingTempShape, 'drawEnd')
-        addShape(drawingTempShape)
+        addShapes(drawingTempShape)
+
+        if ('nodes' in drawingTempShape)
+          addShapes(drawingTempShape.nodes, false)
+
         drawingTempShape = null
       }
     }
@@ -411,10 +418,10 @@ export default class HomePage extends React.Component {
   componentDidMount() {
     window.addEventListener('keydown', this.keyboardEvents) // TODO use external dependency to manager keyboard events
     initCanvas({
-      onClick: this.handleCanvasClick,
-      onMouseDown: this.handleCanvasMouseDown,
-      onMouseMove: this.handleCanvasMouseMove,
-      onMouseUp: this.handleCanvasMouseUp
+      onClick: this.onCanvasClick,
+      onMouseDown: this.onCanvasMouseDown,
+      onMouseMove: this.onCanvasMouseMove,
+      onMouseUp: this.onCanvasMouseUp
     })
     setBackgroundColor('#eeeeee')
     window.addEventListener('canvas', e => {
@@ -433,6 +440,7 @@ export default class HomePage extends React.Component {
   componentWillUnmount() {
     window.removeEventListener('keydown', this.keyboardEvents)
   }
+
   render() {
     let
       ssa = this.state.selectedShapeInfo.shapeProps,
@@ -485,7 +493,7 @@ export default class HomePage extends React.Component {
             {/* Default State */
               !this.state.appState.has(APP_STATES.DRAWING) && <>
                 <ToolBarBtn
-                  title="mountain"
+                  title="stage"
                   onClick={this.addEmptyStage}
                   iconEl={<AddStageIcon />}
                 />
@@ -824,7 +832,9 @@ export default class HomePage extends React.Component {
           <CustomSearchbar
             onAyaSelect={t => this.addText(t)} />
         }
-        <div id="container" className="w-100 h-100"></div>
+        <div id="container" style={{
+          'cursor': this.state.appState.has(APP_STATES.DRAWING) ? 'crosshair' : 'auto'
+        }} className="w-100 h-100"></div>
       </div >
     )
   }

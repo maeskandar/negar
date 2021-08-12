@@ -75,5 +75,5 @@ export function newCustomLine(points) {
 
   applyPropsToShape(shape.props, shape.setters)
 
-  return shape
+return shape
 }

@@ -9,7 +9,12 @@ export var
     mainLayer = null,
     drawingLayer = null,
     transformer = null,
-    shapes = {},
+    shapes = {
+        'root': {
+            props: { id: 'root' },
+            nodes: [],
+        },
+    },
     tempShapes = [],
     bgShape = null
 
@@ -25,8 +30,10 @@ export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
     mainLayer = new Konva.Layer()
     drawingLayer = new Konva.Layer()
 
-    transformer = new Konva.Transformer()
-    transformer.nodes([])
+    transformer = new Konva.Transformer({
+        nodes: [],
+        rotationSnaps: [0, 90, 180, 270],
+    })
     transformer.hide()
 
     mainLayer.add(transformer)
@@ -36,6 +43,7 @@ export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
     board.on('mousedown', onMouseDown)
     board.on('mousemove', onMouseMove)
     board.on('mouseup', onMouseUp)
+    board.on('contextmenu', e => e.evt.preventDefault())
 }
 
 window.addEventListener('canvas', e => {
@@ -70,9 +78,16 @@ export function triggerShapeEvent(shape, event, ...data) {
         shape.events[event](...data)
 }
 
-export function addShape(shapeObject) {
-    shapes[shapeObject.props.id] = shapeObject
-    triggerCanvas('create', shapeObject)
+export function addShapes(newShapes, trigger = true, ) {
+    if (!Array.isArray(newShapes))
+        newShapes = [newShapes]
+
+    for (let s of newShapes) {
+        shapes[s.props.id] = s
+
+        if (trigger)
+            triggerCanvas('create', s)
+    }
 }
 export function updateShape(shape, newProps, trigger = false) {
     for (let prop in newProps) {
@@ -162,4 +177,18 @@ export function activateTransformer(...shapes) {
 export function disableTransformer() {
     transformer.nodes([])
     transformer.hide()
+}
+
+// --------------------------------------------------
+export function render(currentPath, shapeid, relativeLevel = 0) {
+    if (relativeLevel === 0) { }
+    else {
+        let relativeRoot = shapes[(currentPath.length === 0) ? 'root' : shapeid]
+
+        mainLayer.clear()
+        for (let node of relativeRoot.nodes) {
+            // set properties
+            mainLayer.add(node)
+        }
+    }
 }
