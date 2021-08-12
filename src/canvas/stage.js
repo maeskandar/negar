@@ -5,7 +5,6 @@ import {
   addCommonEvents, applyPropsToShape,
   everyShapeProps, everyShapeAttrs, applyDefaultSetters
 } from "./abstract"
-import { addShape } from "./manager"
 
 import { newRectangle } from "./shapes"
 

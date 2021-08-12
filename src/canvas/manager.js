@@ -1,3 +1,4 @@
+import shape from "@material-ui/core/styles/shape"
 import Konva from "konva"
 import { newRectangle } from "./shapes"
 
@@ -46,6 +47,74 @@ export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
     board.on('contextmenu', e => e.evt.preventDefault())
 }
 
+function triggerCanvas(eventType, shapeObject) {
+    let e = new CustomEvent('canvas', {
+        detail: {
+            type: eventType,
+            shape: shapeObject
+        }
+    })
+    window.dispatchEvent(e)
+}
+export function triggerShapeEvent(shape, event, ...data) {
+    if (shape.events && event in shape.events)
+        shape.events[event](...data)
+}
+export function addShapes(newShape, nodes, fatherId, trigger) {
+    shapes[newShape.props.id] = newShape
+    shapes[fatherId].nodes.push(newShape)
+
+    if (nodes)
+        for (let n of nodes)
+            shapes[n.props.id] = n
+
+    if (trigger)
+        triggerCanvas('create', newShape)
+}
+export function updateShape(shape, newProps, trigger = false) {
+    for (let prop in newProps) {
+        let val = newProps[prop]
+
+        if (prop in shape.setters)
+            shape.setters[prop](val)
+        else
+            throw new Error(`setter '${prop}' for shape '${shape.props.kind}' is not defined`)
+
+        shape.props[prop] = val
+    }
+
+    if (trigger) triggerCanvas('update', shape)
+}
+export function removeShape(shape) {
+    shape.destroy()
+    mainLayer.draw()
+    triggerCanvas('delete', shape)
+    delete shapes[shape.props.id]
+}
+export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
+    if (relativeLevel === 0) { }
+    else {
+        let
+            relativeRoot = (currentPath.length === 0) ?
+                shapes['root'] :
+                shapes[currentPath[currentPath.length - 1]],
+
+            targetStage = shapes[shapeid]
+
+        // mainLayer.clear(...relativeRoot.nodes)
+
+        for (let n of relativeRoot.nodes)
+            n.remove()
+
+        mainLayer.add(targetStage)
+
+        // for (let n of shapes[shapeid].nodes) {
+        //     // set properties
+        //     mainLayer.add(n)
+        // }
+    }
+}
+
 window.addEventListener('canvas', e => {
     let
         type = e.detail.type,
@@ -62,55 +131,6 @@ window.addEventListener('canvas', e => {
     else
         throw new Error(`undefined canvas event '${type}'`)
 })
-
-function triggerCanvas(eventType, shapeObject) {
-    let e = new CustomEvent('canvas', {
-        detail: {
-            type: eventType,
-            shape: shapeObject
-        }
-    })
-    window.dispatchEvent(e)
-}
-
-export function triggerShapeEvent(shape, event, ...data) {
-    if (shape.events && event in shape.events)
-        shape.events[event](...data)
-}
-
-export function addShapes(newShapes, trigger = true, ) {
-    if (!Array.isArray(newShapes))
-        newShapes = [newShapes]
-
-    for (let s of newShapes) {
-        shapes[s.props.id] = s
-
-        if (trigger)
-            triggerCanvas('create', s)
-    }
-}
-export function updateShape(shape, newProps, trigger = false) {
-    for (let prop in newProps) {
-        let val = newProps[prop]
-
-        if (prop in shape.setters)
-            shape.setters[prop](val)
-        else
-            throw new Error(`setter '${prop}' for shape '${shape.props.kind}' is not defined`)
-
-        shape.props[prop] = val
-    }
-
-    if (trigger) triggerCanvas('update', shape)
-}
-
-export function removeShape(shape) {
-    shape.destroy()
-    mainLayer.draw()
-    triggerCanvas('delete', shape)
-    delete shapes[shape.props.id]
-}
-
 // other functions
 export function prepareDrawingLayer() {
     bgShape = newRectangle({
@@ -175,20 +195,9 @@ export function activateTransformer(...shapes) {
     transformer.moveToTop()
 }
 export function disableTransformer() {
+    for (let n of transformer.nodes())
+        n.setters.draggable(false)
+
     transformer.nodes([])
     transformer.hide()
-}
-
-// --------------------------------------------------
-export function render(currentPath, shapeid, relativeLevel = 0) {
-    if (relativeLevel === 0) { }
-    else {
-        let relativeRoot = shapes[(currentPath.length === 0) ? 'root' : shapeid]
-
-        mainLayer.clear()
-        for (let node of relativeRoot.nodes) {
-            // set properties
-            mainLayer.add(node)
-        }
-    }
 }

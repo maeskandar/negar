@@ -55,6 +55,7 @@ import {
   addTempShape, resetTempPage,
   board, shapes, tempShapes,
   setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
+  renderCanvas,
 } from "../canvas/manager"
 
 
@@ -122,6 +123,9 @@ export default class HomePage extends React.Component {
     this.includeToAppStates = this.includeToAppStates.bind(this)
     this.excludeFromAppState = this.excludeFromAppState.bind(this)
     this.keyboardEvents = this.keyboardEvents.bind(this)
+
+    this.addShape = this.addShape.bind(this)
+    this.getFatherShapeId = this.getFatherShapeId.bind(this)
   }
 
   // advanced state checker
@@ -145,6 +149,9 @@ export default class HomePage extends React.Component {
   }
 
   // related to the canvas
+  addShape(newShape, nodes, trigger = true){
+    addShapes(newShape, nodes, this.getFatherShapeId(), trigger)
+  }
   startDrawingShape(fn) {
     this.setState({
       appState: addToSet(this.state.appState, APP_STATES.DRAWING),
@@ -154,11 +161,11 @@ export default class HomePage extends React.Component {
     this.setSelectedId(null)
     prepareDrawingLayer()
   }
-  addMountain() {
-    this.startDrawingShape(newMountain)
-  }
   addEmptyStage() {
     this.startDrawingShape(newStage)
+  }
+  addMountain() {
+    this.startDrawingShape(newMountain)
   }
   addFlag() {
     this.startDrawingShape(newFlag)
@@ -173,10 +180,10 @@ export default class HomePage extends React.Component {
     this.startDrawingShape(newArrow)
   }
   addImage(e) {
-    addShapes(newImage(e))
+    this.addShape(newImage(e))
   }
   addText(text = 'تایپ کن') {
-    addShapes(newTextNode({ text }))
+    this.addShape(newTextNode({ text }))
   }
 
   backStage() {
@@ -184,7 +191,14 @@ export default class HomePage extends React.Component {
     if (route.length === 0) return
     this.setState({ route: removeInArray(route, route.length - 1) })
   }
+  getFatherShapeId() {
+    let r = this.state.route
+    return (r.length === 0) ? 'root' : r[r.length - 1]
+  }
   enterStage(shapeId) {
+    disableTransformer()
+    renderCanvas(this.state.route, shapeId, +1)
+
     this.setState({
       route: this.state.route.concat(shapeId),
       showStateModal: false
@@ -269,7 +283,7 @@ export default class HomePage extends React.Component {
         dy = Math.abs(pos.y - drawingTempData[1])
 
       if (dx + dy < 32) return
-      addShapes(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
+      this.addShape(newStraghtLine(drawingTempData.concat([pos.x, pos.y])))
     }
     else if (st === APP_TOOLS.SHAPE_DRAWING) {
       this.doneOperation()
@@ -395,15 +409,11 @@ export default class HomePage extends React.Component {
         closeLastLine()
 
         for (let line of resultLines)
-          addShapes(line)
+          this.addShape(line)
       }
       else if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
         triggerShapeEvent(drawingTempShape, 'drawEnd')
-        addShapes(drawingTempShape)
-
-        if ('nodes' in drawingTempShape)
-          addShapes(drawingTempShape.nodes, false)
-
+        this.addShape(drawingTempShape, drawingTempShape.nodes, this.getFatherShapeId())
         drawingTempShape = null
       }
     }
