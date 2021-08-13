@@ -1,4 +1,3 @@
-import shape from "@material-ui/core/styles/shape"
 import Konva from "konva"
 import { newRectangle } from "./shapes"
 
@@ -10,12 +9,7 @@ export var
     mainLayer = null,
     drawingLayer = null,
     transformer = null,
-    shapes = {
-        'root': {
-            props: { id: 'root' },
-            nodes: [],
-        },
-    },
+    shapes = {},
     tempShapes = [],
     bgShape = null
 
@@ -37,7 +31,13 @@ export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
     })
     transformer.hide()
 
-    mainLayer.add(transformer)
+    let root = new Konva.Group({})
+    root.props = { id: 'root' }
+    root.nodes = []
+
+    shapes = { root }
+
+    mainLayer.add(transformer, root)
     board.add(bgLayer, mainLayer, drawingLayer)
 
     board.on('click', onClick)
@@ -63,6 +63,7 @@ export function triggerShapeEvent(shape, event, ...data) {
 export function addShapes(newShape, nodes, fatherId, trigger) {
     shapes[newShape.props.id] = newShape
     shapes[fatherId].nodes.push(newShape)
+    shapes[fatherId].add(newShape)
 
     if (nodes)
         for (let n of nodes)
@@ -103,23 +104,22 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
                 targetStage = shapes[shapeid]
 
             for (let n of relativeRoot.nodes)
-                n.remove()
+                n.visible(false)
 
-            mainLayer.add(targetStage)
-
+            targetStage.visible(true)
         }
         else { // relativeLevel < 0
             let
                 relativeRoot = currentPath.length === 1 ?
                     shapes['root'] :
-                    shapes[currentPath.length - 2],
+                    shapes[currentPath[currentPath.length - 2]],
 
                 stage = shapes[currentPath[currentPath.length - 1]]
 
-            stage.remove()
+            stage.visible(false)
 
             for (let n of relativeRoot.nodes)
-                mainLayer.add(n)
+                n.visible(true)
         }
     }
 }
@@ -130,7 +130,7 @@ window.addEventListener('canvas', e => {
         shape = e.detail.shape
 
     if (type === "create") {
-        mainLayer.add(shape)
+        // mainLayer.add(shape)
         mainLayer.draw()
     }
     else if (type === "update") {

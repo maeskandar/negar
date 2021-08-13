@@ -207,9 +207,12 @@ export default class HomePage extends React.Component {
   }
 
   onCanvasClick(ev) {
+    console.log(shapes)
+
     if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
       this.setSelectedId(ev.target.parent.props.id)
     }
+    /// FIXME consider route
     else if ('props' in ev.target && 'id' in ev.target.props) { // if a shape selected
       this.setSelectedId(ev.target.props.id)
     }
@@ -471,7 +474,7 @@ export default class HomePage extends React.Component {
         />}
 
         <div className="back-btn" onClick={this.backStage}>
-          <IconButton size="small" color="#424242"> <BackIcon /> </IconButton>
+          <IconButton size="small"> <BackIcon /> </IconButton>
         </div>
 
         {this.state.showStateModal &&
