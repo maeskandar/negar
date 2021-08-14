@@ -94,7 +94,6 @@ export function removeShape(shape) {
     delete shapes[shape.props.id]
 }
 
-
 export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
     if (relativeLevel === 0) { }
     else {
@@ -110,21 +109,6 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
 
             targetStage.visible(true)
             targetStage.parts["overly"].listening(false)
-
-            // let
-            //     bw = window.innerWidth,
-            //     bh = window.innerHeight
-
-            // updateShape(targetStage, {
-            //     x: 0,
-            
-            //     y: 0,
-            //     width: bw,
-            //     height: bh,
-            //     borderSize: 4,
-            // })
-
-            // TODO scale array
         }
         else { // relativeLevel < 0
             let

@@ -220,7 +220,6 @@ export default class HomePage extends React.Component {
 
   onCanvasClick(ev) {
     if (this.state.selectedTool === APP_TOOLS.HAND) return
-    console.log(shapes)
 
     if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
       this.setSelectedId(ev.target.parent.props.id)
@@ -479,22 +478,22 @@ export default class HomePage extends React.Component {
       }
       else if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
         let
-          reversedScaleFactor = (100 / this.state.zoom),
+          rfs = (100 / this.state.zoom), // reversed factor scale 
+
           p = drawingTempShape.props,
           r = this.state.route,
           root = shapes['root'],
-          relPos = r.slice(0, r.length - 2).map(id => shapes[id]).reduce((acc, s) => ({
+          relPos = r.map(id => shapes[id]).reduce((acc, s) => ({
             x: acc.x + s.x(),
-            y: acc.y + s.x()
-          }), { x: root.x(), y: root.y() })
-          // father = if 
+            y: acc.y + s.y(),
+          }), { x: 0, y: 0 })
 
-        console.log(relPos)
+
         updateShape(drawingTempShape, {
-          width: p.width * reversedScaleFactor,
-          height: p.height * reversedScaleFactor,
-          x: (p.x - relPos.x) * reversedScaleFactor,
-          y: (p.y - relPos.y) * reversedScaleFactor
+          width: p.width * rfs,
+          height: p.height * rfs,
+          x: (p.x - root.x()) * rfs - relPos.x,
+          y: (p.y - root.y()) * rfs - relPos.y,
         })
 
         triggerShapeEvent(drawingTempShape, 'drawEnd')
