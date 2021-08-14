@@ -79,7 +79,9 @@ let
 export default class HomePage extends React.Component {
   state = {
     route: [],
-    zoom: 0,
+    zoom: 100,
+    lastStableZoom: null,
+    deltaZoom: 0,
 
     appState: new Set(),
     selectedTool: APP_TOOLS.NOTHING,
@@ -129,8 +131,9 @@ export default class HomePage extends React.Component {
 
     this.addShape = this.addShape.bind(this)
     this.getFatherShapeId = this.getFatherShapeId.bind(this)
-    this.getScaleFactor = this.getScaleFactor.bind(this)
     this.setZoom = this.setZoom.bind(this)
+    this.moveZoom = this.moveZoom.bind(this)
+    this.zoomEnd = this.zoomEnd.bind(this)
     this.toggleHandTool = this.toggleHandTool.bind(this)
     this.getCursorStyle = this.getCursorStyle.bind(this)
   }
@@ -316,9 +319,23 @@ export default class HomePage extends React.Component {
 
   setZoom(z) {
     this.setState({ zoom: z })
-    let sf = this.getScaleFactor()
+    let sf = this.state.zoom / 100
     shapes['root'].scale({ x: sf, y: sf })
   }
+  moveZoom(dz) {
+    if (this.state.lastStableZoom === null)
+      this.setState({ lastStableZoom: this.state.zoom })
+
+    this.setState({ deltaZoom: dz })
+    this.setZoom(this.state.lastStableZoom + dz)
+  }
+  zoomEnd() {
+    this.setState({
+      deltaZoom: 0,
+      lastStableZoom: null
+    })
+  }
+
   getCursorStyle() {
     if (this.state.selectedTool === APP_TOOLS.HAND)
       if (this.state.appState.has(APP_STATES.DRAGING))
@@ -330,9 +347,6 @@ export default class HomePage extends React.Component {
       return 'crosshair'
 
     return 'auto'
-  }
-  getScaleFactor() {
-    return (100 + this.state.zoom) / 100
   }
 
   toggleHandTool() {
@@ -465,14 +479,22 @@ export default class HomePage extends React.Component {
       }
       else if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
         let
-          reversedScaleFactor = (1 / this.getScaleFactor()),
-          p = drawingTempShape.props
+          reversedScaleFactor = (100 / this.state.zoom),
+          p = drawingTempShape.props,
+          r = this.state.route,
+          root = shapes['root'],
+          relPos = r.slice(0, r.length - 2).map(id => shapes[id]).reduce((acc, s) => ({
+            x: acc.x + s.x(),
+            y: acc.y + s.x()
+          }), { x: root.x(), y: root.y() })
+          // father = if 
 
+        console.log(relPos)
         updateShape(drawingTempShape, {
           width: p.width * reversedScaleFactor,
           height: p.height * reversedScaleFactor,
-          x: p.x * reversedScaleFactor,
-          y: p.y * reversedScaleFactor
+          x: (p.x - relPos.x) * reversedScaleFactor,
+          y: (p.y - relPos.y) * reversedScaleFactor
         })
 
         triggerShapeEvent(drawingTempShape, 'drawEnd')
@@ -658,21 +680,27 @@ export default class HomePage extends React.Component {
         <div id="app-bar-wrapper">
           <Paper id="app-bar" elevation={3}>
             <div className="row m-auto">
+              <div className="col-2">
+                <span>
+                  {this.state.zoom}%
+                </span>
+              </div>
               <Slider
                 className="col-8"
-                value={this.state.zoom}
-                onChange={(_, nv) => this.setZoom(nv)}
+                value={this.state.deltaZoom}
+                onChange={(_, nv) => this.moveZoom(nv)}
+                onChangeCommitted={this.zoomEnd}
                 aria-labelledby="discrete-slider-small-steps"
                 step={1}
                 min={-90}
                 max={+100}
                 valueLabelDisplay="auto"
               />
-              <div className="col-2">
+              <div className="col-1">
                 <ZoomIcon />
               </div>
 
-              <div className={"col-2 " + (this.state.selectedTool === APP_TOOLS.HAND ? "active" : "")}
+              <div className={"col-1 " + (this.state.selectedTool === APP_TOOLS.HAND ? "active" : "")}
                 onClick={this.toggleHandTool}>
                 <HandIcon />
               </div>

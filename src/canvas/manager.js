@@ -12,9 +12,7 @@ export var
     shapes = {},
     drawingLayer = null,
     tempShapes = [],
-
-    scaleFactor = 0.9,
-    cameraPosition = {x: 0, y: 0}
+    cameraPosition = { x: 0, y: 0 }
 
 // primary functions
 export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
@@ -82,7 +80,7 @@ export function updateShape(shape, newProps, trigger = false) {
         if (prop in shape.setters)
             shape.setters[prop](val)
         else
-            throw new Error(`setter '${prop}' for shape '${shape.props.kind}' is not defined`)
+            throw new Error(`setter '${prop}' for shape kind '${shape.props.kind}' is not defined`)
 
         shape.props[prop] = val
     }
@@ -96,7 +94,7 @@ export function removeShape(shape) {
     delete shapes[shape.props.id]
 }
 
-let currentStageTempData = { props: null, nodes: null }
+
 export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
     if (relativeLevel === 0) { }
     else {
@@ -105,7 +103,6 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
                 relativeRoot = (currentPath.length === 0) ?
                     shapes['root'] :
                     shapes[currentPath[currentPath.length - 1]],
-
                 targetStage = shapes[shapeid]
 
             for (let n of relativeRoot.nodes)
@@ -114,16 +111,19 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
             targetStage.visible(true)
             targetStage.parts["overly"].listening(false)
 
-            let
-                bw = window.innerWidth,
-                bh = window.innerHeight
+            // let
+            //     bw = window.innerWidth,
+            //     bh = window.innerHeight
 
-            updateShape(targetStage, {
-                x: 0,
-                y: 0,
-                width: bw * scaleFactor,
-                height: bh * scaleFactor,
-            })
+            // updateShape(targetStage, {
+            //     x: 0,
+            
+            //     y: 0,
+            //     width: bw,
+            //     height: bh,
+            //     borderSize: 4,
+            // })
+
             // TODO scale array
         }
         else { // relativeLevel < 0
@@ -131,10 +131,9 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
                 relativeRoot = currentPath.length === 1 ?
                     shapes['root'] :
                     shapes[currentPath[currentPath.length - 2]],
-
                 stage = shapes[currentPath[currentPath.length - 1]]
 
-            stage.visible(false)
+            stage.parts["overly"].listening(true)
 
             for (let n of relativeRoot.nodes)
                 n.visible(true)

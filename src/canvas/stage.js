@@ -55,6 +55,7 @@ export function newStage(options = {}, nodes = []) {
   applyDefaultSetters(overly, group.setters, [
     ["borderColor", "stroke"],
     ["borderSize", "strokeWidth"],
+    // "dash",
   ])
   applyDefaultSetters(group, group.setters, [
     'x', 'y',
