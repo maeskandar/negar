@@ -2,7 +2,7 @@ import React from "react"
 
 // utilities
 import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
-import { removeInSet, addToSet, setHasParamsAnd, setHasParamsOr } from "../utils/set"
+import { removeInSet, addToSet, setHasParamsOr } from "../utils/set"
 import { protectedMin, pointsDistance, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
 
@@ -36,7 +36,9 @@ import {
   ExitToApp as EnterIcon,
   Close as CloseIcon,
   ArrowBackIos as BackIcon,
-  LibraryAdd as AddStageIcon
+  LibraryAdd as AddStageIcon,
+  Search as ZoomIcon,
+  PanTool as HandIcon,
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
 import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
@@ -77,6 +79,7 @@ let
 export default class HomePage extends React.Component {
   state = {
     route: [],
+    zoom: 0,
 
     appState: new Set(),
     selectedTool: APP_TOOLS.NOTHING,
@@ -126,6 +129,10 @@ export default class HomePage extends React.Component {
 
     this.addShape = this.addShape.bind(this)
     this.getFatherShapeId = this.getFatherShapeId.bind(this)
+    this.getScaleFactor = this.getScaleFactor.bind(this)
+    this.setZoom = this.setZoom.bind(this)
+    this.toggleHandTool = this.toggleHandTool.bind(this)
+    this.getCursorStyle = this.getCursorStyle.bind(this)
   }
 
   // advanced state checker
@@ -139,10 +146,12 @@ export default class HomePage extends React.Component {
 
   // advenced state functionalities
   includeToAppStates(val) {
-    this.setState({ appState: addToSet(this.state.appState, val) })
+    if (!this.state.appState.has(val))
+      this.setState({ appState: addToSet(this.state.appState, val) })
   }
   excludeFromAppState(val) {
-    this.setState({ appState: removeInSet(this.state.appState, val) })
+    if (this.state.appState.has(val))
+      this.setState({ appState: removeInSet(this.state.appState, val) })
   }
   isSomethingSelected() {
     return this.state.selectedShapeInfo.id !== null
@@ -207,6 +216,7 @@ export default class HomePage extends React.Component {
   }
 
   onCanvasClick(ev) {
+    if (this.state.selectedTool === APP_TOOLS.HAND) return
     console.log(shapes)
 
     if (ev.target.attrs["isMain"] === false) { // select parent node for advanced shapes like flag
@@ -225,10 +235,8 @@ export default class HomePage extends React.Component {
     if (!this.state.appState.has(APP_STATES.DRAGING))
       this.includeToAppStates(APP_STATES.DRAGING)
 
-    if (this.state.appState.has(APP_STATES.DRAWING)) {
-      const pos = e.target.getStage().getPointerPosition()
-      drawingTempData = [pos.x, pos.y]
-    }
+    const pos = e.target.getStage().getPointerPosition()
+    drawingTempData = [pos.x, pos.y]
 
     if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
       drawingTempShape = drawingTempFunction({
@@ -242,8 +250,11 @@ export default class HomePage extends React.Component {
     }
   }
   onCanvasMouseMove(e) {
-    if (setHasParamsAnd(this.state.appState, APP_STATES.DRAWING, APP_STATES.DRAGING)) {
-      var mp = board.getPointerPosition()
+    if (!this.state.appState.has(APP_STATES.DRAGING)) return
+
+    var mp = board.getPointerPosition()
+
+    if (this.state.appState.has(APP_STATES.DRAWING)) {
       mp = [mp.x, mp.y]
 
       let st = this.state.selectedTool
@@ -277,6 +288,13 @@ export default class HomePage extends React.Component {
         drawingLayer.draw()
       }
     }
+    else if (this.state.selectedTool === APP_TOOLS.HAND) {
+      shapes['root'].move({
+        x: mp.x - drawingTempData[0],
+        y: mp.y - drawingTempData[1],
+      })
+      drawingTempData = [mp.x, mp.y]
+    }
   }
   onCanvasMouseUp(e) {
     let st = this.state.selectedTool
@@ -294,6 +312,36 @@ export default class HomePage extends React.Component {
     }
 
     this.excludeFromAppState(APP_STATES.DRAGING)
+  }
+
+  setZoom(z) {
+    this.setState({ zoom: z })
+    let sf = this.getScaleFactor()
+    shapes['root'].scale({ x: sf, y: sf })
+  }
+  getCursorStyle() {
+    if (this.state.selectedTool === APP_TOOLS.HAND)
+      if (this.state.appState.has(APP_STATES.DRAGING))
+        return 'grabbing'
+      else
+        return 'grab'
+
+    if (this.state.appState.has(APP_STATES.DRAWING))
+      return 'crosshair'
+
+    return 'auto'
+  }
+  getScaleFactor() {
+    return (100 + this.state.zoom) / 100
+  }
+
+  toggleHandTool() {
+    this.setState({
+      selectedTool:
+        this.state.selectedTool === APP_TOOLS.HAND ?
+          APP_TOOLS.NOTHING :
+          APP_TOOLS.HAND
+    })
   }
 
   // app functionalities
@@ -416,6 +464,17 @@ export default class HomePage extends React.Component {
           this.addShape(line)
       }
       else if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
+        let
+          reversedScaleFactor = (1 / this.getScaleFactor()),
+          p = drawingTempShape.props
+
+        updateShape(drawingTempShape, {
+          width: p.width * reversedScaleFactor,
+          height: p.height * reversedScaleFactor,
+          x: p.x * reversedScaleFactor,
+          y: p.y * reversedScaleFactor
+        })
+
         triggerShapeEvent(drawingTempShape, 'drawEnd')
         this.addShape(drawingTempShape, drawingTempShape.nodes, this.getFatherShapeId())
         drawingTempShape = null
@@ -595,6 +654,32 @@ export default class HomePage extends React.Component {
             }
           </Paper>
         </div>
+
+        <div id="app-bar-wrapper">
+          <Paper id="app-bar" elevation={3}>
+            <div className="row m-auto">
+              <Slider
+                className="col-8"
+                value={this.state.zoom}
+                onChange={(_, nv) => this.setZoom(nv)}
+                aria-labelledby="discrete-slider-small-steps"
+                step={1}
+                min={-90}
+                max={+100}
+                valueLabelDisplay="auto"
+              />
+              <div className="col-2">
+                <ZoomIcon />
+              </div>
+
+              <div className={"col-2 " + (this.state.selectedTool === APP_TOOLS.HAND ? "active" : "")}
+                onClick={this.toggleHandTool}>
+                <HandIcon />
+              </div>
+            </div>
+          </Paper>
+        </div>
+
 
         {this.isSomethingSelected() &&
           <Paper id="status-bar" className="p-3" square>
@@ -847,7 +932,7 @@ export default class HomePage extends React.Component {
             onAyaSelect={t => this.addText(t)} />
         }
         <div id="container" style={{
-          'cursor': this.state.appState.has(APP_STATES.DRAWING) ? 'crosshair' : 'auto'
+          'cursor': this.getCursorStyle()
         }} className="w-100 h-100"></div>
       </div >
     )

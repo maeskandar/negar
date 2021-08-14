@@ -6,12 +6,15 @@ const canvasWrapperID = "container"
 export var
     board = null,
     bgLayer = null,
+    bgShape = null,
     mainLayer = null,
-    drawingLayer = null,
     transformer = null,
     shapes = {},
+    drawingLayer = null,
     tempShapes = [],
-    bgShape = null
+
+    scaleFactor = 0.9,
+    cameraPosition = {x: 0, y: 0}
 
 // primary functions
 export function initCanvas({ onClick, onMouseDown, onMouseMove, onMouseUp }) {
@@ -92,6 +95,8 @@ export function removeShape(shape) {
     triggerCanvas('delete', shape)
     delete shapes[shape.props.id]
 }
+
+let currentStageTempData = { props: null, nodes: null }
 export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
     if (relativeLevel === 0) { }
     else {
@@ -107,6 +112,19 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
                 n.visible(false)
 
             targetStage.visible(true)
+            targetStage.parts["overly"].listening(false)
+
+            let
+                bw = window.innerWidth,
+                bh = window.innerHeight
+
+            updateShape(targetStage, {
+                x: 0,
+                y: 0,
+                width: bw * scaleFactor,
+                height: bh * scaleFactor,
+            })
+            // TODO scale array
         }
         else { // relativeLevel < 0
             let

@@ -3,7 +3,7 @@ export const
     DRAGING: 0,
     DRAWING: 1,
   },
-  
+
   APP_TOOLS = {
     NOTHING: 0,
     LINE: 1,
@@ -12,6 +12,7 @@ export const
     FG_COLOR_PICKER: 4,
     STROKE_COLOR_PICKER: 5,
     SHAPE_DRAWING: 6,
+    HAND: 7,
   },
 
   TABS = {
@@ -20,7 +21,7 @@ export const
     META: 2,
   },
 
-  ERASER_RADIUS = 10, 
+  ERASER_RADIUS = 10,
   PIXEL_RATIO_DOWNLAOD = 1,
   FONT_NAMES = [
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',

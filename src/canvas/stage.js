@@ -36,11 +36,6 @@ export function newStage(options = {}, nodes = []) {
   group.nodes = nodes
   group.mainNode = nodes[0]
 
-  // {
-  //   "absolute-width": 100,
-  //   "absolute-height": 100,
-  // }
-
   group.setters = {
     width: w => {
       overly.setters.width(w)
@@ -65,6 +60,8 @@ export function newStage(options = {}, nodes = []) {
     'x', 'y',
     'draggable',
     'rotation',
+    "scaleX",
+    "scaleY",
   ])
 
   addCommonEvents(group)
