@@ -3,10 +3,7 @@
   - `npm start`: to start demo
 
 ## Known bugs:
-  - textNode
   - line width & height can be negetive
-  - jamboard performace is low
-  - shape flip causes width & height be negetive
 
 ## Others
   increase limit file watcher command on linux:

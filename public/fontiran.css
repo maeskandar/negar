@@ -1,8 +1,8 @@
 ﻿@import "fonts/shabnam-font-face.css";
+
 @font-face {
     font-family: 'Neirizi';
-    src: url('fonts/woff2/Neirizi.woff2') format('woff2'),
-    url('fonts/woff/Neirizi.woff') format('woff');
+    src: url('fonts/ttf/Neirizi.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -10,8 +10,7 @@
 
 @font-face {
     font-family: 'Al Qalam New';
-    src: url('fonts/woff2/AlQalamNew.woff2') format('woff2'),
-    url('fonts/woff/AlQalamNew.woff') format('woff');
+    src: url('fonts/ttf/AlQalamNew.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -19,11 +18,8 @@
 
 @font-face {
     font-family: 'QuranTaha';
-    src: url('fonts/woff2/QuranTaha1.woff2') format('woff2'),
-    url('fonts/woff/QuranTaha1.woff') format('woff');
+    src: url('fonts/ttf/QuranTaha1.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
 }
-
-

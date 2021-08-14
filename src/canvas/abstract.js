@@ -2,84 +2,96 @@ import Konva from "konva"
 import v1 from 'uuid/dist/v1'
 
 import { DEFAULT_STROKE_COLOR, DEFAULT_STROKE_WIDTH } from "./"
-import { updateShape } from "./manager"
+import { updateShape, transformer } from "./manager"
 import { validDeg } from "../utils/math"
 
-
-export function resetTransformGen(shape, custom) {
-  if (custom) {
+// common shape events --------------------------
+export function resetTransformGen(shape, customFunc) {
+  if (customFunc) {
     return () => {
-      custom()
-      updateShape(shape.attrs.id)
+      if (customFunc()) transformer.forceUpdate()
+      updateShape(shape)
     }
   }
-  else return () => {
-    let
-      sx = shape.scaleX(),
-      sy = shape.scaleY(),
-      rotation = shape.getAbsoluteRotation()
+  else {
+    return () => {
+      let rotation = shape.getAbsoluteRotation()
 
-    shape.scaleX(1)
-    shape.scaleY(1)
+      updateShape(shape, {
+        width: shape.props.width * shape.scaleX(),
+        height: shape.props.height * shape.scaleY(),
+        rotation: validDeg(rotation),
+      })
+      
+      shape.scaleX(1)
+      shape.scaleY(1)
+    }
+  }
+}
+export function onDragEndGen(shape, fn) {
+  if (fn) 
+    return fn
 
-    let oldSize = shape.size()
-    shape.size({
-      width: oldSize.width * sx,
-      height: oldSize.height * sy
-    })
-    shape.attrs.rotation = validDeg(rotation)
+  return () => {
+    updateShape(shape, {
+      x: shape.x(),
+      y: shape.y(),
+    }, true)
+  }
+}
+export function addCommonEvents(shape, ...customFns) {
+  shape.on('transformend', resetTransformGen(shape, customFns[0]))
+  shape.on('dragend', onDragEndGen(shape, customFns[1]))
+}
 
-    updateShape(shape.attrs.id)
+export function applyDefaultSetters(shape, setters, defaultSetters) {
+  for (let ds of defaultSetters) {
+    if (Array.isArray(ds))
+      setters[ds[0]] = (...param) => shape[ds[1]](...param)
+    else
+      setters[ds] = (...param) => shape[ds](...param)
   }
 }
 
-export function onDragMoveGen(shape) {
-  return () => updateShape(shape.attrs.id)
+export function applyPropsToShape(props, setters) {
+  for (let key in props) {
+    if (key in setters)
+      setters[key](props[key])
+  }
 }
 
-export function addCommonEvents(shape, transformendCustomProc) {
-  shape.on('transformend', resetTransformGen(shape, transformendCustomProc))
-  shape.on('dragmove', onDragMoveGen(shape))
-}
-
-export function commonShapeProps() {
+// common shape props --------------------------
+export function everyShapeProps() {
   return {
     id: v1(),
+  }
+}
+export function everyShapeAttrs() {
+  return {
     draggable: false
   }
 }
-
-export function fillableProps() {
+export function closedShapeProps() {
   return {
     opacity: 1,
     fill: Konva.Util.getRandomColor(),
-  }
-}
-
-export function strokeProps() {
-  return {
     stroke: DEFAULT_STROKE_COLOR,
     strokeWidth: DEFAULT_STROKE_WIDTH,
   }
 }
-
-export function closedShapeProps() {
+export function basicShape(x, y, w, h, rotation = 0) {
   return {
-    ...fillableProps(),
-    ...strokeProps(),
-  }
-}
-
-export function basicSize(w = 100, h = 100) {
-  return {
-    width: w,
-    height: h
-  }
-}
-
-export function basicCoordinate(x = 0, y = 0, rotation = 0) {
-  return {
-    rotation,
     x, y,
+    width: w,
+    height: h,
+    rotation,
+  }
+}
+export function closedLine(points) {
+  return {
+    points,
+    lineCap: 'round',
+    lineJoin: 'round',
+    closed: true,
   }
 }

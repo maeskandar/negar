@@ -1,37 +1,4 @@
 {
-  "backgrounds":[
-    {
-      "url": "/images/pexels-eberhard-grossgasteiger-1064162.jpg",
-      "title": "دریاچه و جنگل",
-      "desc": "مناظر و طبیعت"
-    },
-    {
-      "url": "/images/pexels-martin-damboldt-814499.jpg",
-      "title": "دریاچه ای زیبا",
-      "desc": "مناظر و طبیعت"
-    },
-    {
-      "url": "/images/pexels-roberto-shumski-1903702.jpg",
-      "title": "کوه ها!",
-      "desc": "مناظر و طبیعت"
-    },
-    {
-      "url": "/images/solid1.png",
-      "title": "صفحه رنگی",
-      "desc": "صفحه رنگی است!"
-    },
-    {
-      "url": "/images/solid2.jpg",
-      "title": "صفحه رنگی",
-      "desc": "صفحه رنگی است!"
-    },
-    {
-      "url": "/images/solid3.jpg",
-      "title": "صفحه رنگی",
-      "desc": "صفحه رنگی است!"
-    }
-  ],
-
   "imagesData": [
     {
       "url": "/images/tree1.png",
