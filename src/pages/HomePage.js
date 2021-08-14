@@ -479,11 +479,10 @@ export default class HomePage extends React.Component {
       else if (this.state.selectedTool === APP_TOOLS.SHAPE_DRAWING) {
         let
           rfs = (100 / this.state.zoom), // reversed factor scale 
-
           p = drawingTempShape.props,
           r = this.state.route,
           root = shapes['root'],
-          relPos = r.map(id => shapes[id]).reduce((acc, s) => ({
+          fatherAbsPos = r.map(id => shapes[id]).reduce((acc, s) => ({
             x: acc.x + s.x(),
             y: acc.y + s.y(),
           }), { x: 0, y: 0 })
@@ -492,8 +491,8 @@ export default class HomePage extends React.Component {
         updateShape(drawingTempShape, {
           width: p.width * rfs,
           height: p.height * rfs,
-          x: (p.x - root.x()) * rfs - relPos.x,
-          y: (p.y - root.y()) * rfs - relPos.y,
+          x: (p.x - root.x()) * rfs - fatherAbsPos.x,
+          y: (p.y - root.y()) * rfs - fatherAbsPos.y,
         })
 
         triggerShapeEvent(drawingTempShape, 'drawEnd')
