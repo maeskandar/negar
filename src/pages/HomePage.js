@@ -223,7 +223,7 @@ export default class HomePage extends React.Component {
       newsf = Math.min(sx, sy)
 
     let p = this.getRealPositionOfRoute(this.state.route.concat([shapeId]))
-    this.moveCanvasTo(-p.x * newsf, -p.y * newsf)
+    this.moveCanvasTo(-p.x * sf * newsf, -p.y * sf * newsf)
     this.setZoom(z * newsf)
   }
   backStage() {
@@ -234,7 +234,7 @@ export default class HomePage extends React.Component {
     let
       z = this.state.zoom,
       sf = z / 100, // scale factor
-      fatherId = r.length > 1 ? r[r.length - 1] : 'root',
+      fatherId = r.length > 1 ? r[r.length - 2] : 'root',
       father = shapes[fatherId],
       fatherSize = fatherId === 'root' ?
         { w: window.innerWidth, h: window.innerHeight } :
@@ -245,8 +245,8 @@ export default class HomePage extends React.Component {
       sy = window.innerHeight / (sf * fatherSize.h),
       newsf = Math.min(sx, sy)
 
-    let p = this.getRealPositionOfRoute(r)
-    this.moveCanvasTo(-p.x * z * newsf, -p.y * z * newsf)
+    let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
+    this.moveCanvasTo(-p.x * sf * newsf, -p.y * sf * newsf)
     this.setZoom(z * newsf)
 
     this.setState({ route: removeInArray(r, r.length - 1) })
