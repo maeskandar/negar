@@ -41,6 +41,18 @@
     width: 400px;
 }
 
+.pos-bar{
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: white;
+    z-index: 2;
+}
+
+.percent-after::after{
+    content: '%';
+}
+
 #status-bar {
     height          : 100%;
     min-width       : 300px;

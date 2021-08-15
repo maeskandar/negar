@@ -91,7 +91,7 @@ export function removeShape(shape) {
     shape.destroy()
     mainLayer.draw()
     triggerCanvas('delete', shape)
-    delete shapes[shape.props.id]
+    delete shapes[shape.props.id] // FIXME and remove thier nodes
 }
 
 export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
@@ -127,8 +127,8 @@ export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {
 
 window.addEventListener('canvas', e => {
     let
-        type = e.detail.type,
-        shape = e.detail.shape
+        type = e.detail.type
+        // shape = e.detail.shape
 
     if (type === "create") {
         // mainLayer.add(shape)

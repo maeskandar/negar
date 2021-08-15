@@ -136,6 +136,9 @@ export default class HomePage extends React.Component {
     this.zoomEnd = this.zoomEnd.bind(this)
     this.toggleHandTool = this.toggleHandTool.bind(this)
     this.getCursorStyle = this.getCursorStyle.bind(this)
+
+    this.dragCanvas = this.dragCanvas.bind(this)
+    this.getRealPositionOfRoute = this.getRealPositionOfRoute.bind(this)
   }
 
   // advanced state checker
@@ -210,11 +213,42 @@ export default class HomePage extends React.Component {
       route: this.state.route.concat(shapeId),
       showStateModal: false
     })
+
+    let
+      z = this.state.zoom,
+      sf = z / 100, // scale factor
+      shape = shapes[shapeId],
+      sx = window.innerWidth / (sf * shape.props.width) * 0.9,
+      sy = window.innerHeight / (sf * shape.props.height) * 0.9,
+      newsf = Math.min(sx, sy)
+
+    let p = this.getRealPositionOfRoute(this.state.route.concat([shapeId]))
+    this.moveCanvasTo(-p.x * newsf, -p.y * newsf)
+    this.setZoom(z * newsf)
   }
   backStage() {
     let r = this.state.route
     if (r.length === 0) return
     renderCanvas(r, undefined, -1)
+
+    let
+      z = this.state.zoom,
+      sf = z / 100, // scale factor
+      fatherId = r.length > 1 ? r[r.length - 1] : 'root',
+      father = shapes[fatherId],
+      fatherSize = fatherId === 'root' ?
+        { w: window.innerWidth, h: window.innerHeight } :
+        { w: father.props.width, h: father.props.height }
+
+    let
+      sx = window.innerWidth / (sf * fatherSize.w),
+      sy = window.innerHeight / (sf * fatherSize.h),
+      newsf = Math.min(sx, sy)
+
+    let p = this.getRealPositionOfRoute(r)
+    this.moveCanvasTo(-p.x * z * newsf, -p.y * z * newsf)
+    this.setZoom(z * newsf)
+
     this.setState({ route: removeInArray(r, r.length - 1) })
   }
 
@@ -317,9 +351,9 @@ export default class HomePage extends React.Component {
   }
 
   setZoom(z) {
-    this.setState({ zoom: z })
-    let sf = this.state.zoom / 100
+    let sf = z / 100
     shapes['root'].scale({ x: sf, y: sf })
+    this.setState({ zoom: z })
   }
   moveZoom(dz) {
     if (this.state.lastStableZoom === null)
@@ -333,6 +367,12 @@ export default class HomePage extends React.Component {
       deltaZoom: 0,
       lastStableZoom: null
     })
+  }
+  dragCanvas(x, y) {
+    shapes['root'].move({ x, y })
+  }
+  moveCanvasTo(x, y) {
+    shapes['root'].position({ x, y })
   }
 
   getCursorStyle() {
@@ -437,6 +477,12 @@ export default class HomePage extends React.Component {
 
     disableDrawingLayer()
   }
+  getRealPositionOfRoute(route) {
+    return route.map(id => shapes[id]).reduce((acc, s) => ({
+      x: acc.x + s.x(),
+      y: acc.y + s.y(),
+    }), { x: 0, y: 0 })
+  }
   doneOperation() {
     if (this.state.appState.has(APP_STATES.DRAWING)) {
       // stick lines if they have Intersection, else create new line
@@ -480,13 +526,8 @@ export default class HomePage extends React.Component {
         let
           rfs = (100 / this.state.zoom), // reversed factor scale 
           p = drawingTempShape.props,
-          r = this.state.route,
           root = shapes['root'],
-          fatherAbsPos = r.map(id => shapes[id]).reduce((acc, s) => ({
-            x: acc.x + s.x(),
-            y: acc.y + s.y(),
-          }), { x: 0, y: 0 })
-
+          fatherAbsPos = this.getRealPositionOfRoute(this.state.route)
 
         updateShape(drawingTempShape, {
           width: p.width * rfs,
@@ -543,6 +584,14 @@ export default class HomePage extends React.Component {
 
     return (
       <div id="home-page">
+        {shapes['root'] &&
+          <div className="pos-bar">
+            <span className="m-auto">
+              x: {shapes['root'].x()}
+              y: {shapes['root'].y()}
+            </span>
+          </div>
+        }
 
         {this.state.imageModalShow && <MyVerticallyCenteredModal
           title={"تصویر"}
@@ -679,8 +728,8 @@ export default class HomePage extends React.Component {
           <Paper id="app-bar" elevation={3}>
             <div className="row m-auto">
               <div className="col-2">
-                <span>
-                  {this.state.zoom}%
+                <span className="percent-after float-left">
+                  {this.state.zoom}
                 </span>
               </div>
               <Slider
@@ -912,7 +961,7 @@ export default class HomePage extends React.Component {
                 {ssa.hypes.map((v, i) => <>
                   <TextField
                     type="number"
-                    label={'x' + i}
+                    label={'x ' + i}
                     value={ssa.hypes[i][0]}
                     onChange={e => {
                       let newval = parseInt(e.target.value)
@@ -922,7 +971,7 @@ export default class HomePage extends React.Component {
                   />
                   <TextField
                     type="number"
-                    label={'y' + i}
+                    label={'y ' + i}
                     value={ssa.hypes[i][1]}
                     onChange={e => {
                       let newval = parseInt(e.target.value)
