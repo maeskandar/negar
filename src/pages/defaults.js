@@ -23,6 +23,8 @@ export const
 
   ERASER_RADIUS = 10,
   PIXEL_RATIO_DOWNLAOD = 1,
+  ZOOM_ON_SHAPE_RATIO = 0.8,
+  ZOOM_ON_SHAPE_MARGIN = 0.1,
   FONT_NAMES = [
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
   ]

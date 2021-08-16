@@ -8,7 +8,7 @@ import { downloadURI } from "../utils/other"
 
 // data
 import { imagesData } from "./meta.json"
-import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD, TABS } from "./defaults"
+import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD, TABS, ZOOM_ON_SHAPE_MARGIN, ZOOM_ON_SHAPE_RATIO } from "./defaults"
 
 // ui 
 import {
@@ -93,7 +93,6 @@ export default class HomePage extends React.Component {
     selectedShapeInfo: { id: null, shapeProps: null },
     color: '#fff',
   }
-
   constructor(props) {
     super(props)
 
@@ -218,13 +217,18 @@ export default class HomePage extends React.Component {
       z = this.state.zoom,
       sf = z / 100, // scale factor
       shape = shapes[shapeId],
-      sx = window.innerWidth / (sf * shape.props.width) * 0.9,
-      sy = window.innerHeight / (sf * shape.props.height) * 0.9,
+      bw = window.innerWidth,
+      bh = window.innerHeight,
+      sx = bw / (sf * shape.props.width),
+      sy = bh / (sf * shape.props.height),
       newsf = Math.min(sx, sy)
 
     let p = this.getRealPositionOfRoute(this.state.route.concat([shapeId]))
-    this.moveCanvasTo(-p.x * sf * newsf, -p.y * sf * newsf)
-    this.setZoom(z * newsf)
+    this.moveCanvasTo(
+      -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+      -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+    )
+    this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
   }
   backStage() {
     let r = this.state.route
@@ -232,22 +236,31 @@ export default class HomePage extends React.Component {
     renderCanvas(r, undefined, -1)
 
     let
-      z = this.state.zoom,
-      sf = z / 100, // scale factor
-      fatherId = r.length > 1 ? r[r.length - 2] : 'root',
-      father = shapes[fatherId],
-      fatherSize = fatherId === 'root' ?
-        { w: window.innerWidth, h: window.innerHeight } :
-        { w: father.props.width, h: father.props.height }
+      bw = window.innerWidth,
+      bh = window.innerHeight,
+      fatherId = r.length > 1 ? r[r.length - 2] : 'root'
+
+    if (fatherId === 'root') {
+      this.setZoom(100)
+      this.moveCanvasTo(0, 0)
+      return
+    }
 
     let
-      sx = window.innerWidth / (sf * fatherSize.w),
-      sy = window.innerHeight / (sf * fatherSize.h),
+      z = this.state.zoom,
+      sf = z / 100, // scale factor
+      father = shapes[fatherId],
+      fatherSize = { w: father.props.width, h: father.props.height },
+      sx = bw / (sf * fatherSize.w),
+      sy = bh / (sf * fatherSize.h),
       newsf = Math.min(sx, sy)
 
     let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
-    this.moveCanvasTo(-p.x * sf * newsf, -p.y * sf * newsf)
-    this.setZoom(z * newsf)
+    this.moveCanvasTo(
+      -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+      -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+    )
+    this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
 
     this.setState({ route: removeInArray(r, r.length - 1) })
   }
@@ -374,7 +387,6 @@ export default class HomePage extends React.Component {
   moveCanvasTo(x, y) {
     shapes['root'].position({ x, y })
   }
-
   getCursorStyle() {
     if (this.state.selectedTool === APP_TOOLS.HAND)
       if (this.state.appState.has(APP_STATES.DRAGING))
@@ -387,7 +399,6 @@ export default class HomePage extends React.Component {
 
     return 'auto'
   }
-
   toggleHandTool() {
     this.setState({
       selectedTool:
@@ -574,7 +585,6 @@ export default class HomePage extends React.Component {
   componentWillUnmount() {
     window.removeEventListener('keydown', this.keyboardEvents)
   }
-
   render() {
     let
       ssa = this.state.selectedShapeInfo.shapeProps,
@@ -729,7 +739,7 @@ export default class HomePage extends React.Component {
             <div className="row m-auto">
               <div className="col-2">
                 <span className="percent-after float-left">
-                  {this.state.zoom}
+                  {Math.round(this.state.zoom)}
                 </span>
               </div>
               <Slider
