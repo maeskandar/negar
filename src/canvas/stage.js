@@ -9,7 +9,7 @@ import {
 import { newRectangle } from "./shapes"
 
 // the main node is node[0], you can set it to undefined if you dont want
-export function newStage(options = {}, nodes = []) {
+export function newStage(options = {}, nodes = [], events = []) {
   let group = new Konva.Group({ ...everyShapeAttrs() })
   group.props = {
     ...everyShapeProps(),
@@ -55,7 +55,6 @@ export function newStage(options = {}, nodes = []) {
   applyDefaultSetters(overly, group.setters, [
     ["borderColor", "stroke"],
     ["borderSize", "strokeWidth"],
-    // "dash",
   ])
   applyDefaultSetters(group, group.setters, [
     'x', 'y',
@@ -63,10 +62,14 @@ export function newStage(options = {}, nodes = []) {
     'rotation',
     "scaleX",
     "scaleY",
+    "dragBoundFunc",
+    "position"
   ])
-
   addCommonEvents(group)
   applyPropsToShape(group.props, group.setters)
+
+  for (const ev in events)
+    group.on(ev, events[ev])
 
   group.add(...nodes, overly)
   return group

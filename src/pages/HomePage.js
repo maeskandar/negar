@@ -3,12 +3,12 @@ import React from "react"
 // utilities
 import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsOr } from "../utils/set"
-import { protectedMin, pointsDistance, prettyFloatNumber } from "../utils/math"
+import { protectedMin, pointsDistanceArr, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
 
 // data
 import { imagesData } from "./meta.json"
-import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD, TABS } from "./defaults"
+import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD, TABS, ZOOM_ON_SHAPE_MARGIN, ZOOM_ON_SHAPE_RATIO } from "./defaults"
 
 // ui 
 import {
@@ -93,7 +93,6 @@ export default class HomePage extends React.Component {
     selectedShapeInfo: { id: null, shapeProps: null },
     color: '#fff',
   }
-
   constructor(props) {
     super(props)
 
@@ -136,6 +135,9 @@ export default class HomePage extends React.Component {
     this.zoomEnd = this.zoomEnd.bind(this)
     this.toggleHandTool = this.toggleHandTool.bind(this)
     this.getCursorStyle = this.getCursorStyle.bind(this)
+
+    this.dragCanvas = this.dragCanvas.bind(this)
+    this.getRealPositionOfRoute = this.getRealPositionOfRoute.bind(this)
   }
 
   // advanced state checker
@@ -210,11 +212,57 @@ export default class HomePage extends React.Component {
       route: this.state.route.concat(shapeId),
       showStateModal: false
     })
+
+    let
+      z = this.state.zoom,
+      sf = z / 100, // scale factor
+      shape = shapes[shapeId],
+      bw = window.innerWidth,
+      bh = window.innerHeight,
+      sx = bw / (sf * shape.props.width),
+      sy = bh / (sf * shape.props.height),
+      newsf = Math.min(sx, sy)
+
+    let p = this.getRealPositionOfRoute(this.state.route.concat([shapeId]))
+    this.moveCanvasTo(
+      -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+      -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+    )
+    this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
   }
   backStage() {
     let r = this.state.route
     if (r.length === 0) return
     renderCanvas(r, undefined, -1)
+
+    let
+      bw = window.innerWidth,
+      bh = window.innerHeight,
+      fatherId = r.length > 1 ? r[r.length - 2] : 'root'
+
+    if (fatherId === 'root') {
+      this.setZoom(100)
+      this.moveCanvasTo(0, 0)
+    }
+    else {
+
+      let
+        z = this.state.zoom,
+        sf = z / 100, // scale factor
+        father = shapes[fatherId],
+        fatherSize = { w: father.props.width, h: father.props.height },
+        sx = bw / (sf * fatherSize.w),
+        sy = bh / (sf * fatherSize.h),
+        newsf = Math.min(sx, sy)
+
+      let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
+      this.moveCanvasTo(
+        -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+        -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+      )
+      this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
+    }
+
     this.setState({ route: removeInArray(r, r.length - 1) })
   }
 
@@ -272,7 +320,7 @@ export default class HomePage extends React.Component {
             sp = [l.attrs.points[0], l.attrs.points[1]],
             ep = [l.attrs.points[2], l.attrs.points[3]]
 
-          if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
+          if ([pointsDistanceArr(sp, mp), pointsDistanceArr(ep, mp)].every(v => v > ERASER_RADIUS)) {
             acc.push(l)
           }
         }
@@ -317,9 +365,9 @@ export default class HomePage extends React.Component {
   }
 
   setZoom(z) {
-    this.setState({ zoom: z })
-    let sf = this.state.zoom / 100
+    let sf = z / 100
     shapes['root'].scale({ x: sf, y: sf })
+    this.setState({ zoom: z })
   }
   moveZoom(dz) {
     if (this.state.lastStableZoom === null)
@@ -334,7 +382,12 @@ export default class HomePage extends React.Component {
       lastStableZoom: null
     })
   }
-
+  dragCanvas(x, y) {
+    shapes['root'].move({ x, y })
+  }
+  moveCanvasTo(x, y) {
+    shapes['root'].position({ x, y })
+  }
   getCursorStyle() {
     if (this.state.selectedTool === APP_TOOLS.HAND)
       if (this.state.appState.has(APP_STATES.DRAGING))
@@ -347,7 +400,6 @@ export default class HomePage extends React.Component {
 
     return 'auto'
   }
-
   toggleHandTool() {
     this.setState({
       selectedTool:
@@ -437,6 +489,12 @@ export default class HomePage extends React.Component {
 
     disableDrawingLayer()
   }
+  getRealPositionOfRoute(route) {
+    return route.map(id => shapes[id]).reduce((acc, s) => ({
+      x: acc.x + s.x(),
+      y: acc.y + s.y(),
+    }), { x: 0, y: 0 })
+  }
   doneOperation() {
     if (this.state.appState.has(APP_STATES.DRAWING)) {
       // stick lines if they have Intersection, else create new line
@@ -480,13 +538,8 @@ export default class HomePage extends React.Component {
         let
           rfs = (100 / this.state.zoom), // reversed factor scale 
           p = drawingTempShape.props,
-          r = this.state.route,
           root = shapes['root'],
-          fatherAbsPos = r.map(id => shapes[id]).reduce((acc, s) => ({
-            x: acc.x + s.x(),
-            y: acc.y + s.y(),
-          }), { x: 0, y: 0 })
-
+          fatherAbsPos = this.getRealPositionOfRoute(this.state.route)
 
         updateShape(drawingTempShape, {
           width: p.width * rfs,
@@ -533,7 +586,6 @@ export default class HomePage extends React.Component {
   componentWillUnmount() {
     window.removeEventListener('keydown', this.keyboardEvents)
   }
-
   render() {
     let
       ssa = this.state.selectedShapeInfo.shapeProps,
@@ -543,6 +595,14 @@ export default class HomePage extends React.Component {
 
     return (
       <div id="home-page">
+        {shapes['root'] &&
+          <div className="pos-bar">
+            <span className="m-auto">
+              x: {shapes['root'].x()}
+              y: {shapes['root'].y()}
+            </span>
+          </div>
+        }
 
         {this.state.imageModalShow && <MyVerticallyCenteredModal
           title={"تصویر"}
@@ -679,8 +739,8 @@ export default class HomePage extends React.Component {
           <Paper id="app-bar" elevation={3}>
             <div className="row m-auto">
               <div className="col-2">
-                <span>
-                  {this.state.zoom}%
+                <span className="percent-after float-left">
+                  {Math.round(this.state.zoom)}
                 </span>
               </div>
               <Slider
@@ -912,7 +972,7 @@ export default class HomePage extends React.Component {
                 {ssa.hypes.map((v, i) => <>
                   <TextField
                     type="number"
-                    label={'x' + i}
+                    label={'x ' + i}
                     value={ssa.hypes[i][0]}
                     onChange={e => {
                       let newval = parseInt(e.target.value)
@@ -922,7 +982,7 @@ export default class HomePage extends React.Component {
                   />
                   <TextField
                     type="number"
-                    label={'y' + i}
+                    label={'y ' + i}
                     value={ssa.hypes[i][1]}
                     onChange={e => {
                       let newval = parseInt(e.target.value)
