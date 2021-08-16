@@ -3,7 +3,7 @@ import React from "react"
 // utilities
 import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsOr } from "../utils/set"
-import { protectedMin, pointsDistance, prettyFloatNumber } from "../utils/math"
+import { protectedMin, pointsDistanceArr, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
 
 // data
@@ -320,7 +320,7 @@ export default class HomePage extends React.Component {
             sp = [l.attrs.points[0], l.attrs.points[1]],
             ep = [l.attrs.points[2], l.attrs.points[3]]
 
-          if ([pointsDistance(sp, mp), pointsDistance(ep, mp)].every(v => v > ERASER_RADIUS)) {
+          if ([pointsDistanceArr(sp, mp), pointsDistanceArr(ep, mp)].every(v => v > ERASER_RADIUS)) {
             acc.push(l)
           }
         }

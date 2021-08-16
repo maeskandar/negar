@@ -28,6 +28,15 @@ export function arraysEqual(arr1, arr2) {
   return true
 }
 
+export function sliceIntoChunks(arr, chunkSize) {
+  let res = []
+
+  for (let i = 0; i < arr.length; i += chunkSize)
+    res.push(arr.slice(i, i + chunkSize))
+
+  return res
+}
+
 export const
   oddIndexes = (arr) => arr.filter((_, i) => i % 2 === 1),
   evenIndexes = (arr) => arr.filter((_, i) => i % 2 === 0),

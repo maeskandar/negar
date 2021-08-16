@@ -4,7 +4,7 @@ import { shapeKinds, DEFAULT_STROKE_WIDTH, DEFAULT_STROKE_COLOR } from '..'
 import { everyShapeProps, addCommonEvents, closedLine, everyShapeAttrs, applyPropsToShape, applyDefaultSetters } from '../abstract'
 
 import { validDeg } from "../../utils/math"
-import { apply2DScale } from "../../utils/array"
+import { apply2DScale, sliceIntoChunks } from "../../utils/array"
 import { newStage } from "../stage"
 
 const
@@ -29,16 +29,15 @@ export function newMountain(options = {}) {
     ...closedLine(),
     ...everyShapeAttrs(),
   })
-  
   shape.props = {
     ...everyShapeProps(),
     kind: shapeKinds.Mountain,
     hypes: DEFAULT_HYPES,
-    
+
     width: 100,
     height: 100,
-    rotation: 0, 
-    
+    rotation: 0,
+
     fill: Konva.Util.getRandomColor(),
     borderColor: DEFAULT_STROKE_COLOR,
     borderSize: DEFAULT_STROKE_WIDTH,
@@ -48,11 +47,6 @@ export function newMountain(options = {}) {
     x: 0,
     y: 0,
   }
-
-  function applyScale(sx, sy) {
-    shape.points(apply2DScale(shape.points(), sx, sy))
-  }
-
   shape.setters = {
     width: (w) => {
       applyScale(w / shape.props.width, 1)
@@ -71,15 +65,24 @@ export function newMountain(options = {}) {
       shape.setters.hypes(shape.props.hypes.concat([p]))
     },
   }
+  shape.cached = {
+    hypesPos: [] // it's a 2d array
+  }
 
+  function applyScale(sx, sy) {
+    let newPoints = apply2DScale(shape.points(), sx, sy)
+    shape.points(newPoints)
+    shape.cached.hypesPos = sliceIntoChunks(newPoints, 2)
+  }
   applyDefaultSetters(shape, shape.setters, [
     "x",
     "y",
     "fill",
     "rotation",
+    "draggable",
+    "position",
     ["borderColor", "stroke"],
     ["borderSize", "strokeWidth"],
-    "draggable",
   ])
   addCommonEvents(shape, () => {
     applyScale(shape.scaleX(), shape.scaleY())

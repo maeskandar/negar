@@ -3,13 +3,14 @@ import Konva from "konva"
 import { shapeKinds } from '..'
 import {
   addCommonEvents, applyPropsToShape,
-  everyShapeProps, basicShape, closedLine, everyShapeAttrs
+  everyShapeProps, basicShape, closedLine, everyShapeAttrs, applyDefaultSetters
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
-import { minMaxDistance, validDeg } from '../../utils/math'
+import { addPoints, minMaxDistance, pointsDistance, pointsDistanceArr, subtractPoints, validDeg } from '../../utils/math'
 
 import { newStage } from "../stage"
+import { shapes } from "../manager"
 
 const
   BASE_ORIGIN_POINTS = [
@@ -56,7 +57,6 @@ export function newFlag(options = {}) {
       x: 0,
       y: 0,
     },
-
     base = new Konva.Line({
       isMain: false,
       fill: props.baseFill,
@@ -66,7 +66,6 @@ export function newFlag(options = {}) {
       )),
       ...basicShape(0, 0, ORIGIN_BASE_WIDTH, ORIGIN_BASE_HEIGHT, 0),
     }),
-
     flag = new Konva.Line({
       isMain: false,
       fill: props.flagFill,
@@ -76,33 +75,31 @@ export function newFlag(options = {}) {
       )),
       ...basicShape(0, 0, ORIGIN_FLAG_WIDTH, ORIGIN_FLAG_HEIGHT, 0),
     }),
-
     group = new Konva.Group({
-       ...everyShapeAttrs(), 
+      ...everyShapeAttrs(),
       kind: shapeKinds.Flag
-      })
+    })
 
   group.props = props
   group.parts = {
     'flag': flag,
     'base': base
   }
-
+  group.setters = {
+    width: (w) => scaleGroup(w / group.props.width, 1),
+    height: (h) => scaleGroup(1, h / group.props.height),
+  }
   function scaleGroup(sx, sy) {
     for (let childName of ['flag', 'base'])
       group.parts[childName].points(
         apply2DScale(group.parts[childName].points(), sx, sy))
   }
-
-  group.setters = {
-    x: v => group.x(v),
-    y: v => group.y(v),
-    width: (w) => scaleGroup(w / group.props.width, 1),
-    height: (h) => scaleGroup(1, h / group.props.height),
-    rotation: r => group.rotation(r),
-    draggable: d => group.draggable(d),
-  }
-
+  applyDefaultSetters(group, group.setters, [
+    "x",
+    "y",
+    "rotation",
+    "draggable",
+  ])
   addCommonEvents(group, () => {
     scaleGroup(group.scaleX(), group.scaleY())
 
@@ -118,6 +115,26 @@ export function newFlag(options = {}) {
   applyPropsToShape(group.props, group.setters)
 
   group.add(flag, base)
-  // return group
-  return newStage(options, [group])
+  return newStage(options, [group], {
+    dragmove: () => {
+      // TODO pass route
+      let
+        mypos = { x: group.parent.x(), y: group.parent.y() },
+        currentStage = group.parent.parent // it's not current stage always ...
+
+      if (currentStage.mainNode && currentStage.mainNode.props.kind === shapeKinds.Mountain) {
+        let mountainHypesPos = currentStage.mainNode.cached.hypesPos
+
+        for (let p of mountainHypesPos) {
+          p = { x: p[0], y: p[1] - group.props.height}
+          if (pointsDistance(p, mypos) < 30) {
+            group.parent.setters.position(p)
+            group.parent.props.x = p.x
+            group.parent.props.y = p.y
+            break
+          }
+        }
+      }
+    },
+  })
 }
