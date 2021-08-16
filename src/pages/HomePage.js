@@ -243,24 +243,25 @@ export default class HomePage extends React.Component {
     if (fatherId === 'root') {
       this.setZoom(100)
       this.moveCanvasTo(0, 0)
-      return
     }
+    else {
 
-    let
-      z = this.state.zoom,
-      sf = z / 100, // scale factor
-      father = shapes[fatherId],
-      fatherSize = { w: father.props.width, h: father.props.height },
-      sx = bw / (sf * fatherSize.w),
-      sy = bh / (sf * fatherSize.h),
-      newsf = Math.min(sx, sy)
+      let
+        z = this.state.zoom,
+        sf = z / 100, // scale factor
+        father = shapes[fatherId],
+        fatherSize = { w: father.props.width, h: father.props.height },
+        sx = bw / (sf * fatherSize.w),
+        sy = bh / (sf * fatherSize.h),
+        newsf = Math.min(sx, sy)
 
-    let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
-    this.moveCanvasTo(
-      -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
-      -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
-    )
-    this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
+      let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
+      this.moveCanvasTo(
+        -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+        -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+      )
+      this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
+    }
 
     this.setState({ route: removeInArray(r, r.length - 1) })
   }
