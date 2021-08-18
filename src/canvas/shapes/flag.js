@@ -123,10 +123,15 @@ export function newFlag(options = {}) {
         currentStage = group.parent.parent // it's not current stage always ...
 
       if (currentStage.mainNode && currentStage.mainNode.props.kind === shapeKinds.Mountain) {
-        let mountainHypesPos = currentStage.mainNode.cached.hypesPos
+        let
+          mountainPos = { x: currentStage.mainNode.props.x, y: currentStage.mainNode.props.y },
+          mountainHypesPos = currentStage.mainNode.cached.hypesPos
 
         for (let p of mountainHypesPos) {
-          p = { x: p[0], y: p[1] - group.props.height}
+          p = {
+            x: p[0] + mountainPos.x,
+            y: p[1] + mountainPos.y - group.props.height
+          }
           if (pointsDistance(p, mypos) < 30) {
             group.parent.setters.position(p)
             group.parent.props.x = p.x

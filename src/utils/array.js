@@ -16,7 +16,6 @@ export function addToArray(array, item) {
 export function cleanArray(arr) {
   arr.length = 0
 }
-
 export function arraysEqual(arr1, arr2) {
   if (arr1.length !== arr2.length)
     return false
@@ -27,7 +26,6 @@ export function arraysEqual(arr1, arr2) {
 
   return true
 }
-
 export function sliceIntoChunks(arr, chunkSize) {
   let res = []
 
@@ -35,6 +33,15 @@ export function sliceIntoChunks(arr, chunkSize) {
     res.push(arr.slice(i, i + chunkSize))
 
   return res
+}
+export function haveInCommonAtFirst(arr1, arr2) {
+  let c = 0, limit = Math.min(arr1.length, arr2.length)
+  
+  for (; c < limit; c++)
+    if (arr1[c] !== arr2[c])
+      break
+
+  return c
 }
 
 export const
