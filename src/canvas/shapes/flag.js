@@ -7,10 +7,9 @@ import {
 } from "../abstract"
 
 import { oddIndexes, evenIndexes, apply2DScale } from '../../utils/array'
-import { addPoints, minMaxDistance, pointsDistance, pointsDistanceArr, subtractPoints, validDeg } from '../../utils/math'
+import {  minMaxDistance, pointsDistance, validDeg } from '../../utils/math'
 
 import { newStage } from "../stage"
-import { shapes } from "../manager"
 
 const
   BASE_ORIGIN_POINTS = [

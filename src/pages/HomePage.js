@@ -1,7 +1,7 @@
 import React from "react"
 
 // utilities
-import { cleanArray, arraysEqual, replaceInArray, removeInArray, haveInCommonAtFirst } from "../utils/array"
+import { cleanArray, arraysEqual, replaceInArray, removeInArray } from "../utils/array"
 import { removeInSet, addToSet, setHasParamsOr } from "../utils/set"
 import { protectedMin, pointsDistanceArr, prettyFloatNumber } from "../utils/math"
 import { downloadURI } from "../utils/other"
@@ -135,6 +135,7 @@ export default class HomePage extends React.Component {
     this.setZoom = this.setZoom.bind(this)
     this.moveZoom = this.moveZoom.bind(this)
     this.zoomEnd = this.zoomEnd.bind(this)
+    this.setZoomOnShape = this.setZoomOnShape.bind(this)
     this.toggleHandTool = this.toggleHandTool.bind(this)
     this.getCursorStyle = this.getCursorStyle.bind(this)
 
@@ -216,57 +217,39 @@ export default class HomePage extends React.Component {
       showStateModal: false
     })
 
+    this.setZoomOnShape(this.state.route.concat(shapeId))
+  }
+  setZoomOnShape(route) {
+    if (route.length === 0) {
+      this.setZoom(100)
+      this.moveCanvasTo(0, 0)
+      return
+    }
+
     let
-      z = this.state.zoom,
-      sf = z / 100, // scale factor
-      shape = shapes[shapeId],
+      shape = shapes[route[route.length - 1]],
       bw = window.innerWidth,
       bh = window.innerHeight,
-      sx = bw / (sf * shape.props.width),
-      sy = bh / (sf * shape.props.height),
-      newsf = Math.min(sx, sy)
+      sx = bw / (shape.props.width),
+      sy = bh / (shape.props.height),
+      sf = Math.min(sx, sy)
 
-    let p = this.getRealPositionOfRoute(this.state.route.concat([shapeId]))
+    let p = this.getRealPositionOfRoute(route)
+
     this.moveCanvasTo(
-      -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
-      -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+      -p.x * sf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+      -p.y * sf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
     )
-    this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
+    this.setZoom(100 * sf * ZOOM_ON_SHAPE_RATIO)
   }
   backStage() {
     let r = this.state.route
     if (r.length === 0) return
-    renderCanvas(r, undefined, -1)
 
-    let
-      bw = window.innerWidth,
-      bh = window.innerHeight,
-      fatherId = r.length > 1 ? r[r.length - 2] : 'root'
-
-    if (fatherId === 'root') {
-      this.setZoom(100)
-      this.moveCanvasTo(0, 0)
-    }
-    else {
-
-      let
-        z = this.state.zoom,
-        sf = z / 100, // scale factor
-        father = shapes[fatherId],
-        fatherSize = { w: father.props.width, h: father.props.height },
-        sx = bw / (sf * fatherSize.w),
-        sy = bh / (sf * fatherSize.h),
-        newsf = Math.min(sx, sy)
-
-      let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
-      this.moveCanvasTo(
-        -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
-        -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
-      )
-      this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
-    }
-
+    this.setZoomOnShape(r.slice(0, -1))
     this.setState({ route: removeInArray(r, r.length - 1) })
+
+    renderCanvas(r, undefined, -1)
   }
 
   onCanvasClick(ev) {
@@ -572,7 +555,7 @@ export default class HomePage extends React.Component {
       for (let n of target.nodes) {
         let obj = {
           shortId: n.props.id.slice(0, 8),
-          route: route.slice(1, indx + 1).concat([n.props.id]),
+          route: route.slice(1, indx + 1).concat(n.props.id),
           canGoInside: n.props.kind === shapeKinds.Stage
         }
         res.push(obj)
@@ -585,23 +568,7 @@ export default class HomePage extends React.Component {
   }
 
   goTo(newRoute) {
-    // TODO it can be usefull in animation
-    let n = haveInCommonAtFirst(newRoute, this.state.route)
-
-    if (n === this.state.route.length) {
-      for (; n < newRoute.length; n++)
-        this.enterStage(newRoute[n])
-    }
-    else { // n < 
-      for (let i = 0; i < this.state.route.length; i++)
-        this.backStage()
-
-      for (let i = 0; i < newRoute.length; i++)
-        this.enterStage(newRoute[i])
-    }
-
-    // FIXME i think it doesn't work because the setState is lazy
-
+    this.setZoomOnShape(newRoute)
     this.setState({ route: newRoute })
   }
 
