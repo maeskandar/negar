@@ -8,7 +8,7 @@ import { downloadURI } from "../utils/other"
 
 // data
 import { imagesData } from "./meta.json"
-import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, PIXEL_RATIO_DOWNLAOD, TABS, ZOOM_ON_SHAPE_MARGIN, ZOOM_ON_SHAPE_RATIO } from "./defaults"
+import { APP_STATES, APP_TOOLS, ERASER_RADIUS, FONT_NAMES, isShapeRelatedTab, PIXEL_RATIO_DOWNLAOD, TABS, ZOOM_ON_SHAPE_MARGIN, ZOOM_ON_SHAPE_RATIO } from "./defaults"
 
 // ui 
 import {
@@ -39,6 +39,8 @@ import {
   LibraryAdd as AddStageIcon,
   Search as ZoomIcon,
   PanTool as HandIcon,
+  Layers as StageManagmentIcon,
+  LabelImportant as StageIn,
 } from '@material-ui/icons'
 import { SketchPicker } from "react-color"
 import { ColorPreview, CustomSearchbar, MyVerticallyCenteredModal, ToolBarBtn } from "../UI/"
@@ -133,11 +135,13 @@ export default class HomePage extends React.Component {
     this.setZoom = this.setZoom.bind(this)
     this.moveZoom = this.moveZoom.bind(this)
     this.zoomEnd = this.zoomEnd.bind(this)
+    this.setZoomOnShape = this.setZoomOnShape.bind(this)
     this.toggleHandTool = this.toggleHandTool.bind(this)
     this.getCursorStyle = this.getCursorStyle.bind(this)
 
     this.dragCanvas = this.dragCanvas.bind(this)
     this.getRealPositionOfRoute = this.getRealPositionOfRoute.bind(this)
+    this.goTo = this.goTo.bind(this)
   }
 
   // advanced state checker
@@ -213,57 +217,39 @@ export default class HomePage extends React.Component {
       showStateModal: false
     })
 
+    this.setZoomOnShape(this.state.route.concat(shapeId))
+  }
+  setZoomOnShape(route) {
+    if (route.length === 0) {
+      this.setZoom(100)
+      this.moveCanvasTo(0, 0)
+      return
+    }
+
     let
-      z = this.state.zoom,
-      sf = z / 100, // scale factor
-      shape = shapes[shapeId],
+      shape = shapes[route[route.length - 1]],
       bw = window.innerWidth,
       bh = window.innerHeight,
-      sx = bw / (sf * shape.props.width),
-      sy = bh / (sf * shape.props.height),
-      newsf = Math.min(sx, sy)
+      sx = bw / (shape.props.width),
+      sy = bh / (shape.props.height),
+      sf = Math.min(sx, sy)
 
-    let p = this.getRealPositionOfRoute(this.state.route.concat([shapeId]))
+    let p = this.getRealPositionOfRoute(route)
+
     this.moveCanvasTo(
-      -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
-      -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
+      -p.x * sf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
+      -p.y * sf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
     )
-    this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
+    this.setZoom(100 * sf * ZOOM_ON_SHAPE_RATIO)
   }
   backStage() {
     let r = this.state.route
     if (r.length === 0) return
-    renderCanvas(r, undefined, -1)
 
-    let
-      bw = window.innerWidth,
-      bh = window.innerHeight,
-      fatherId = r.length > 1 ? r[r.length - 2] : 'root'
-
-    if (fatherId === 'root') {
-      this.setZoom(100)
-      this.moveCanvasTo(0, 0)
-    }
-    else {
-
-      let
-        z = this.state.zoom,
-        sf = z / 100, // scale factor
-        father = shapes[fatherId],
-        fatherSize = { w: father.props.width, h: father.props.height },
-        sx = bw / (sf * fatherSize.w),
-        sy = bh / (sf * fatherSize.h),
-        newsf = Math.min(sx, sy)
-
-      let p = this.getRealPositionOfRoute(r.slice(0, r.length - 1))
-      this.moveCanvasTo(
-        -p.x * sf * newsf * ZOOM_ON_SHAPE_RATIO + bw * ZOOM_ON_SHAPE_MARGIN,
-        -p.y * sf * newsf * ZOOM_ON_SHAPE_RATIO + bh * ZOOM_ON_SHAPE_MARGIN,
-      )
-      this.setZoom(z * newsf * ZOOM_ON_SHAPE_RATIO)
-    }
-
+    this.setZoomOnShape(r.slice(0, -1))
     this.setState({ route: removeInArray(r, r.length - 1) })
+
+    renderCanvas(r, undefined, -1)
   }
 
   onCanvasClick(ev) {
@@ -560,6 +546,32 @@ export default class HomePage extends React.Component {
     else if (ev.code === "Escape") this.setSelectedId(null)
   }
 
+  getStageTree(route = ['root'], indx = 0) {
+    let
+      res = [],
+      target = route[indx] ? shapes[route[indx]] : {}
+
+    if (target.nodes)
+      for (let n of target.nodes) {
+        let obj = {
+          shortId: n.props.id.slice(0, 8),
+          route: route.slice(1, indx + 1).concat(n.props.id),
+          canGoInside: n.props.kind === shapeKinds.Stage
+        }
+        res.push(obj)
+
+        if (route[indx + 1] === n.props.id)
+          res.push(...this.getStageTree(route, indx + 1))
+      }
+
+    return res
+  }
+
+  goTo(newRoute) {
+    this.setZoomOnShape(newRoute)
+    this.setState({ route: newRoute })
+  }
+
   // register native events 
   componentDidMount() {
     window.addEventListener('keydown', this.keyboardEvents) // TODO use external dependency to manager keyboard events
@@ -591,7 +603,13 @@ export default class HomePage extends React.Component {
       ssa = this.state.selectedShapeInfo.shapeProps,
       ss = this.state.selectedShapeInfo.id ?
         shapes[this.state.selectedShapeInfo.id] :
-        null
+        null,
+
+      stageTree = this.state.selectedTab === TABS.STAGE_TREE_VIEW ?
+        this.getStageTree(['root'].concat(this.state.route)) :
+        [],
+
+      isDetailBarOpen = this.isSomethingSelected() || !isShapeRelatedTab(this.state.selectedTab)
 
     return (
       <div id="home-page">
@@ -744,7 +762,7 @@ export default class HomePage extends React.Component {
                 </span>
               </div>
               <Slider
-                className="col-8"
+                className="col-7"
                 value={this.state.deltaZoom}
                 onChange={(_, nv) => this.moveZoom(nv)}
                 onChangeCommitted={this.zoomEnd}
@@ -757,263 +775,276 @@ export default class HomePage extends React.Component {
               <div className="col-1">
                 <ZoomIcon />
               </div>
-
               <div className={"col-1 " + (this.state.selectedTool === APP_TOOLS.HAND ? "active" : "")}
                 onClick={this.toggleHandTool}>
                 <HandIcon />
+              </div>
+              <div className="col-1" onClick={() => this.setState({ selectedTab: TABS.STAGE_TREE_VIEW })}>
+                <StageManagmentIcon />
               </div>
             </div>
           </Paper>
         </div>
 
-
-        {this.isSomethingSelected() &&
+        {isDetailBarOpen &&
           <Paper id="status-bar" className="p-3" square>
-            <AppBar position="relative">
-              <Tabs value={this.state.selectedTab} onChange={(e, v) =>
-                this.setState({ selectedTab: v })
-              }>
-                <Tab label="Visual" value={0} />
-                <Tab label="Info" value={1} />
-                <Tab label="Meta" value={2} />
-              </Tabs>
-            </AppBar>
-            <TabPanel value={this.state.selectedTab} index={TABS.VISUAL}>
-              <div className="mb-2">
-                <span> نوع شکل: </span>
-                <span>
-                  {Object.keys(shapeKinds)
-                    .find(it => shapeKinds[it] === ssa.kind)
-                    .toLowerCase()
-                  }
-                </span>
-              </div>
-
-              {('x' in ssa) &&
-                <TextField
-                  type="number"
-                  label="مختصات x"
-                  value={prettyFloatNumber(ssa.x)}
-                  onChange={e => {
-                    this.onShapeChanged({ x: parseInt(e.target.value) })
-                  }}
-                />
-              }
-              {('y' in ssa) &&
-                <TextField
-                  type="number"
-                  label="مختصات y"
-                  value={prettyFloatNumber(ssa.y)}
-                  onChange={e => {
-                    this.onShapeChanged({ y: parseInt(e.target.value) })
-                  }}
-                />
-              }
-              {
-                <TextField
-                  type="number"
-                  label="عرض"
-                  value={ssa.width}
-                  onChange={e => {
-                    this.onShapeChanged({ width: parseInt(e.target.value) })
-                  }}
-                />
-              }
-              {'height' in ssa &&
-                <TextField
-                  type="number"
-                  label="ارتفاع"
-                  value={ssa.height}
-                  onChange={e => {
-                    this.onShapeChanged({ height: parseInt(e.target.value) })
-                  }}
-                />
-              }
-              {('rotation' in ssa) && <>
-                <Typography gutterBottom> چرخش </Typography>
-                <Slider
-                  value={ssa.rotation}
-                  onChange={(e, nv) => this.onShapeChanged({ rotation: nv })}
-                  aria-labelledby="discrete-slider-small-steps"
-                  step={1}
-                  min={0}
-                  max={360}
-                  valueLabelDisplay="auto"
-                />
-              </>
-              }
-              {('text' in ssa) &&
-                <TextField
-                  label="متن"
-                  rows={5}
-                  multiline
-                  value={ssa.text}
-                  onChange={e => this.onShapeChanged({ text: e.target.value })}
-                />
-              }
-              {('fontSize' in ssa) && <>
-                <Typography gutterBottom> اندازه فونت </Typography>
-                <Slider
-                  value={ssa.fontSize}
-                  onChange={(e, nv) => this.onShapeChanged({ fontSize: nv })}
-                  aria-labelledby="discrete-slider-small-steps"
-                  step={0.5}
-                  min={1}
-                  max={150}
-                  valueLabelDisplay="auto"
-                />
-              </>
-              }
-              {(ssa.kind === shapeKinds.Text) && <>
-                <Typography gutterBottom> نوع فونت </Typography>
-                <Select
-                  value={ssa.fontFamily}
-                  onChange={e => this.onShapeChanged({ fontFamily: e.target.value })}
-                >
-                  {FONT_NAMES.map(fname =>
-                    <MenuItem value={fname}>{fname} </MenuItem>)
-                  }
-                </Select>
-
-                <Typography gutterBottom> ارتفاع خط </Typography>
-                <Slider
-                  value={ssa.lineHeight}
-                  onChange={(e, nv) => this.onShapeChanged({ lineHeight: nv })}
-                  aria-labelledby="discrete-slider-small-steps"
-                  step={0.1}
-                  min={0.1}
-                  max={8}
-                  valueLabelDisplay="auto"
-                />
-
-                <Typography gutterBottom> چینش </Typography>
-                <Select
-                  value={ssa.align}
-                  onChange={e => this.onShapeChanged({ align: e.target.value })}
-                >
-                  {['left', 'right', 'center'].map(v =>
-                    <MenuItem value={v}>{v} </MenuItem>)
-                  }
-                </Select>
-              </>
-              }
-              {'borderSize' in ssa && <>
-                <Typography gutterBottom> اندازه خط </Typography>
-                <Slider
-                  value={ssa.borderSize}
-                  onChange={(e, nv) => this.onShapeChanged({ borderSize: nv })}
-                  // aria-labelledby="discrete-slider-small-steps"
-                  step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
-                  min={isKindOfLine(ssa.kind) ? 1 : 0}
-                  max={20}
-                  valueLabelDisplay="auto"
-                />
-              </>}
-              {'borderColor' in ssa && <div>
-                <span>  رنگ خط </span>
-                <ColorPreview
-                  hexColor={ssa.borderColor}
-                  onClick={() => {
-                    if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
-                      this.setState({ selectedTool: APP_TOOLS.NOTHING })
-                    else {
-                      this.setState({
-                        selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
-                        color: ssa.borderColor
-                      })
+            {isShapeRelatedTab(this.state.selectedTab) && <>
+              <AppBar position="relative">
+                <Tabs value={this.state.selectedTab} onChange={(e, v) =>
+                  this.setState({ selectedTab: v })
+                }>
+                  <Tab label="Visual" value={0} />
+                  <Tab label="Info" value={1} />
+                  <Tab label="Meta" value={2} />
+                </Tabs>
+              </AppBar>
+              <TabPanel value={this.state.selectedTab} index={TABS.VISUAL}>
+                <div className="mb-2">
+                  <span> نوع شکل: </span>
+                  <span>
+                    {Object.keys(shapeKinds)
+                      .find(it => shapeKinds[it] === ssa.kind)
+                      .toLowerCase()
                     }
-                  }}
-                />
-              </div>}
-              {
-                ('fill' in ssa) && <div>
-                  <span> رنگ داخل: </span>
+                  </span>
+                </div>
+
+                {('x' in ssa) &&
+                  <TextField
+                    type="number"
+                    label="مختصات x"
+                    value={prettyFloatNumber(ssa.x)}
+                    onChange={e => {
+                      this.onShapeChanged({ x: parseInt(e.target.value) })
+                    }}
+                  />
+                }
+                {('y' in ssa) &&
+                  <TextField
+                    type="number"
+                    label="مختصات y"
+                    value={prettyFloatNumber(ssa.y)}
+                    onChange={e => {
+                      this.onShapeChanged({ y: parseInt(e.target.value) })
+                    }}
+                  />
+                }
+                {
+                  <TextField
+                    type="number"
+                    label="عرض"
+                    value={ssa.width}
+                    onChange={e => {
+                      this.onShapeChanged({ width: parseInt(e.target.value) })
+                    }}
+                  />
+                }
+                {'height' in ssa &&
+                  <TextField
+                    type="number"
+                    label="ارتفاع"
+                    value={ssa.height}
+                    onChange={e => {
+                      this.onShapeChanged({ height: parseInt(e.target.value) })
+                    }}
+                  />
+                }
+                {('rotation' in ssa) && <>
+                  <Typography gutterBottom> چرخش </Typography>
+                  <Slider
+                    value={ssa.rotation}
+                    onChange={(e, nv) => this.onShapeChanged({ rotation: nv })}
+                    aria-labelledby="discrete-slider-small-steps"
+                    step={1}
+                    min={0}
+                    max={360}
+                    valueLabelDisplay="auto"
+                  />
+                </>
+                }
+                {('text' in ssa) &&
+                  <TextField
+                    label="متن"
+                    rows={5}
+                    multiline
+                    value={ssa.text}
+                    onChange={e => this.onShapeChanged({ text: e.target.value })}
+                  />
+                }
+                {('fontSize' in ssa) && <>
+                  <Typography gutterBottom> اندازه فونت </Typography>
+                  <Slider
+                    value={ssa.fontSize}
+                    onChange={(e, nv) => this.onShapeChanged({ fontSize: nv })}
+                    aria-labelledby="discrete-slider-small-steps"
+                    step={0.5}
+                    min={1}
+                    max={150}
+                    valueLabelDisplay="auto"
+                  />
+                </>
+                }
+                {(ssa.kind === shapeKinds.Text) && <>
+                  <Typography gutterBottom> نوع فونت </Typography>
+                  <Select
+                    value={ssa.fontFamily}
+                    onChange={e => this.onShapeChanged({ fontFamily: e.target.value })}
+                  >
+                    {FONT_NAMES.map(fname =>
+                      <MenuItem value={fname}>{fname} </MenuItem>)
+                    }
+                  </Select>
+
+                  <Typography gutterBottom> ارتفاع خط </Typography>
+                  <Slider
+                    value={ssa.lineHeight}
+                    onChange={(e, nv) => this.onShapeChanged({ lineHeight: nv })}
+                    aria-labelledby="discrete-slider-small-steps"
+                    step={0.1}
+                    min={0.1}
+                    max={8}
+                    valueLabelDisplay="auto"
+                  />
+
+                  <Typography gutterBottom> چینش </Typography>
+                  <Select
+                    value={ssa.align}
+                    onChange={e => this.onShapeChanged({ align: e.target.value })}
+                  >
+                    {['left', 'right', 'center'].map(v =>
+                      <MenuItem value={v}>{v} </MenuItem>)
+                    }
+                  </Select>
+                </>
+                }
+                {'borderSize' in ssa && <>
+                  <Typography gutterBottom> اندازه خط </Typography>
+                  <Slider
+                    value={ssa.borderSize}
+                    onChange={(e, nv) => this.onShapeChanged({ borderSize: nv })}
+                    // aria-labelledby="discrete-slider-small-steps"
+                    step={ssa.kind === shapeKinds.Text ? 0.1 : 0.5}
+                    min={isKindOfLine(ssa.kind) ? 1 : 0}
+                    max={20}
+                    valueLabelDisplay="auto"
+                  />
+                </>}
+                {'borderColor' in ssa && <div>
+                  <span>  رنگ خط </span>
                   <ColorPreview
+                    hexColor={ssa.borderColor}
                     onClick={() => {
-                      if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
+                      if (this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER)
                         this.setState({ selectedTool: APP_TOOLS.NOTHING })
                       else {
                         this.setState({
-                          selectedTool: APP_TOOLS.FG_COLOR_PICKER,
-                          color: ssa.fill
+                          selectedTool: APP_TOOLS.STROKE_COLOR_PICKER,
+                          color: ssa.borderColor
                         })
                       }
                     }}
-                    hexColor={ssa.fill} />
+                  />
                 </div>}
-              {
-                this.isColorPicking() &&
-                <div id="color-picker-wrapper">
-                  <SketchPicker
-                    disableAlpha
-                    color={this.state.color}
-                    onChange={(color) => this.setState({ color: color['hex'] })}
-                    onChangeComplete={(color) => {
-                      let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'borderColor' : 'fill'
-                      this.onShapeChanged({ [key]: color['hex'] })
-                    }}
-                  />
-                </div>
-              }
-              {('opacity' in ssa) && <>
-                <Typography gutterBottom> شفافیت </Typography>
-                <Slider
-                  value={ssa.opacity}
-                  onChange={(e, nv) => { this.onShapeChanged({ opacity: nv }) }}
-                  aria-labelledby="discrete-slider-small-steps"
-                  step={0.01}
-                  min={0.05}
-                  max={1}
-                  valueLabelDisplay="auto"
-                />
-              </>
-              }
-              {('hypes' in ssa) && <>
-                {ssa.hypes.map((v, i) => <>
-                  <TextField
-                    type="number"
-                    label={'x ' + i}
-                    value={ssa.hypes[i][0]}
-                    onChange={e => {
-                      let newval = parseInt(e.target.value)
-                      let hypes = ssa.hypes
-                      this.onShapeChanged({ hypes: replaceInArray(hypes, i, [newval, hypes[i][1]]) })
-                    }}
-                  />
-                  <TextField
-                    type="number"
-                    label={'y ' + i}
-                    value={ssa.hypes[i][1]}
-                    onChange={e => {
-                      let newval = parseInt(e.target.value)
-                      let hypes = ssa.hypes
-                      this.onShapeChanged({ hypes: replaceInArray(hypes, i, [hypes[i][0], newval]) })
-                    }}
+                {
+                  ('fill' in ssa) && <div>
+                    <span> رنگ داخل: </span>
+                    <ColorPreview
+                      onClick={() => {
+                        if (this.state.selectedTool === APP_TOOLS.FG_COLOR_PICKER)
+                          this.setState({ selectedTool: APP_TOOLS.NOTHING })
+                        else {
+                          this.setState({
+                            selectedTool: APP_TOOLS.FG_COLOR_PICKER,
+                            color: ssa.fill
+                          })
+                        }
+                      }}
+                      hexColor={ssa.fill} />
+                  </div>}
+                {
+                  this.isColorPicking() &&
+                  <div id="color-picker-wrapper">
+                    <SketchPicker
+                      disableAlpha
+                      color={this.state.color}
+                      onChange={(color) => this.setState({ color: color['hex'] })}
+                      onChangeComplete={(color) => {
+                        let key = this.state.selectedTool === APP_TOOLS.STROKE_COLOR_PICKER ? 'borderColor' : 'fill'
+                        this.onShapeChanged({ [key]: color['hex'] })
+                      }}
+                    />
+                  </div>
+                }
+                {('opacity' in ssa) && <>
+                  <Typography gutterBottom> شفافیت </Typography>
+                  <Slider
+                    value={ssa.opacity}
+                    onChange={(e, nv) => { this.onShapeChanged({ opacity: nv }) }}
+                    aria-labelledby="discrete-slider-small-steps"
+                    step={0.01}
+                    min={0.05}
+                    max={1}
+                    valueLabelDisplay="auto"
                   />
                 </>
-                )}
+                }
+                {('hypes' in ssa) && <>
+                  {ssa.hypes.map((v, i) => <>
+                    <TextField
+                      type="number"
+                      label={'x ' + i}
+                      value={ssa.hypes[i][0]}
+                      onChange={e => {
+                        let newval = parseInt(e.target.value)
+                        let hypes = ssa.hypes
+                        this.onShapeChanged({ hypes: replaceInArray(hypes, i, [newval, hypes[i][1]]) })
+                      }}
+                    />
+                    <TextField
+                      type="number"
+                      label={'y ' + i}
+                      value={ssa.hypes[i][1]}
+                      onChange={e => {
+                        let newval = parseInt(e.target.value)
+                        let hypes = ssa.hypes
+                        this.onShapeChanged({ hypes: replaceInArray(hypes, i, [hypes[i][0], newval]) })
+                      }}
+                    />
+                  </>
+                  )}
 
-                <button className="btn btn-danger mt-3" onClick={() => {
-                  this.onShapeChanged({ addHype: null })
-                }}>
-                  add point
+                  <button className="btn btn-danger mt-3" onClick={() => {
+                    this.onShapeChanged({ addHype: null })
+                  }}>
+                    add point
+                  </button>
+                </>
+                }
+                <button className="btn btn-danger mt-3" onClick={() => this.setSelectedId(null)}>
+                  خروج
                 </button>
-              </>
-              }
-              <button className="btn btn-danger mt-3" onClick={() => this.setSelectedId(null)}>
-                خروج
-              </button>
-            </TabPanel>
-            <TabPanel value={this.state.selectedTab} index={TABS.INFO}>
-              Item Two
-            </TabPanel>
-            <TabPanel value={this.state.selectedTab} index={TABS.META}>
-              Item Three
-            </TabPanel>
+              </TabPanel>
+              <TabPanel value={this.state.selectedTab} index={TABS.INFO}>
+                Item Two
+              </TabPanel>
+              <TabPanel value={this.state.selectedTab} index={TABS.META}>
+                Item Three
+              </TabPanel>
+            </>
+            }
+            {(this.state.selectedTab === TABS.STAGE_TREE_VIEW) && <div className="d-flex flex-column justify-content-center pt-4">
+              {stageTree.map(it => <div
+                className={"w-100 text-left " + (it.canGoInside ? "" : 'text-muted')}
+                style={{ paddingLeft: 16 * (it.route.length - 1) }}
+                onClick={() => it.canGoInside && this.goTo(it.route)}
+              >
+                {it.shortId} <StageIn />
+              </div>)}
+            </div>}
           </Paper>
         }
         {
-          !this.isSomethingSelected() && this.state.selectedTool === APP_TOOLS.NOTHING &&
+          !isDetailBarOpen && this.state.selectedTool === APP_TOOLS.NOTHING &&
           <CustomSearchbar
             onAyaSelect={t => this.addText(t)} />
         }

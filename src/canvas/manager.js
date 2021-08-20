@@ -91,7 +91,9 @@ export function removeShape(shape) {
     shape.destroy()
     mainLayer.draw()
     triggerCanvas('delete', shape)
-    delete shapes[shape.props.id] // FIXME and remove thier nodes
+    delete shapes[shape.props.id] 
+    // FIXME remove thier nodes
+    // FIXME remove it from it's parent
 }
 
 export function renderCanvas(currentPath, shapeid, relativeLevel = 0) {

@@ -65,6 +65,7 @@ export function newMountain(options = {}) {
       shape.setters.hypes(shape.props.hypes.concat([p]))
     },
   }
+  
   shape.cached = {
     hypesPos: [] // it's a 2d array
   }

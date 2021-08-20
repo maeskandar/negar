@@ -19,6 +19,8 @@ export const
     VISUAL: 0,
     INFO: 1,
     META: 2,
+    // -------------
+    STAGE_TREE_VIEW: 3,
   },
 
   ERASER_RADIUS = 10,
@@ -28,3 +30,7 @@ export const
   FONT_NAMES = [
     'Neirizi', 'Al Qalam New', 'QuranTaha', 'Shabnam',
   ]
+
+export function isShapeRelatedTab(tnumber) {
+  return tnumber <= TABS.META
+}
