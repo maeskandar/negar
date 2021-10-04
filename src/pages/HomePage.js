@@ -209,15 +209,16 @@ export default class HomePage extends React.Component {
     return (r.length === 0) ? 'root' : r[r.length - 1]
   }
   enterStage(shapeId) {
+    let r = this.state.route
+
     disableTransformer()
-    renderCanvas(this.state.route, shapeId, +1)
+    renderCanvas(r, shapeId, +1)
 
     this.setState({
-      route: this.state.route.concat(shapeId),
+      route: r.concat(shapeId),
       showStateModal: false
     })
-
-    this.setZoomOnShape(this.state.route.concat(shapeId))
+    this.setZoomOnShape(r.concat(shapeId))
   }
   setZoomOnShape(route) {
     if (route.length === 0) {
@@ -232,7 +233,7 @@ export default class HomePage extends React.Component {
       bh = window.innerHeight,
       sx = bw / (shape.props.width),
       sy = bh / (shape.props.height),
-      sf = Math.min(sx, sy)
+      sf = Math.min(sx, sy) // scale factor
 
     let p = this.getRealPositionOfRoute(route)
 
@@ -245,9 +246,10 @@ export default class HomePage extends React.Component {
   backStage() {
     let r = this.state.route
     if (r.length === 0) return
-
+    
+    disableTransformer()
     this.setZoomOnShape(r.slice(0, -1))
-    this.setState({ route: removeInArray(r, r.length - 1) })
+    this.setState({ route: r.slice(0, -1) })
 
     renderCanvas(r, undefined, -1)
   }
