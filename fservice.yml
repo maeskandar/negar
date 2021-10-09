@@ -1,0 +1,8 @@
+kind: ExternalService
+name: editorq
+spec: 
+  image: editorq:0.1
+  port: 3000
+
+  resources:
+    memory: 100Mi
