@@ -1,0 +1,7 @@
+version: '3'
+services:
+  web-server:
+    image: front-negar:1.0
+    ports:
+      - "3003:3000"
+
