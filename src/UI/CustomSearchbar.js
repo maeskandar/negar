@@ -6,6 +6,7 @@ import { makeStyles } from "@material-ui/styles"
 
 import { getRecommendedSearch, getResultSearch } from '../api/api_search'
 import "./../common.css"
+import {useSearchbarItems} from "../utils/hooks";
 
 
 const useStyle = makeStyles(theme => ({
@@ -102,6 +103,7 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
   const [recommends, setRecommends] = useState([])
   const [isRecomVisible, setIsRecomVisible] = useState(false)
   const [isResultVisible, setIsResultVisible] = useState(false)
+  const {selectedTheme , selectedConcept , handleChangeConcept , handleChangeTheme} = useSearchbarItems();
   const classes = useStyle()
 
 
@@ -259,16 +261,6 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
       style={{ textAlign: 'center' }}>
       <div className="p-2 disable-pe-not-children d-flex">
         <AppBar position="static" style={{borderRadius : 10}}>
-          {/*
-
-      </div>
-      <div className="recommed-container">
-        <Recommend recom={recommends} />
-      </div>
-      <div className="result-container">
-        <Result results={results} />
-      </div>
-          */}
           <Toolbar>
             <input id="searchbar1" type="text" value={value}
                    onChange={e => {
@@ -286,10 +278,16 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
                    onMouseOver={HoverSearchHandler}
                    onMouseLeave={LeaveSearchHandler}
             />
+            <div className="recommed-container">
+              <Recommend recom={recommends} />
+            </div>
+            <div className="result-container">
+              <Result results={results} />
+            </div>
             <Select
                 className={"selectbox"}
-                value={1}
-                onChange={() => {}}
+                value={selectedConcept}
+                onChange={handleChangeConcept}
             >
               <MenuItem value={1}>انتخاب مفاهیم</MenuItem>
               <MenuItem value={2}>مفاهیم شماره 1</MenuItem>
@@ -297,9 +295,9 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
               <MenuItem value={4}>مفاهیم شماره 3</MenuItem>
             </Select>
             <Select
-                value={1}
+                value={selectedTheme}
                 className={"selectbox"}
-                onChange={() => {}}
+                onChange={handleChangeTheme}
             >
               <MenuItem value={1}>قالب های آماده</MenuItem>
               <MenuItem value={2}>پلکان نصر الله</MenuItem>
