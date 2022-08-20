@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 // import { useHistory } from 'react-router-dom'
 
-import { Divider, Grid, Typography } from '@material-ui/core'
+import {AppBar, Button, Divider, Grid, IconButton, MenuItem, Select, Toolbar, Typography} from '@material-ui/core'
 import { makeStyles } from "@material-ui/styles"
 
 import { getRecommendedSearch, getResultSearch } from '../api/api_search'
@@ -258,28 +258,66 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
     <div className="app-container fixed-top w-100 disable-pe-not-children"
       style={{ textAlign: 'center' }}>
       <div className="p-2 disable-pe-not-children d-flex">
-        <input id="searchbar1" type="text" value={value}
-          onChange={e => {
+        <AppBar position="static" style={{borderRadius : 10}}>
+          {/*
 
-            setValue(e.target.value)
-            // console.log(value)
-            setIsResultVisible(false)
-            if ((e.target.value).length > 1) {
-              setIsRecomVisible(true)
-              relateWithServer((e.target.value))
-            }
-          }}
-          placeholder={"جست و جوی سریع.."}
-          className={classes.inputClass}
-          onMouseOver={HoverSearchHandler}
-          onMouseLeave={LeaveSearchHandler}
-        />
       </div>
       <div className="recommed-container">
         <Recommend recom={recommends} />
       </div>
       <div className="result-container">
         <Result results={results} />
+      </div>
+          */}
+          <Toolbar>
+            <input id="searchbar1" type="text" value={value}
+                   onChange={e => {
+
+                     setValue(e.target.value)
+                     // console.log(value)
+                     setIsResultVisible(false)
+                     if ((e.target.value).length > 1) {
+                       setIsRecomVisible(true)
+                       relateWithServer((e.target.value))
+                     }
+                   }}
+                   placeholder={"جست و جوی سریع.."}
+                   className={classes.inputClass}
+                   onMouseOver={HoverSearchHandler}
+                   onMouseLeave={LeaveSearchHandler}
+            />
+            <Select
+                className={"selectbox"}
+                value={1}
+                onChange={() => {}}
+            >
+              <MenuItem value={1}>انتخاب مفاهیم</MenuItem>
+              <MenuItem value={2}>مفاهیم شماره 1</MenuItem>
+              <MenuItem value={3}>مفاهیم شماره 2</MenuItem>
+              <MenuItem value={4}>مفاهیم شماره 3</MenuItem>
+            </Select>
+            <Select
+                value={1}
+                className={"selectbox"}
+                onChange={() => {}}
+            >
+              <MenuItem value={1}>قالب های آماده</MenuItem>
+              <MenuItem value={2}>پلکان نصر الله</MenuItem>
+              <MenuItem value={3}>شجره الطیبه</MenuItem>
+              <MenuItem value={4}>رشته کوه</MenuItem>
+              <MenuItem value={5}>وضعیت موجود مطلوب</MenuItem>
+              <MenuItem value={6}>جاده زمان</MenuItem>
+              <MenuItem value={7}>قالب</MenuItem>
+            </Select>
+            <Select
+                className={"selectbox"}
+                value={1}
+                onChange={() => {}}
+            >
+              <MenuItem value={1}>ساخت قالب جدید</MenuItem>
+            </Select>
+          </Toolbar>
+        </AppBar>
       </div>
     </div>
   )
