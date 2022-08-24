@@ -1,10 +1,9 @@
-import React, { useState } from 'react'
+import React, {useState} from 'react'
 // import { useHistory } from 'react-router-dom'
+import {AppBar, Divider, Grid, MenuItem, Select, Toolbar, Typography} from '@material-ui/core'
+import {makeStyles} from "@material-ui/styles"
 
-import {AppBar, Button, Divider, Grid, IconButton, MenuItem, Select, Toolbar, Typography} from '@material-ui/core'
-import { makeStyles } from "@material-ui/styles"
-
-import { getRecommendedSearch, getResultSearch } from '../api/api_search'
+import {getRecommendedSearch, getResultSearch} from '../api/api_search'
 import "./../common.css"
 import {useSearchbarItems} from "../utils/hooks";
 
@@ -94,16 +93,16 @@ const useStyle = makeStyles(theme => ({
   }
 }))
 
-export const CustomSearchbar = ({ onAyaSelect }) => {
-  // var history = useHistory()
-  // const [index, setIndex] = useState(null)
+export const CustomSearchbar = ({ onAyaSelect , addCustomShape}) => {
   const [value, setValue] = useState("")
-  // const [lines, setLines] = useState([])
   const [results, setResults] = useState([])
   const [recommends, setRecommends] = useState([])
   const [isRecomVisible, setIsRecomVisible] = useState(false)
   const [isResultVisible, setIsResultVisible] = useState(false)
-  const {selectedTheme , selectedConcept , handleChangeConcept , handleChangeTheme} = useSearchbarItems();
+  const {
+    selectedTheme , selectedConcept , handleChangeConcept ,
+    handleChangeTheme , handleChangeNewTheme , selectedNewTheme
+  } = useSearchbarItems(addCustomShape);
   const classes = useStyle()
 
 
@@ -309,10 +308,16 @@ export const CustomSearchbar = ({ onAyaSelect }) => {
             </Select>
             <Select
                 className={"selectbox"}
-                value={1}
-                onChange={() => {}}
+                value={selectedNewTheme}
+                onChange={handleChangeNewTheme}
             >
               <MenuItem value={1}>ساخت قالب جدید</MenuItem>
+              <MenuItem value={2}>پلکان</MenuItem>
+              <MenuItem value={3}>شجره</MenuItem>
+              <MenuItem value={4}>رشته کوه</MenuItem>
+              <MenuItem value={5}>وضعیت موجود و مطلوب</MenuItem>
+              <MenuItem value={6}>جاده زمان</MenuItem>
+              <MenuItem value={7}>قالب</MenuItem>
             </Select>
           </Toolbar>
         </AppBar>

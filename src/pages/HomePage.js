@@ -61,6 +61,7 @@ import {
   setBackgroundColor, activateTransformer, disableTransformer, drawingLayer, disableDrawingLayer, prepareDrawingLayer, triggerShapeEvent,
   renderCanvas,
 } from "../canvas/manager"
+import {newCustomShapeNode} from "../canvas/shapes/CustomNode";
 
 
 function TabPanel(props) {
@@ -95,6 +96,7 @@ export default class HomePage extends React.Component {
     selectedShapeInfo: { id: null, shapeProps: null },
     color: '#fff',
   }
+
   constructor(props) {
     super(props)
 
@@ -109,6 +111,7 @@ export default class HomePage extends React.Component {
     this.addArrow = this.addArrow.bind(this)
     this.addImage = this.addImage.bind(this)
     this.addText = this.addText.bind(this)
+    this.addCustomShape = this.addCustomShape.bind(this)
     this.startDrawingShape = this.startDrawingShape.bind(this)
     this.startLineDrawingMode = this.startLineDrawingMode.bind(this)
     this.startJamBoard = this.startJamBoard.bind(this)
@@ -202,6 +205,12 @@ export default class HomePage extends React.Component {
   }
   addText(text = 'تایپ کن') {
     this.addShape(newTextNode({ text }))
+  }
+  addCustomShape(shapeOptions) {
+    this.addShape(newCustomShapeNode(undefined , false))
+    // alert("AddCustom Shape ")
+    // console.log(newCustomShapeNode(shapeOptions))
+    // this.addShape(newCustomShapeNode(shapeOptions))
   }
 
   getFatherShapeId() {
@@ -586,6 +595,7 @@ export default class HomePage extends React.Component {
     setBackgroundColor('#eeeeee')
     window.addEventListener('canvas', e => {
       let type = e.detail.type
+      console.log("#canvas_event " , {type})
 
       if (type === "create") {
       }
@@ -613,6 +623,7 @@ export default class HomePage extends React.Component {
 
       isDetailBarOpen = this.isSomethingSelected() || !isShapeRelatedTab(this.state.selectedTab)
 
+    console.log(this.state)
     return (
       <div id="home-page">
         {shapes['root'] &&
@@ -1048,11 +1059,13 @@ export default class HomePage extends React.Component {
         {
           !isDetailBarOpen && this.state.selectedTool === APP_TOOLS.NOTHING &&
           <CustomSearchbar
-            onAyaSelect={t => this.addText(t)} />
+            onAyaSelect={t => this.addText(t)}
+            addCustomShape={this.addCustomShape}
+          />
         }
         <div id="container" style={{
           'cursor': this.getCursorStyle()
-        }} className="w-100 h-100"></div>
+        }} className="w-100 h-100"/>
       </div >
     )
   }
