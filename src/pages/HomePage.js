@@ -207,7 +207,7 @@ export default class HomePage extends React.Component {
     this.addShape(newTextNode({ text }))
   }
   addCustomShape(shapeOptions) {
-    this.addShape(newCustomShapeNode(undefined , false))
+    this.addShape(newCustomShapeNode(shapeOptions , false))
     // alert("AddCustom Shape ")
     // console.log(newCustomShapeNode(shapeOptions))
     // this.addShape(newCustomShapeNode(shapeOptions))
