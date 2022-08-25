@@ -93,7 +93,7 @@ const useStyle = makeStyles(theme => ({
   }
 }))
 
-export const CustomSearchbar = ({ onAyaSelect , addCustomShape}) => {
+export const CustomSearchbar = ({ onAyaSelect , addCustomShape , addCustomImage}) => {
   const [value, setValue] = useState("")
   const [results, setResults] = useState([])
   const [recommends, setRecommends] = useState([])
@@ -102,7 +102,7 @@ export const CustomSearchbar = ({ onAyaSelect , addCustomShape}) => {
   const {
     selectedTheme , selectedConcept , handleChangeConcept ,
     handleChangeTheme , handleChangeNewTheme , selectedNewTheme
-  } = useSearchbarItems(addCustomShape);
+  } = useSearchbarItems({addCustomShape , addCustomImage});
   const classes = useStyle()
 
 

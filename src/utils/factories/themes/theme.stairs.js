@@ -31,8 +31,6 @@ export class ThemeStairs {
 
     handle() {
         const stairs = parseInt(prompt("چند پله را پیاده سازی کنیم"));
-        return {
-            points : this.createStairsPoints(stairs)
-        }
+        return "http://localhost:3000/images/stairs6.png"
     }
 }

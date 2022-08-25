@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {ThemeFactory} from "./factories/themes/theme-factory";
 
-export const useSearchbarItems = (addCustomShape) => {
+export const useSearchbarItems = ({addCustomShape , addCustomImage}) => {
     const [selectedConcept , setSelectedConcept] = useState(1);
     const [selectedTheme , setSelectedTheme] = useState(1);
     const [selectedNewTheme , setSelectedNewTheme] = useState(1);
@@ -12,7 +12,7 @@ export const useSearchbarItems = (addCustomShape) => {
 
     const handleChangeNewTheme = (e) => {
         const themeFactory = new ThemeFactory(e.target.value)
-        addCustomShape(themeFactory.handle());
+        addCustomImage(themeFactory.handle());
         setSelectedNewTheme(e.target.value)
     }
 

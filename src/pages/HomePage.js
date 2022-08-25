@@ -1061,6 +1061,7 @@ export default class HomePage extends React.Component {
           <CustomSearchbar
             onAyaSelect={t => this.addText(t)}
             addCustomShape={this.addCustomShape}
+            addCustomImage={this.addImage}
           />
         }
         <div id="container" style={{
